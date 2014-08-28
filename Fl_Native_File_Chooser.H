@@ -33,6 +33,12 @@
 #  include <windows.h>
 #  include <commdlg.h>		// OPENFILENAME, GetOpenFileName()
 #  include <shlobj.h>		// BROWSEINFO, SHBrowseForFolder()
+#elif __FLTK_WINCE__
+#  include <stdio.h>
+#  include <stdlib.h>		// malloc
+#  include <windows.h>
+#  include <commdlg.h>		// OPENFILENAME, GetOpenFileName()
+#  include <shlobj.h>		// BROWSEINFO, SHBrowseForFolder()
 #endif
 
 // Use Apple's chooser
@@ -159,6 +165,41 @@ private:
 	int  _options;		// general options
 	OPENFILENAMEW _ofn;		// GetOpenFileName() & GetSaveFileName() struct
 	BROWSEINFOW   _binf;		// SHBrowseForFolder() struct
+	char  **_pathnames;		// array of pathnames
+	int     _tpathnames;		// total pathnames
+	char   *_directory;		// default pathname to use
+	char   *_title;		// title for window
+	char   *_filter;		// user-side search filter
+	char   *_parsedfilt;		// filter parsed for Windows dialog
+	int     _nfilters;		// number of filters parse_filter counted
+	char   *_preset_file;		// the file to preselect
+	char   *_errmsg;		// error message
+
+	// Private methods
+	void errmsg(const char *msg);
+
+	void clear_pathnames();
+	void set_single_pathname(const char *s);
+	void add_pathname(const char *s);
+
+	void FreePIDL(LPITEMIDLIST pidl);
+	void ClearOFN();
+	void ClearBINF();
+	void Win2Unix(char *s);
+	void Unix2Win(char *s);
+	int showfile();
+	static int CALLBACK Dir_CB(HWND win, UINT msg, LPARAM param, LPARAM data);
+	int showdir();
+
+	void parse_filter(const char *);
+	void clear_filters();
+	void add_filter(const char *, const char *);
+#elif __FLTK_WINCE__
+private:
+	int  _btype;			// kind-of browser to show()
+	int  _options;		// general options
+	OPENFILENAMEW _ofn;		// GetOpenFileName() & GetSaveFileName() struct
+	BROWSEINFO    _binf;		// SHBrowseForFolder() struct
 	char  **_pathnames;		// array of pathnames
 	int     _tpathnames;		// total pathnames
 	char   *_directory;		// default pathname to use

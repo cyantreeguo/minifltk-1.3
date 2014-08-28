@@ -25,7 +25,7 @@
 #include "Fl_Image.H"
 
 #include "Fl_Platform.h"
-#if __FLTK_WIN32__
+#if __FLTK_WIN32__ || __FLTK_WINCE__
 #include "x.H"
 #endif
 
@@ -61,8 +61,10 @@ private:
 	static // a static member is needed for ABI compatibility
 #endif
 	UINT pixmap_bg_color; // RGB color used for pixmap background
+#elif __FLTK_WINCE__
+	static UINT pixmap_bg_color; // RGB color used for pixmap background
 #endif // WIN32
-#if __FLTK_WIN32__ || __FLTK_MACOSX__
+#if __FLTK_WIN32__ || __FLTK_MACOSX__ || __FLTK_WINCE__
 	void *id_; // for internal use
 	void *mask_; // for internal use (mask bitmap)
 #elif __FLTK_IPHONEOS__	

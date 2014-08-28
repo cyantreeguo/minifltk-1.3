@@ -20,7 +20,13 @@
 #ifndef _FL_TABLE_H
 #define _FL_TABLE_H
 
+#include "Fl_Platform.h"
+#if __FLTK_WINCE__
+#include "wince_compate.h"
+#else
 #include <sys/types.h>
+#endif
+
 #include <string.h>		// memcpy
 #ifdef WIN32
 #include <malloc.h>		// WINDOWS: malloc/realloc

@@ -46,6 +46,8 @@
 #include "x_ios.H"
 #elif __FLTK_LINUX__
 #include "x_linux.h"
+#elif __FLTK_WINCE__
+#include "x_wince.H"
 #else
 #error unsupported platform
 #endif

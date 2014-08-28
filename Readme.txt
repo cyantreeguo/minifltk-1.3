@@ -1,4 +1,20 @@
-﻿2014-08-24 cyantree
+﻿2014-08-27 cyantree
+官方添加Fl_Shaped_Window，同步更新
+
+===================
+2014-08-26 cyantree
+移植到windows mobile 5/6，vs2008编译方式：创建smart app，加入src下所有代码(不含子目录)，将minifltk-1.3目录加入搜索路径，link:Ws2.lib Ceshell.lib Commdlg.lib
+已知bug:
+1.fl_open未实现
+2.src/os/wince/Fl_Native_File_Chooser.cxx里的SHBrowseForFolder未修改完成，具体修改方法已经写在代码里
+3.输入法切换的功能有问题，会导致在中文模拟器下卡顿，估计是输入法的API使用不当，因为使用的是win32版本API，可能有不兼容
+
+===================
+2014-08-25 cyantree
+将所有cxxprivate文件移入src/os，同时开始尝试移植wince平台
+
+===================
+2014-08-24 cyantree
   加入Fl_ComboBox和Fl_Win32_TrayIcon(目前只能运行在win32平台下)
   
 ========================================
@@ -10,7 +26,7 @@
   cyantree
   将和平台相关的代码后缀加上private，这样只要导入所有.cxx文件即可，无需再删除Platform开头的文件
   
-==================================================================================
+====================================================================
 
 windows下用vs2008编译：
 添加minifltk下所有的.cxx文件，去掉platform_xxx.cxx，将minifltk加入搜索路径
@@ -36,6 +52,6 @@ osx下用xcode编译：
 linux下用gcc编译：
 参看os/linux/Makefile，在linux下必须有x11和xft(x freetype library)
 
-==============================================================================
+===================================================================
 
 将gl分离为extra

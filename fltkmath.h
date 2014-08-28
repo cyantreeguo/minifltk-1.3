@@ -47,7 +47,9 @@
 #    define M_SQRT1_2       0.70710678118654752440
 #  endif // !M_SQRT2
 
-#  if (defined(WIN32) || defined(CRAY)) && !defined(__MINGW32__) && !defined(__MWERKS__)
+#include "Fl_Platform.h"
+#if __FLTK_WIN32__ || __FLTK_WINCE__
+//#  if (defined(WIN32) || defined(CRAY)) && !defined(__MINGW32__) && !defined(__MWERKS__)
 
 inline double rint(double v)
 {

@@ -47,6 +47,7 @@ __FLTK_RISCOS__
 __FLTK_SOLARIS__
 __FLTK_WINRT__
 __FLTK_WIN32__
+__FLTK_WINCE__
 __FLTK_PSP__
 */
 
@@ -157,6 +158,9 @@ __FLTK_PSP__
 #undef __FLTK_WINRT__
 #define __FLTK_WINRT__ 1
 #endif
+#elif defined(_WIN32_WCE)
+#undef __FLTK_WINCE__
+#define __FLTK_WINCE__ 1
 #else
 #undef __FLTK_WINDOWS__
 #define __FLTK_WINDOWS__   1

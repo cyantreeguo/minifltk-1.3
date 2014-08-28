@@ -70,6 +70,26 @@
 #  include <X11/Xlib.h>
 #  include <locale.h>
 #  define xchar unsigned short
+#elif __FLTK_WINCE__
+//#  include <sys/types.h>
+//#  include <sys/stat.h>
+#  include <locale.h>
+#  include <ctype.h>
+#  define xchar wchar_t
+#  if !defined(FL_DLL) && !defined(__CYGWIN__)
+#    undef strdup
+#    define strdup _strdup
+#    undef putenv
+#    define putenv _putenv
+#    undef stricmp
+#    define stricmp _stricmp
+#    undef strnicmp
+#    define strnicmp _strnicmp
+#    undef hypot
+#    define hypot _hypot
+#    undef chdir
+#    define chdir _chdir
+#  endif
 #else
 #error unsupported platform
 #endif

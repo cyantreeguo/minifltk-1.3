@@ -55,6 +55,11 @@ private:
 	Window _sw;
 	Fl_Surface_Device *_ss;
 	int _savedc;
+#elif __FLTK_WINCE__
+	HDC _sgc;
+	Window _sw;
+	Fl_Surface_Device *_ss;
+	int _savedc;
 #elif __FLTK_MACOSX__
 #elif __FLTK_IPHONEOS__
 #elif __FLTK_LINUX__

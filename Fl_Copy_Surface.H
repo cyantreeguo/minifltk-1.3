@@ -63,6 +63,9 @@ private:
 #if __FLTK_WIN32__
 	HDC oldgc;
 	HDC gc;
+#elif __FLTK_WINCE__
+	HDC oldgc;
+	HDC gc;
 #elif __FLTK_MACOSX__
 	CFMutableDataRef pdfdata;
 	CGContextRef oldgc;
@@ -135,6 +138,8 @@ public:
 	virtual void untranslate();
 	virtual ~Fl_GDI_Surface_();
 };
+
+#elif __FLTK_WINCE__
 
 #elif __FLTK_LINUX__
 

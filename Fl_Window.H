@@ -16,13 +16,17 @@
 //     http://www.fltk.org/str.php
 //
 
-/* \file
+/** \file
    Fl_Window widget . */
 
 #ifndef Fl_Window_H
 #define Fl_Window_H
 
-#ifdef WIN32
+#include "Fl_Platform.h"
+
+#if __FLTK_WIN32__
+#include <windows.h>
+#elif __FLTK_WINCE__
 #include <windows.h>
 #endif
 
@@ -30,6 +34,7 @@
 
 #define FL_WINDOW 0xF0		///< window type id all subclasses have type() >= this
 #define FL_DOUBLE_WINDOW 0xF1   ///< double window type id
+#define FL_SHAPED_WINDOW 0xF2   ///< shaped window type id
 
 class Fl_X;
 class Fl_RGB_Image;
@@ -98,7 +103,10 @@ class FL_EXPORT Fl_Window : public Fl_Group
 		const void *legacy_icon;
 		Fl_RGB_Image **icons;
 		int count;
-#ifdef WIN32
+#if __FLTK_WIN32__
+		HICON big_icon;
+		HICON small_icon;
+#elif __FLTK_WINCE__
 		HICON big_icon;
 		HICON small_icon;
 #endif

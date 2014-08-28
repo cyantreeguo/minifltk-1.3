@@ -228,6 +228,9 @@ private:
 #elif __FLTK_LINUX__
 	unsigned id_; // for internal use
 	unsigned mask_; // for internal use (mask bitmap)
+#elif __FLTK_WINCE__
+	void *id_; // for internal use
+	void *mask_; // for internal use (mask bitmap)
 #else
 #error unsupported platform
 #endif

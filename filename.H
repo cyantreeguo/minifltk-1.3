@@ -94,7 +94,13 @@ struct dirent {
 #  elif defined(__WATCOMC__)
 #    include <sys/types.h>
 #    include <direct.h>
-
+#elif defined(_WIN32_WCE)
+#    define fl_dirent_h_cyclic_include
+//#    include <dirent.h>
+#    undef fl_dirent_h_cyclic_include
+struct dirent {
+	char d_name[1];
+};
 #  else
 /*
  * WARNING: on some systems (very few nowadays?) <dirent.h> may not exist.

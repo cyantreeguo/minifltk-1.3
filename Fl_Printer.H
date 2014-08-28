@@ -33,6 +33,7 @@
 
 #if __FLTK_WIN32__
 #include <commdlg.h>
+#elif __FLTK_WINCE__
 #elif __FLTK_MACOSX__
 #elif __FLTK_IPHONEOS__
 #elif __FLTK_LINUX__
@@ -122,7 +123,7 @@ public:
 
 #endif
 
-#if !__FLTK_IPHONEOS__
+#if __FLTK_WIN32__ || __FLTK_MACOSX__ || __FLTK_LINUX__
 
 /**
  * \brief OS-independent print support.
