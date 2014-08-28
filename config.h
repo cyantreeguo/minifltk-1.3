@@ -8,6 +8,8 @@
 #include "config_mac.h"
 #elif __FLTK_LINUX__
 #include "config_linux.h"
+#elif __FLTK_WINCE__
+#include "config_wince.h"
 #else
 #error unsupported platform
 #endif
