@@ -128,6 +128,9 @@ void fl_scroll(int X, int Y, int W, int H, int dx, int dy,
 
 	// Great, we can do an accelerated scroll instead of re-rendering
 	BitBlt(fl_gc, dest_x, dest_y, src_w, src_h, fl_gc, src_x, src_y,SRCCOPY);
+#elif __FLTK_WINCE__
+	// Great, we can do an accelerated scroll instead of re-rendering
+	BitBlt(fl_gc, dest_x, dest_y, src_w, src_h, fl_gc, src_x, src_y,SRCCOPY);
 #elif __FLTK_MACOSX__
 #if defined(__APPLE_QUARTZ__)
 	CGImageRef img = Fl_X::CGImage_from_window_rect(Fl_Window::current(), src_x, src_y, src_w, src_h);
