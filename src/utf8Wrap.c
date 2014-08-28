@@ -20,6 +20,8 @@
 #if !defined(WIN32) && !defined(__APPLE__)
 
 #include "Xutf8.h"
+
+#if __FLTK_LINUX__
 #include <X11/Xlib.h>
 #include <ctype.h>
 #include <stdlib.h>
@@ -1060,6 +1062,8 @@ XFreeUtf8FontStruct(Display 	    *dpy,
 	free(font_set->encodings);
 	free(font_set);
 }
+
+#endif
 
 #endif /* X11 only */
 

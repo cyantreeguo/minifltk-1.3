@@ -23,9 +23,10 @@
  *     http://www.fltk.org/str.php
  */
 
-#if !defined(WIN32) && !defined(__APPLE__)
-
 #include "config.h"
+
+#if __FLTK_LINUX__
+
 #include "Xutf8.h"
 #include <X11/X.h>
 #include <X11/Xlib.h>
