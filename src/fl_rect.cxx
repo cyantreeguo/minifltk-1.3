@@ -178,6 +178,12 @@ void Fl_Graphics_Driver::rect(int x, int y, int w, int h)
 	LineTo(fl_gc, x+w-1, y+h-1);
 	LineTo(fl_gc, x, y+h-1);
 	LineTo(fl_gc, x, y);
+#elif __FLTK_WINCE__
+	MoveToEx(fl_gc, x, y, 0L);
+	LineTo(fl_gc, x+w-1, y);
+	LineTo(fl_gc, x+w-1, y+h-1);
+	LineTo(fl_gc, x, y+h-1);
+	LineTo(fl_gc, x, y);
 #elif __FLTK_MACOSX__
   #if defined(__APPLE_QUARTZ__)
 	if ( (!USINGQUARTZPRINTER) && fl_quartz_line_width_ > 1.5f) CGContextSetShouldAntialias(fl_gc, true);
@@ -210,6 +216,13 @@ void Fl_Graphics_Driver::rectf(int x, int y, int w, int h)
 	rect.right = x + w;
 	rect.bottom = y + h;
 	FillRect(fl_gc, &rect, fl_brush());
+#elif __FLTK_WINCE__
+	RECT rect;
+	rect.left = x;
+	rect.top = y;
+	rect.right = x + w;
+	rect.bottom = y + h;
+	FillRect(fl_gc, &rect, fl_brush());
 #elif __FLTK_MACOSX__
 	CGRect  rect = CGRectMake(x, y, w - 0.9 , h - 0.9);
 	CGContextFillRect(fl_gc, rect);
@@ -227,6 +240,9 @@ void Fl_Graphics_Driver::rectf(int x, int y, int w, int h)
 void Fl_Graphics_Driver::xyline(int x, int y, int x1)
 {
 #if __FLTK_WIN32__
+	MoveToEx(fl_gc, x, y, 0L);
+	LineTo(fl_gc, x1+1, y);
+#elif __FLTK_WINCE__
 	MoveToEx(fl_gc, x, y, 0L);
 	LineTo(fl_gc, x1+1, y);
 #elif __FLTK_MACOSX__
@@ -251,6 +267,12 @@ void Fl_Graphics_Driver::xyline(int x, int y, int x1)
 void Fl_Graphics_Driver::xyline(int x, int y, int x1, int y2)
 {
 #if __FLTK_WIN32__
+	if (y2 < y) y2--;
+	else y2++;
+	MoveToEx(fl_gc, x, y, 0L);
+	LineTo(fl_gc, x1, y);
+	LineTo(fl_gc, x1, y2);
+#elif __FLTK_WINCE__
 	if (y2 < y) y2--;
 	else y2++;
 	MoveToEx(fl_gc, x, y, 0L);
@@ -285,6 +307,13 @@ void Fl_Graphics_Driver::xyline(int x, int y, int x1, int y2)
 void Fl_Graphics_Driver::xyline(int x, int y, int x1, int y2, int x3)
 {
 #if __FLTK_WIN32__
+	if(x3 < x1) x3--;
+	else x3++;
+	MoveToEx(fl_gc, x, y, 0L);
+	LineTo(fl_gc, x1, y);
+	LineTo(fl_gc, x1, y2);
+	LineTo(fl_gc, x3, y2);
+#elif __FLTK_WINCE__
 	if(x3 < x1) x3--;
 	else x3++;
 	MoveToEx(fl_gc, x, y, 0L);
@@ -327,6 +356,11 @@ void Fl_Graphics_Driver::yxline(int x, int y, int y1)
 	else y1++;
 	MoveToEx(fl_gc, x, y, 0L);
 	LineTo(fl_gc, x, y1);
+#elif __FLTK_WINCE__
+	if (y1 < y) y1--;
+	else y1++;
+	MoveToEx(fl_gc, x, y, 0L);
+	LineTo(fl_gc, x, y1);
 #elif __FLTK_MACOSX__
 	if (USINGQUARTZPRINTER || fl_quartz_line_width_ > 1.5f) CGContextSetShouldAntialias(fl_gc, true);
 	CGContextMoveToPoint(fl_gc, x, y);
@@ -349,6 +383,12 @@ void Fl_Graphics_Driver::yxline(int x, int y, int y1)
 void Fl_Graphics_Driver::yxline(int x, int y, int y1, int x2)
 {
 #if __FLTK_WIN32__
+	if (x2 > x) x2++;
+	else x2--;
+	MoveToEx(fl_gc, x, y, 0L);
+	LineTo(fl_gc, x, y1);
+	LineTo(fl_gc, x2, y1);
+#elif __FLTK_WINCE__
 	if (x2 > x) x2++;
 	else x2--;
 	MoveToEx(fl_gc, x, y, 0L);
@@ -383,6 +423,13 @@ void Fl_Graphics_Driver::yxline(int x, int y, int y1, int x2)
 void Fl_Graphics_Driver::yxline(int x, int y, int y1, int x2, int y3)
 {
 #if __FLTK_WIN32__
+	if(y3<y1) y3--;
+	else y3++;
+	MoveToEx(fl_gc, x, y, 0L);
+	LineTo(fl_gc, x, y1);
+	LineTo(fl_gc, x2, y1);
+	LineTo(fl_gc, x2, y3);
+#elif __FLTK_WINCE__
 	if(y3<y1) y3--;
 	else y3++;
 	MoveToEx(fl_gc, x, y, 0L);
@@ -426,6 +473,12 @@ void Fl_Graphics_Driver::line(int x, int y, int x1, int y1)
 	// Draw the last point *again* because the GDI line drawing
 	// functions will not draw the last point ("it's a feature!"...)
 	SetPixel(fl_gc, x1, y1, fl_RGB());
+#elif __FLTK_WINCE__
+	MoveToEx(fl_gc, x, y, 0L);
+	LineTo(fl_gc, x1, y1);
+	// Draw the last point *again* because the GDI line drawing
+	// functions will not draw the last point ("it's a feature!"...)
+	SetPixel(fl_gc, x1, y1, fl_RGB());
 #elif __FLTK_MACOSX__
 	if (fl_quartz_line_width_ > 1.5f) CGContextSetShouldAntialias(fl_gc, true);
 	CGContextMoveToPoint(fl_gc, x, y);
@@ -448,6 +501,13 @@ void Fl_Graphics_Driver::line(int x, int y, int x1, int y1)
 void Fl_Graphics_Driver::line(int x, int y, int x1, int y1, int x2, int y2)
 {
 #if __FLTK_WIN32__
+	MoveToEx(fl_gc, x, y, 0L);
+	LineTo(fl_gc, x1, y1);
+	LineTo(fl_gc, x2, y2);
+	// Draw the last point *again* because the GDI line drawing
+	// functions will not draw the last point ("it's a feature!"...)
+	SetPixel(fl_gc, x2, y2, fl_RGB());
+#elif __FLTK_WINCE__
 	MoveToEx(fl_gc, x, y, 0L);
 	LineTo(fl_gc, x1, y1);
 	LineTo(fl_gc, x2, y2);
@@ -489,6 +549,11 @@ void Fl_Graphics_Driver::loop(int x, int y, int x1, int y1, int x2, int y2)
 	LineTo(fl_gc, x1, y1);
 	LineTo(fl_gc, x2, y2);
 	LineTo(fl_gc, x, y);
+#elif __FLTK_WINCE__
+	MoveToEx(fl_gc, x, y, 0L);
+	LineTo(fl_gc, x1, y1);
+	LineTo(fl_gc, x2, y2);
+	LineTo(fl_gc, x, y);
 #elif __FLTK_MACOSX__
 	CGContextSetShouldAntialias(fl_gc, true);
 	CGContextMoveToPoint(fl_gc, x, y);
@@ -524,6 +589,12 @@ void Fl_Graphics_Driver::loop(int x, int y, int x1, int y1, int x2, int y2)
 void Fl_Graphics_Driver::loop(int x, int y, int x1, int y1, int x2, int y2, int x3, int y3)
 {
 #if __FLTK_WIN32__
+	MoveToEx(fl_gc, x, y, 0L);
+	LineTo(fl_gc, x1, y1);
+	LineTo(fl_gc, x2, y2);
+	LineTo(fl_gc, x3, y3);
+	LineTo(fl_gc, x, y);
+#elif __FLTK_WINCE__
 	MoveToEx(fl_gc, x, y, 0L);
 	LineTo(fl_gc, x1, y1);
 	LineTo(fl_gc, x2, y2);
@@ -577,6 +648,9 @@ void Fl_Graphics_Driver::polygon(int x, int y, int x1, int y1, int x2, int y2)
 #if __FLTK_WIN32__
 	SelectObject(fl_gc, fl_brush());
 	Polygon(fl_gc, p, 3);
+#elif __FLTK_WINCE__
+	SelectObject(fl_gc, fl_brush());
+	Polygon(fl_gc, p, 3);
 #elif __FLTK_MACOSX__
 	CGContextSetShouldAntialias(fl_gc, true);
 	CGContextMoveToPoint(fl_gc, x, y);
@@ -617,6 +691,9 @@ void Fl_Graphics_Driver::polygon(int x, int y, int x1, int y1, int x2, int y2, i
 #if __FLTK_WIN32__
 	SelectObject(fl_gc, fl_brush());
 	Polygon(fl_gc, p, 4);
+#elif __FLTK_WINCE__
+	SelectObject(fl_gc, fl_brush());
+	Polygon(fl_gc, p, 4);
 #elif __FLTK_MACOSX__
 	CGContextSetShouldAntialias(fl_gc, true);
 	CGContextMoveToPoint(fl_gc, x, y);
@@ -648,6 +725,8 @@ void Fl_Graphics_Driver::polygon(int x, int y, int x1, int y1, int x2, int y2, i
 void Fl_Graphics_Driver::point(int x, int y)
 {
 #if __FLTK_WIN32__
+	SetPixel(fl_gc, x, y, fl_RGB());
+#elif __FLTK_WINCE__
 	SetPixel(fl_gc, x, y, fl_RGB());
 #elif __FLTK_MACOSX__
 	CGContextFillRect(fl_gc, CGRectMake(x - 0.5, y - 0.5, 1, 1) );
@@ -684,6 +763,8 @@ void Fl_Graphics_Driver::restore_clip()
 	fl_clip_state_number++;
 	Fl_Region r = rstack[rstackptr];
 #if __FLTK_WIN32__
+	SelectClipRgn(fl_gc, r); //if r is NULL, clip is automatically cleared
+#elif __FLTK_WINCE__
 	SelectClipRgn(fl_gc, r); //if r is NULL, clip is automatically cleared
 #elif __FLTK_MACOSX__
 	if ( fl_window ) { // clipping for a true window
@@ -745,6 +826,8 @@ void Fl_Graphics_Driver::push_clip(int x, int y, int w, int h)
 		if (current) {
 #if __FLTK_WIN32__
 			CombineRgn(r,r,current,RGN_AND);
+#elif __FLTK_WINCE__
+			CombineRgn(r,r,current,RGN_AND);
 #elif __FLTK_MACOSX__
 			XDestroyRegion(r);
 			r = Fl_X::intersect_region_and_rect(current, x,y,w,h);
@@ -762,6 +845,8 @@ void Fl_Graphics_Driver::push_clip(int x, int y, int w, int h)
 		}
 	} else { // make empty clip region:
 #if __FLTK_WIN32__
+		r = CreateRectRgn(0,0,0,0);
+#elif __FLTK_WINCE__
 		r = CreateRectRgn(0,0,0,0);
 #elif __FLTK_MACOSX__
 		r = XRectangleRegion(0,0,0,0);
@@ -806,6 +891,22 @@ int Fl_Graphics_Driver::not_clipped(int x, int y, int w, int h)
 	if (Fl_Surface_Device::surface() != Fl_Display_Device::display_device()) { // in case of print context, convert coords from logical to device
 		POINT pt[2] = { {x, y}, {x + w, y + h} };
 		LPtoDP(fl_gc, pt, 2);
+		rect.left = pt[0].x;
+		rect.top = pt[0].y;
+		rect.right = pt[1].x;
+		rect.bottom = pt[1].y;
+	} else {
+		rect.left = x;
+		rect.top = y;
+		rect.right = x+w;
+		rect.bottom = y+h;
+	}
+	return RectInRegion(r,&rect);
+#elif __FLTK_WINCE__
+	RECT rect;
+	if (Fl_Surface_Device::surface() != Fl_Display_Device::display_device()) { // in case of print context, convert coords from logical to device
+		POINT pt[2] = { {x, y}, {x + w, y + h} };
+		//LPtoDP(fl_gc, pt, 2);
 		rect.left = pt[0].x;
 		rect.top = pt[0].y;
 		rect.right = pt[1].x;
@@ -868,6 +969,40 @@ int Fl_Graphics_Driver::clip_box(int x, int y, int w, int h, int& X, int& Y, int
 		if (Fl_Surface_Device::surface() != Fl_Display_Device::display_device()) { // if print context, convert coords from device to logical
 			POINT pt[2] = { {rect.left, rect.top}, {rect.right, rect.bottom} };
 			DPtoLP(fl_gc, pt, 2);
+			X = pt[0].x;
+			Y = pt[0].y;
+			W = pt[1].x - X;
+			H = pt[1].y - Y;
+		} else {
+			X = rect.left;
+			Y = rect.top;
+			W = rect.right - X;
+			H = rect.bottom - Y;
+		}
+		ret = 1;
+	}
+	DeleteObject(temp);
+	DeleteObject(rr);
+	return ret;
+#elif __FLTK_WINCE__
+	// The win32 API makes no distinction between partial and complete
+	// intersection, so we have to check for partial intersection ourselves.
+	// However, given that the regions may be composite, we have to do
+	// some voodoo stuff...
+	Fl_Region rr = XRectangleRegion(x,y,w,h);
+	Fl_Region temp = CreateRectRgn(0,0,0,0);
+	int ret;
+	if (CombineRgn(temp, rr, r, RGN_AND) == NULLREGION) { // disjoint
+		W = H = 0;
+		ret = 2;
+	} else if (EqualRgn(temp, rr)) { // complete
+		ret = 0;
+	} else {	// partial intersection
+		RECT rect;
+		GetRgnBox(temp, &rect);
+		if (Fl_Surface_Device::surface() != Fl_Display_Device::display_device()) { // if print context, convert coords from device to logical
+			POINT pt[2] = { {rect.left, rect.top}, {rect.right, rect.bottom} };
+			//DPtoLP(fl_gc, pt, 2);
 			X = pt[0].x;
 			Y = pt[0].y;
 			W = pt[1].x - X;

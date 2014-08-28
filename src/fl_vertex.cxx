@@ -162,6 +162,8 @@ void Fl_Graphics_Driver::end_points()
 {
 #if __FLTK_WIN32__
 	for (int i=0; i<n; i++) SetPixel(fl_gc, p[i].x, p[i].y, fl_RGB());
+#elif __FLTK_WINCE__
+	for (int i=0; i<n; i++) SetPixel(fl_gc, p[i].x, p[i].y, fl_RGB());
 #elif __FLTK_MACOSX__
   #if defined(__APPLE_QUARTZ__)
 	if (fl_quartz_line_width_ > 1.5f) CGContextSetShouldAntialias(fl_gc, true);
@@ -199,6 +201,8 @@ void Fl_Graphics_Driver::end_line()
 	}
 
 #if __FLTK_WIN32__
+	if (n>1) Polyline(fl_gc, p, n);
+#elif __FLTK_WINCE__
 	if (n>1) Polyline(fl_gc, p, n);
 #elif __FLTK_MACOSX__
   #if defined(__APPLE_QUARTZ__)
@@ -249,6 +253,11 @@ void Fl_Graphics_Driver::end_polygon()
 		return;
 	}
 #if __FLTK_WIN32__
+	if (n>2) {
+		SelectObject(fl_gc, fl_brush());
+		Polygon(fl_gc, p, n);
+	}
+#elif __FLTK_WINCE__
 	if (n>2) {
 		SelectObject(fl_gc, fl_brush());
 		Polygon(fl_gc, p, n);
@@ -319,6 +328,18 @@ void Fl_Graphics_Driver::end_complex_polygon()
 		SelectObject(fl_gc, fl_brush());
 		PolyPolygon(fl_gc, p, counts, numcount);
 	}
+#elif __FLTK_WINCE__
+	if (n>2) {
+		//SelectObject(fl_gc, fl_brush());
+		//PolyPolygon(fl_gc, p, counts, numcount);
+		SelectObject(fl_gc, fl_brush());
+		Polygon(fl_gc, p, numcount);
+		/*
+		HRGN hRgn = ExtCreateRegion(NULL, p, counts);
+		FillRgn(fl_gc, hRgn, (HBRUSH)SelectObject(fl_gc, fl_brush()));
+		DeleteObject(hRgn);
+		*/
+	}
 #elif __FLTK_MACOSX__
   #if defined(__APPLE_QUARTZ__)
 	if (n<=1) return;
@@ -371,6 +392,13 @@ void Fl_Graphics_Driver::circle(double x, double y,double r)
 		Pie(fl_gc, llx, lly, llx+w, lly+h, 0,0, 0,0);
 	} else
 		Arc(fl_gc, llx, lly, llx+w, lly+h, 0,0, 0,0);
+#elif __FLTK_WINCE__
+	if (what==POLYGON) {
+		SelectObject(fl_gc, fl_brush());
+		//Pie(fl_gc, llx, lly, llx+w, lly+h, 0,0, 0,0);
+	} else
+		//Arc(fl_gc, llx, lly, llx+w, lly+h, 0,0, 0,0);
+		Ellipse(fl_gc, llx, lly, llx+w, lly+h);
 #elif __FLTK_MACOSX__
   #if defined(__APPLE_QUARTZ__)
 	// Quartz warning: circle won't scale to current matrix!

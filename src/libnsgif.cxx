@@ -306,7 +306,7 @@ gif_result gif_initialise(gif_animation *gif, int size, unsigned char *data)
 
 		/*	Initialise the sprite header
 		*/
-		assert(gif->bitmap_callbacks.bitmap_create);
+		assert((int)(gif->bitmap_callbacks.bitmap_create));
 		if ((gif->frame_image = gif->bitmap_callbacks.bitmap_create(gif->width, gif->height)) == NULL) {
 			gif_finalise(gif);
 			return GIF_INSUFFICIENT_MEMORY;
@@ -404,10 +404,10 @@ static gif_result gif_initialise_sprite(gif_animation *gif, unsigned int width, 
 
 	/*	Allocate some more memory
 	*/
-	assert(gif->bitmap_callbacks.bitmap_create);
+	assert((int)(gif->bitmap_callbacks.bitmap_create));
 	if ((buffer = (struct bitmap *)(gif->bitmap_callbacks.bitmap_create(max_width, max_height))) == NULL)
 		return GIF_INSUFFICIENT_MEMORY;
-	assert(gif->bitmap_callbacks.bitmap_destroy);
+	assert((int)(gif->bitmap_callbacks.bitmap_destroy));
 	gif->bitmap_callbacks.bitmap_destroy(gif->frame_image);
 	gif->frame_image = buffer;
 	gif->width = max_width;
@@ -908,7 +908,7 @@ gif_result gif_decode_frame(gif_animation *gif, unsigned int frame)
 
 	/*	Get the frame data
 	*/
-	assert(gif->bitmap_callbacks.bitmap_get_buffer);
+	assert((int)(gif->bitmap_callbacks.bitmap_get_buffer));
 	frame_data = (unsigned int *)gif->bitmap_callbacks.bitmap_get_buffer(gif->frame_image);
 	if (!frame_data)
 		return GIF_INSUFFICIENT_MEMORY;
@@ -959,7 +959,7 @@ gif_result gif_decode_frame(gif_animation *gif, unsigned int frame)
 					goto gif_decode_frame_exit;
 				/*	Get this frame's data
 				*/
-				assert(gif->bitmap_callbacks.bitmap_get_buffer);
+				assert((int)(gif->bitmap_callbacks.bitmap_get_buffer));
 				frame_data = (unsigned int *)gif->bitmap_callbacks.bitmap_get_buffer(gif->frame_image);
 				if (!frame_data)
 					return GIF_INSUFFICIENT_MEMORY;
@@ -1141,7 +1141,7 @@ void gif_finalise(gif_animation *gif)
 	/*	Release all our memory blocks
 	*/
 	if (gif->frame_image) {
-		assert(gif->bitmap_callbacks.bitmap_destroy);
+		assert((int)(gif->bitmap_callbacks.bitmap_destroy));
 		gif->bitmap_callbacks.bitmap_destroy(gif->frame_image);
 	}
 	gif->frame_image = NULL;

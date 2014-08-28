@@ -141,7 +141,7 @@ int Fl_Pixmap::prepare(int XP, int YP, int WP, int HP, int &cx, int &cy,
 	return 0;
 }
 
-#ifdef __APPLE__
+#if __FLTK_MACOSX__
 void Fl_Quartz_Graphics_Driver::draw(Fl_Pixmap *pxm, int XP, int YP, int WP, int HP, int cx, int cy)
 {
 	int X, Y, W, H;
@@ -149,7 +149,7 @@ void Fl_Quartz_Graphics_Driver::draw(Fl_Pixmap *pxm, int XP, int YP, int WP, int
 	copy_offscreen(X, Y, W, H, (Fl_Offscreen)pxm->id_, cx, cy);
 }
 
-#elif defined(WIN32)
+#elif __FLTK_WIN32__
 void Fl_GDI_Graphics_Driver::draw(Fl_Pixmap *pxm, int XP, int YP, int WP, int HP, int cx, int cy)
 {
 	int X, Y, W, H;
@@ -194,6 +194,55 @@ void Fl_GDI_Printer_Graphics_Driver::draw(Fl_Pixmap *pxm, int XP, int YP, int WP
 	} else {
 		copy_offscreen(X, Y, W, H, (Fl_Offscreen)pxm->id_, cx, cy);
 	}
+}
+
+#elif __FLTK_WINCE__
+void Fl_GDI_Graphics_Driver::draw(Fl_Pixmap *pxm, int XP, int YP, int WP, int HP, int cx, int cy)
+{
+	int X, Y, W, H;
+	if (pxm->prepare(XP, YP, WP, HP, cx, cy, X, Y, W, H)) return;
+	if (pxm->mask_) {
+		HDC new_gc = CreateCompatibleDC(fl_gc);
+		int save = SaveDC(new_gc);
+		SelectObject(new_gc, (void*)pxm->mask_);
+		BitBlt(fl_gc, X, Y, W, H, new_gc, cx, cy, SRCAND);
+		SelectObject(new_gc, (void*)pxm->id_);
+		BitBlt(fl_gc, X, Y, W, H, new_gc, cx, cy, SRCPAINT);
+		RestoreDC(new_gc,save);
+		DeleteDC(new_gc);
+	} else {
+		copy_offscreen(X, Y, W, H, (Fl_Offscreen)pxm->id_, cx, cy);
+	}
+}
+
+#if FLTK_ABI_VERSION < 10301
+UINT Fl_Pixmap::pixmap_bg_color = 0;
+#endif
+
+void Fl_GDI_Printer_Graphics_Driver::draw(Fl_Pixmap *pxm, int XP, int YP, int WP, int HP, int cx, int cy)
+{
+	int X, Y, W, H;
+	if (pxm->prepare(XP, YP, WP, HP, cx, cy, X, Y, W, H)) return;
+	/*
+	typedef BOOL (WINAPI* fl_transp_func)  (HDC,int,int,int,int,HDC,int,int,int,int,UINT);
+	static HMODULE hMod = NULL;
+	static fl_transp_func fl_TransparentBlt = NULL;
+	if (!hMod) {
+		hMod = LoadLibraryA("MSIMG32.DLL");
+		if(hMod) fl_TransparentBlt = (fl_transp_func)GetProcAddress(hMod, "TransparentBlt");
+	}
+	*/
+	//if (fl_TransparentBlt) {
+		HDC new_gc = CreateCompatibleDC(fl_gc);
+		int save = SaveDC(new_gc);
+		SelectObject(new_gc, (void*)pxm->id_);
+		// print all of offscreen but its parts in background color
+		TransparentBlt(fl_gc, X, Y, W, H, new_gc, cx, cy, pxm->w(), pxm->h(), pxm->pixmap_bg_color );
+		RestoreDC(new_gc,save);
+		DeleteDC(new_gc);
+	//} else {
+	//	copy_offscreen(X, Y, W, H, (Fl_Offscreen)pxm->id_, cx, cy);
+	//}
 }
 
 #else // Xlib

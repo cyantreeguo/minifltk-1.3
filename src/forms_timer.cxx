@@ -23,6 +23,17 @@
 #include "Fl.H"
 #include "Fl_Timer.H"
 #include "fl_draw.H"
+
+#if __FLTK_WIN32__
+#    include <sys/types.h>
+#    include <sys/timeb.h>
+#elif __FLTK_WINCE__
+#    include <time.h>
+#else
+#  include <time.h>
+#  include <sys/time.h>
+#endif
+/*
 #ifdef WIN32
 #  ifdef __MWERKS__
 #    include <time.h>
@@ -34,12 +45,32 @@
 #  include <time.h>
 #  include <sys/time.h>
 #endif
+*/
 #include <stdio.h>
 
 #define FL_TIMER_BLINKRATE	0.2
 
 void fl_gettime(long* sec, long* usec)
 {
+#if __FLTK_WIN32__
+	struct timeb tp;
+	ftime(&tp);
+	*sec = (long) tp.time;
+	*usec = tp.millitm * 1000;
+#elif __FLTK_WINCE__
+	time_t localTime = time(NULL);
+	struct tm *now = localtime(&localTime);
+	*sec = now->tm_sec + 60*now->tm_min + 3600*now->tm_hour + 24*3600*now->tm_yday;
+	*usec = 0;
+#else
+	struct timeval tp;
+	struct timezone tzp;
+	gettimeofday(&tp, &tzp);
+	*sec = tp.tv_sec;
+	*usec = tp.tv_usec;
+#endif
+
+/*
 #ifdef WIN32
 # ifdef __MWERKS__
 	time_t localTime = time(NULL);
@@ -59,6 +90,7 @@ void fl_gettime(long* sec, long* usec)
 	*sec = tp.tv_sec;
 	*usec = tp.tv_usec;
 #endif
+*/
 }
 
 void Fl_Timer::draw()

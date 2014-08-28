@@ -784,7 +784,9 @@ unsigned fl_utf8froma(char* dst, unsigned dstlen,
 	return count;
 }
 
-#ifdef WIN32
+#if __FLTK_WIN32__
+# include <windows.h>
+#elif __FLTK_WINCE__
 # include <windows.h>
 #endif
 
@@ -804,7 +806,9 @@ int fl_utf8locale(void)
 {
 	static int ret = 2;
 	if (ret == 2) {
-#ifdef WIN32
+#if __FLTK_WIN32__
+		ret = GetACP() == CP_UTF8;
+#elif __FLTK_WINCE__
 		ret = GetACP() == CP_UTF8;
 #else
 		char* s;

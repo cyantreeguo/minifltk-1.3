@@ -30,6 +30,8 @@
 // Include necessary header files...
 //
 
+#include "Fl_Platform.h"
+
 #include "Fl_File_Browser.H"
 #include "fl_draw.H"
 #include "filename.H"
@@ -38,13 +40,17 @@
 #include <stdlib.h>
 #include "flstring.h"
 
-#ifdef __CYGWIN__
-#  include <mntent.h>
-#elif defined(WIN32)
+#if __FLTK_WIN32__
 #  include <windows.h>
 #  include <direct.h>
 // Apparently Borland C++ defines DIRECTORY in <direct.h>, which
 // interfers with the Fl_File_Icon enumeration of the same name.
+#  ifdef DIRECTORY
+#    undef DIRECTORY
+#  endif // DIRECTORY
+#elif __FLTK_WINCE__
+#  include <windows.h>
+#  include "wince_compate.h"
 #  ifdef DIRECTORY
 #    undef DIRECTORY
 #  endif // DIRECTORY
@@ -56,13 +62,13 @@
 #  include <os2.h>
 #endif // __EMX__
 
-#if defined(__APPLE__)
+#if __FLTK_MACOSX__
 #  include <sys/param.h>
 #  include <sys/ucred.h>
 #  include <sys/mount.h>
 #endif // __APPLE__
 
-#if defined(_AIX)
+#if __FLTK_AIX__
 extern "C" {
 #  include <sys/types.h>
 #  include <sys/vmount.h>
@@ -445,6 +451,8 @@ Fl_File_Browser::load(const char     *directory,// I - Directory to load
 			icon = Fl_File_Icon::find("any", Fl_File_Icon::DIRECTORY);
 
 #ifdef WIN32
+#if __FLTK_WINCE__
+#else
 #  ifdef __CYGWIN__
 		//
 		// Cygwin provides an implementation of setmntent() to get the list
@@ -478,6 +486,7 @@ Fl_File_Browser::load(const char     *directory,// I - Directory to load
 				num_files ++;
 			}
 #  endif // __CYGWIN__
+#endif
 #elif defined(__EMX__)
 		//
 		// OS/2 code uses drive bits...

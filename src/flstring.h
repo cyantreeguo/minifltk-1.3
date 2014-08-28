@@ -50,6 +50,11 @@
 #      define strdup _strdup
 #      define unlink _unlink
 #    endif /* !__WATCOMC__ */
+#elif defined(_WIN32_WCE)
+#    define strcasecmp(s,t)	_stricmp((s), (t))
+#    define strncasecmp(s,t,n)	_strnicmp((s), (t), (n))
+#    define strdup _strdup
+#    define unlink _unlink
 #  elif defined(__EMX__)
 #    define strcasecmp(s,t)	stricmp((s), (t))
 #    define strncasecmp(s,t,n)	strnicmp((s), (t), (n))

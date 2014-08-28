@@ -353,11 +353,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "flstring.h"
+#if __FLTK_WINCE__
+# include "wince_compate.h"
+#else
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#endif
 
-#if defined(WIN32) && ! defined (__CYGWIN__)
+#if __FLTK_WIN32__
 #  include <direct.h>
 #  include <io.h>
 // Visual C++ 2005 incorrectly displays a warning about the use of POSIX APIs
@@ -369,6 +373,7 @@
 #  ifdef DIRECTORY
 #    undef DIRECTORY
 #  endif // DIRECTORY
+#elif __FLTK_WINCE__
 #else
 #  include <unistd.h>
 #  include <pwd.h>

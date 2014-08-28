@@ -24,13 +24,24 @@
 // Include necessary headers...
 //
 
+#include "Fl_Platform.h"
+
 #include "filename.H"
 #include <stdio.h>
 #include <stdlib.h>
+
+#if __FLTK_WINCE__
+#include "wince_compate.h"
+#else
 #include <errno.h>
 #include <sys/types.h>
+#endif
+
 #include "flstring.h"
-#ifdef WIN32
+#if __FLTK_WIN32__
+#  include <windows.h>
+#  include <shellapi.h>
+#elif __FLTK_WINCE__
 #  include <windows.h>
 #  include <shellapi.h>
 #else
@@ -127,12 +138,15 @@ fl_open_uri(const char *uri, char *msg, int msglen)
 		return 0;
 	}
 
-#ifdef WIN32
+#if __FLTK_WIN32__
 	if (msg) snprintf(msg, msglen, "open %s", uri);
 
 	return (int)(ShellExecuteA(HWND_DESKTOP, "open", uri, NULL, NULL, SW_SHOW) > (void *)32);
 
-#elif defined(__APPLE__)
+#elif __FLTK_WINCE__
+	return 0;
+
+#elif __FLTK_MACOSX__
 	char	*argv[3];			// Command-line arguments
 
 	argv[0] = (char*)"open";

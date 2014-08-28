@@ -21,13 +21,14 @@
 #include "Fl_Platform.h"
 
 #if __FLTK_WIN32__
-#include "Platform_win32_Fl_Printer.cxxprivate"
+#include "os/win32/Fl_Printer.cxx"
 #elif __FLTK_MACOSX__
 //#include "Fl_Quartz_Printer.mm"
 #elif __FLTK_IPHONEOS__
+#elif __FLTK_WINCE__
 #endif
 
-#if !__FLTK_IPHONEOS__
+#if __FLTK_WIN32__ || __FLTK_MACOSX__ || __FLTK_LINUX__
 
 //#include "Fl_PostScript.cxx"
 

@@ -70,7 +70,14 @@ void fl_cleanup_dc_list(void);
 extern double fl_mac_flush_and_wait(double time_to_wait);
 #elif __FLTK_IPHONEOS__
 extern double fl_mac_flush_and_wait(double time_to_wait);
-#endif // WIN32
+#elif __FLTK_WINCE__
+#  include <ole2.h>
+void fl_free_fonts(void);
+HBRUSH fl_brush_action(int action);
+void fl_cleanup_pens(void);
+void fl_release_dc(HWND,HDC);
+void fl_cleanup_dc_list(void);
+#endif
 
 //
 // Globals...
@@ -612,8 +619,7 @@ int Fl::run()
 	return 0;
 }
 
-#ifdef WIN32
-
+#if __FLTK_WIN32__
 // Function to initialize COM/OLE for usage. This must be done only once.
 // We define a flag to register whether we called it:
 static char oleInitialized = 0;
@@ -633,6 +639,43 @@ void fl_OleUninitialize()
 {
 	if (oleInitialized) {
 		OleUninitialize();
+		oleInitialized = 0;
+	}
+}
+
+class Fl_Win32_At_Exit
+{
+public:
+	Fl_Win32_At_Exit() { }
+	~Fl_Win32_At_Exit() {
+		fl_free_fonts();        // do some WIN32 cleanup
+		fl_cleanup_pens();
+		fl_OleUninitialize();
+		fl_brush_action(1);
+		fl_cleanup_dc_list();
+	}
+};
+static Fl_Win32_At_Exit win32_at_exit;
+#elif __FLTK_WINCE__
+// Function to initialize COM/OLE for usage. This must be done only once.
+// We define a flag to register whether we called it:
+static char oleInitialized = 0;
+
+// This calls the Windows function OleInitialize() exactly once.
+void fl_OleInitialize()
+{
+	if (!oleInitialized) {
+		CoInitializeEx(0L, COINIT_MULTITHREADED);
+		oleInitialized = 1;
+	}
+}
+
+// This calls the Windows function OleUninitialize() only, if
+// OleInitialize has been called before.
+void fl_OleUninitialize()
+{
+	if (oleInitialized) {
+		CoUninitialize();
 		oleInitialized = 0;
 	}
 }
@@ -757,6 +800,8 @@ Fl_Window* fl_find(Window xid)
 		if (window->xid == xid && !window->w->window())
 #elif __FLTK_LINUX__
 		if (window->xid == xid)
+#elif __FLTK_WINCE__
+		if (window->xid == xid)
 #else
 #error unsupported platform
 #endif
@@ -853,6 +898,8 @@ void Fl::flush()
 	}
 #if __FLTK_WIN32__
 	GdiFlush();
+#elif __FLTK_WINCE__
+	//GdiFlush(); // WinCE has no GdiFlush
 #elif __FLTK_MACOSX__
 	if (fl_gc)
 		CGContextFlush(fl_gc);
@@ -1611,6 +1658,20 @@ void Fl_Window::hide()
 		doit[ii]->show();
 	}
 	if (count) delete[] doit;
+#elif __FLTK_WINCE__
+	// this little trickery seems to avoid the popup window stacking problem
+	HWND p = GetForegroundWindow();
+	if (p==GetParent(ip->xid)) {
+		ShowWindow(ip->xid, SW_HIDE);
+		ShowWindow(p, SW_SHOWNA);
+	}
+	XDestroyWindow(fl_display, ip->xid);
+	// end of fix for STR#3079
+	for (int ii = 0; ii < count; ii++) {
+		doit[ii]->hide();
+		doit[ii]->show();
+	}
+	if (count) delete[] doit;
 #elif __FLTK_MACOSX__
 	ip->destroy();
 #elif __FLTK_IPHONEOS__
@@ -1660,6 +1721,8 @@ int Fl_Window::handle(int ev)
 			else {
 #if __FLTK_WIN32__
 				XMapWindow(fl_display, fl_xid(this)); // extra map calls are harmless
+#elif __FLTK_WINCE__
+				XMapWindow(fl_display, fl_xid(this)); // extra map calls are harmless
 #elif __FLTK_MACOSX__
 				i->map();
 #elif __FLTK_IPHONEOS__
@@ -1686,6 +1749,8 @@ int Fl_Window::handle(int ev)
 					if (p->type() >= FL_WINDOW) break; // don't do the unmap
 				}
 #if __FLTK_WIN32__
+				XUnmapWindow(fl_display, fl_xid(this));
+#elif __FLTK_WINCE__
 				XUnmapWindow(fl_display, fl_xid(this));
 #elif __FLTK_MACOSX__
 				i->unmap();
@@ -1897,6 +1962,10 @@ void Fl_Widget::damage(uchar fl, int X, int Y, int W, int H)
 			Fl_Region R = XRectangleRegion(X, Y, W, H);
 			CombineRgn(i->region, i->region, R, RGN_OR);
 			XDestroyRegion(R);
+#elif __FLTK_WINCE__
+			Fl_Region R = XRectangleRegion(X, Y, W, H);
+			CombineRgn(i->region, i->region, R, RGN_OR);
+			XDestroyRegion(R);
 #elif __FLTK_MACOSX__
 			CGRect arg = fl_cgrectmake_cocoa(X, Y, W, H);
 			int j; // don't add a rectangle totally inside the Fl_Region
@@ -1947,8 +2016,11 @@ void Fl_Window::flush()
 	draw();
 }
 
-#ifdef WIN32
-#  include "Platform_win32_Fl.cxxprivate"
+#if __FLTK_WIN32__
+#  include "os/win32/Fl.cxx"
+#elif __FLTK_WINCE__
+#  include "os/wince/Fl.cxx"
+#else
 //#elif defined(__APPLE__)
 #endif
 

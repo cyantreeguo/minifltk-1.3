@@ -23,7 +23,9 @@
 
 #include <stdlib.h>
 
-#ifdef WIN32
+#if __FLTK_WIN32__
+#include <windows.h>
+#elif __FLTK_WINCE__
 #include <windows.h>
 #else
 #include <unistd.h>
@@ -49,7 +51,7 @@ void Fl::msleep(unsigned long milliseconds)
 void Fl::usleep(unsigned long long microseconds)
 // unsigned long long more should be more portable than int64_t before c++ 2011 ...
 {
-#ifdef WIN32
+#if __FLTK_WIN32__
 	HANDLE timer;
 	LARGE_INTEGER reltime;
 
@@ -58,6 +60,8 @@ void Fl::usleep(unsigned long long microseconds)
 	SetWaitableTimer(timer, &reltime, 0, NULL, NULL, 0);
 	WaitForSingleObject(timer, INFINITE);
 	CloseHandle(timer);
+#elif __FLTK_WINCE__
+	Sleep(microseconds / 1000);
 #else
 	::usleep((useconds_t) microseconds);
 #endif

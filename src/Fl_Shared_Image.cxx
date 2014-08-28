@@ -27,6 +27,10 @@
 #include "Fl_XPM_Image.H"
 #include "Fl_GIF_Image.H"
 
+#if __FLTK_WINCE__
+#include "wince_compate.h"
+#endif
+
 
 //
 // Global class vars...

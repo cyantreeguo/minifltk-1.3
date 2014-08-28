@@ -16,17 +16,14 @@
 //     http://www.fltk.org/str.php
 //
 
-#ifdef WIN32
-//#  include "Fl_win32.cxx"
-#elif defined(__APPLE__)
-//#  include "Fl_mac.cxx"	// now Fl_cocoa.mm
-#elif !defined(FL_DOXYGEN)
+#if !defined(FL_DOXYGEN)
 
 #  define CONSOLIDATE_MOTION 1
 /**** Define this if your keyboard lacks a backspace key... ****/
 /* #define BACKSPACE_HACK 1 */
 
 #  include "config.h"
+#if __FLTK_LINUX__
 #  include "Fl.H"
 #  include "x.H"
 #  include "Fl_Window.H"
@@ -35,6 +32,7 @@
 #  include "fl_draw.H"
 #  include "Fl_Paged_Device.H"
 #  include "Fl_Shared_Image.H"
+#  include "Fl_Shaped_Window.H"
 #  include "fl_ask.H"
 #  include "filename.H"
 #  include <stdio.h>
@@ -2622,6 +2620,9 @@ void Fl_X::make_xid(Fl_Window* win, XVisualInfo *visual, Colormap colormap)
 	}
 #endif
 
+	if (win->type() == FL_SHAPED_WINDOW) {
+		((Fl_Shaped_Window*)win)->combine_mask();
+    }
 	XMapWindow(fl_display, xp->xid);
 	if (showit) {
 		win->set_visible();
@@ -2996,7 +2997,7 @@ void Fl_Window::show()
 	if (!shown()) {
 		fl_open_display();
 		// Don't set background pixel for double-buffered windows...
-		if (type() == FL_WINDOW && can_boxcheat(box())) {
+		if (type() != FL_DOUBLE_WINDOW && can_boxcheat(box())) {
 			fl_background_pixel = int(fl_xpixel(color()));
 		}
 		Fl_X::make_xid(this);
@@ -3181,6 +3182,8 @@ void preparePrintFront(void)
 	w.show();
 }
 #endif // USE_PRINT_BUTTON
+
+#endif
 
 #endif
 

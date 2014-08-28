@@ -42,7 +42,7 @@ void Fl_Window::hotspot(int X, int Y, int offscreen)
 		int bottom = 0;
 
 		if (border()) {
-#ifdef WIN32
+#if __FLTK_WIN32__
 			if (size_range_set && (maxw != minw || maxh != minh)) {
 				left = right = GetSystemMetrics(SM_CXSIZEFRAME);
 				top = bottom = GetSystemMetrics(SM_CYSIZEFRAME);
@@ -51,7 +51,16 @@ void Fl_Window::hotspot(int X, int Y, int offscreen)
 				top = bottom = GetSystemMetrics(SM_CYFIXEDFRAME);
 			}
 			top += GetSystemMetrics(SM_CYCAPTION);
-#elif defined(__APPLE__)
+#elif __FLTK_WINCE__
+			if (size_range_set && (maxw != minw || maxh != minh)) {
+				left = right = GetSystemMetrics(SM_CXFIXEDFRAME);
+				top = bottom = GetSystemMetrics(SM_CYFIXEDFRAME);
+			} else {
+				left = right = GetSystemMetrics(SM_CXFIXEDFRAME);
+				top = bottom = GetSystemMetrics(SM_CYFIXEDFRAME);
+			}
+			top += GetSystemMetrics(SM_CYCAPTION);
+#elif __FLTK_MACOSX__ || __FLTK_IPHONEOS__
 			top = 24;
 			left = 2;
 			right = 2;

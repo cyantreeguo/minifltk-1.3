@@ -26,13 +26,23 @@
 #include <stdarg.h>
 #include "fl_utf8.h"
 #include "flstring.h"
+#if __FLTK_WINCE__
+#include "wince_compate.h"
+#else
 #include <sys/stat.h>
+#endif
 #include <time.h>
 
 #if __FLTK_WIN32__
 #  include <windows.h>
 #  include <direct.h>
 #  include <io.h>
+// Visual C++ 2005 incorrectly displays a warning about the use of POSIX APIs
+// on Windows, which is supposed to be POSIX compliant...
+#  define access _access
+#  define mkdir _mkdir
+#elif __FLTK_WINCE__
+#  include <windows.h>
 // Visual C++ 2005 incorrectly displays a warning about the use of POSIX APIs
 // on Windows, which is supposed to be POSIX compliant...
 #  define access _access
@@ -58,6 +68,8 @@
 // function pointer for the UuidCreate Function
 // RPC_STATUS RPC_ENTRY UuidCreate(UUID __RPC_FAR *Uuid);
 typedef RPC_STATUS (WINAPI* uuid_func)(UUID __RPC_FAR *Uuid);
+#elif __FLTK_WINCE__
+#include "winsock2.h"
 #else
 #  include <sys/time.h>
 #endif // WIN32
@@ -161,6 +173,56 @@ const char *Fl_Preferences::newUUID()
 		        b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7],
 		        b[8], b[9], b[10], b[11], b[12], b[13], b[14], b[15]);
 	}
+#elif __FLTK_WINCE__
+	// First try and use the win API function UuidCreate(), but if that is not
+	// available, fall back to making something up from scratch.
+	// We do not want to link against the Rpcrt4.dll, as we will rarely use it,
+	// so we load the DLL dynamically, if it is available, and work from there.
+	/*
+	UUID ud;
+	UUID *pu = &ud;
+	int got_uuid = 0;
+
+	if (got_uuid == 0) {		// did not make a UUID - use fallback logic
+		unsigned char b[16];
+		time_t t = time(0);		// first 4 byte
+		b[0] = (unsigned char)t;
+		b[1] = (unsigned char)(t>>8);
+		b[2] = (unsigned char)(t>>16);
+		b[3] = (unsigned char)(t>>24);
+		int r = rand();		// four more bytes
+		b[4] = (unsigned char)r;
+		b[5] = (unsigned char)(r>>8);
+		b[6] = (unsigned char)(r>>16);
+		b[7] = (unsigned char)(r>>24);
+		// Now we try to find 4 more "random" bytes. We extract the
+		// lower 4 bytes from the address of t - it is created on the
+		// stack so *might* be in a different place each time...
+		// This is now done via a union to make it compile OK on 64-bit systems.
+		union {
+			void *pv;
+			unsigned char a[sizeof(void*)];
+		} v;
+		v.pv = (void *)(&t);
+		// NOTE: This assume that all WinXX systems are little-endian
+		b[8] = v.a[0];
+		b[9] = v.a[1];
+		b[10] = v.a[2];
+		b[11] = v.a[3];
+		TCHAR name[MAX_COMPUTERNAME_LENGTH + 1]; // only used to make last four bytes
+		DWORD nSize = MAX_COMPUTERNAME_LENGTH + 1;
+		// GetComputerName() does not depend on any extra libs, and returns something
+		// analogous to gethostname()
+		GetComputerName(name, &nSize);
+		//  use the first 4 TCHAR's of the name to create the last 4 bytes of our UUID
+		for (int ii = 0; ii < 4; ii++) {
+			b[12 + ii] = (unsigned char)name[ii];
+		}
+		sprintf(uuidBuffer, "%02X%02X%02X%02X-%02X%02X-%02X%02X-%02X%02X-%02X%02X%02X%02X%02X%02X",
+			b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7],
+			b[8], b[9], b[10], b[11], b[12], b[13], b[14], b[15]);
+	}
+	*/
 #else
 	// warning Unix implementation of Fl_Preferences::newUUID() incomplete!
 	// #include <uuid/uuid.h>
@@ -1045,6 +1107,8 @@ static char makePath( const char *path )
 //#if defined(WIN32) && !defined(__CYGWIN__)
 #if __FLTK_WIN32__
 		return ( mkdir( path ) == 0 );
+#elif __FLTK_WINCE__
+		return ( mkdir( path ) == 0 );
 #else
 		return ( mkdir( path, 0777 ) == 0 );
 #endif // WIN32 && !__CYGWIN__
@@ -1922,8 +1986,10 @@ int Fl_Plugin_Manager::load(const char *filename)
 {
 	// the functions below will autmaticaly load plugins that are defined:
 	// Fl_My_Plugin plugin();
-#if defined(WIN32) && !defined(__CYGWIN__)
+#if __FLTK_WIN32__
 	HMODULE dl = LoadLibraryA(filename);
+#elif __FLTK_WINCE__
+	HMODULE dl = 0;
 #else
 	void * dl = dlopen(filename, RTLD_LAZY);
 #endif

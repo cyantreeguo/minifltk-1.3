@@ -32,16 +32,24 @@
 // Include necessary header files...
 //
 
+#include "Fl_Platform.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "fl_utf8.h"
 #include "flstring.h"
+#if __FLTK_WINCE__
+# include "wince_compate.h"
+#else
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#if (defined(WIN32) && ! defined(__CYGWIN__)) || defined(__EMX__)
+#endif
+
+#if __FLTK_WIN32__
 #  include <io.h>
 #  define F_OK	0
+#elif __FLTK_WINCE__
 #else
 #  include <unistd.h>
 #endif /* WIN32 || __EMX__ */

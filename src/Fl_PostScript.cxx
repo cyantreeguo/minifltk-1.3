@@ -147,7 +147,7 @@ Fl_PostScript_File_Device::~Fl_PostScript_File_Device()
 #ifndef FL_DOXYGEN
 
 #if ! (defined(__APPLE__) || defined(WIN32) )
-#  include "Platform_linux_print_panel.cxxprivate"
+#  include "os/linux/print_panel.cxx"
 #endif
 
 //  Prolog string

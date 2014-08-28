@@ -21,6 +21,9 @@
 //extern "C" {
 //#  endif
 
+#include "Fl_Platform.h"
+#if __FLTK_LINUX__
+
 #include <X11/X.h>
 #include <X11/Xlib.h>
 #include <X11/Xlocale.h>
@@ -172,6 +175,8 @@ int
 XUtf8Toupper(
         int ucs);
 
+
+#endif
 
 //#  ifdef __cplusplus
 //}

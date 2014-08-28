@@ -16,9 +16,31 @@
 //     http://www.fltk.org/str.php
 //
 
+#include "Fl_Platform.h"
+
+/*
+#if __FLTK_WIN32__
+#include "os\win32\Fl_Native_File_Chooser.cxx"
+#elif __FLTK_IPHONEOS__
+#include "Fl_Native_File_Chooser.H"
+#elif __FLTK_MACOSX__
+#include "config_mac.h"
+#elif __FLTK_LINUX__
+#include "config_linux.h"
+#elif __FLTK_WINCE__
+#include "os\wince\Fl_Native_File_Chooser.cxx"
+#else
+#error unsupported platform
+#endif
+*/
+
 // Use Windows' chooser
-#ifdef WIN32
-#include "Platform_win32_Fl_Native_File_Chooser.cxxprivate"
+#if __FLTK_WIN32__
+#include "os/win32/Fl_Native_File_Chooser.cxx"
+#endif
+
+#if __FLTK_WINCE__
+#include "os/wince/Fl_Native_File_Chooser.cxx"
 #endif
 
 // Use Apple's chooser
@@ -27,8 +49,9 @@
 #endif
 
 // All else falls back to FLTK's own chooser
-#if ! defined(__APPLE__) && !defined(WIN32)
-#include "Platform_fltk_Fl_Native_File_Chooser.cxxprivate"
+//#if ! defined(__APPLE__) && !defined(WIN32)
+#if __FLTK_LINUX__
+#include "os/linux/fltk_Fl_Native_File_Chooser.cxx"
 #endif
 
 const char *Fl_Native_File_Chooser::file_exists_message = "File exists. Are you sure you want to overwrite?";

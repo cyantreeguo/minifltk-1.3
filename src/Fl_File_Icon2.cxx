@@ -33,21 +33,28 @@
 // Include necessary header files...
 //
 
+#include "Fl_Platform.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "fl_utf8.h"
 #include "flstring.h"
 #include <ctype.h>
+#if __FLTK_WINCE__
+#include "wince_compate.h"
+#else
 #include <errno.h>
-#include "fltkmath.h"
 #include <sys/types.h>
 #include <sys/stat.h>
-#if defined(WIN32) && !defined(__CYGWIN__)
+#endif
+#include "fltkmath.h"
+#if __FLTK_WIN32__
 #  include <io.h>
 #  define F_OK	0
 // Visual C++ 2005 incorrectly displays a warning about the use of POSIX APIs
 // on Windows, which is supposed to be POSIX compliant...
 #  define access _access
+#elif __FLTK_WINCE__
 #else
 #  include <unistd.h>
 #endif // WIN32
@@ -641,6 +648,9 @@ Fl_File_Icon::load_system_icons(void)
 		// This method requires the images library...
 		fl_register_images();
 
+#if __FLTK_WINCE__
+		kdedir = "\\windows";
+#else
 		if (!kdedir) {
 			// Figure out where KDE is installed...
 			if ((kdedir = getenv("KDEDIR")) == NULL) {
@@ -649,9 +659,16 @@ Fl_File_Icon::load_system_icons(void)
 				else kdedir = "/usr";
 			}
 		}
+#endif
 
 		snprintf(filename, sizeof(filename), "%s/share/mimelnk", kdedir);
 
+#if __FLTK_WINCE__
+		new Fl_File_Icon("*", Fl_File_Icon::PLAIN, sizeof(plain) / sizeof(plain[0]), plain);
+		new Fl_File_Icon("*.{bm|bmp|bw|gif|jpg|pbm|pcd|pgm|ppm|png|ras|rgb|tif|xbm|xpm}", Fl_File_Icon::PLAIN,
+			sizeof(image) / sizeof(image[0]), image);
+		new Fl_File_Icon("*", Fl_File_Icon::DIRECTORY, sizeof(dir) / sizeof(dir[0]), dir);
+#else
 		if (!access(filename, F_OK)) {
 			// Load KDE icons...
 			icon = new Fl_File_Icon("*", Fl_File_Icon::PLAIN);
@@ -750,6 +767,7 @@ Fl_File_Icon::load_system_icons(void)
 			                 sizeof(image) / sizeof(image[0]), image);
 			new Fl_File_Icon("*", Fl_File_Icon::DIRECTORY, sizeof(dir) / sizeof(dir[0]), dir);
 		}
+#endif
 
 		// Mark things as initialized...
 		init = 1;
@@ -763,7 +781,8 @@ Fl_File_Icon::load_system_icons(void)
 	}
 }
 
-
+#if __FLTK_WINCE__
+#else
 //
 // 'load_kde_icons()' - Load KDE icon files.
 //
@@ -980,7 +999,7 @@ static char *get_kde_val(char *str, const char *key)
 
 	return ((char *)0);
 }
-
+#endif
 
 //
 // End of "$Id: Fl_File_Icon2.cxx 10140 2014-05-01 15:55:03Z manolo $".

@@ -22,15 +22,23 @@
 #include "flstring.h"
 #include <stdlib.h>
 
-#ifdef WIN32
-#  include "Platform_win32_fl_set_fonts.cxxprivate"
-#elif defined(__APPLE__)
-#  include "Platform_mac_fl_set_fonts.cxxprivate"
-#elif USE_XFT
-#  include "Platform_linux_xft_fl_set_fonts.cxxprivate"
+#if __FLTK_WIN32__
+#  include "os/win32/fl_set_fonts.cxx"
+#elif __FLTK_MACOSX__
+#  include "os/mac/fl_set_fonts.cxx"
+#elif __FLTK_IPHONEOS__
+#  include "os/ios/fl_set_fonts.cxx"
+#elif __FLTK_WINCE__
+#  include "os/wince/fl_set_fonts.cxx"
+#elif __FLTK_LINUX__
+#if USE_XFT
+#  include "os/linux/xft_fl_set_fonts.cxx"
 #else
-#  include "Platform_linux_x_fl_set_fonts.cxxprivate"
+#  include "os/linux/x_fl_set_fonts.cxx"
 #endif // WIN32
+#else
+#error unsupported platform
+#endif
 
 //
 // End of "$Id: fl_set_fonts.cxx 8864 2011-07-19 04:49:30Z greg.ercolano $".

@@ -344,7 +344,12 @@ unsigned lodepng_load_file(unsigned char** out, unsigned int* outsize, const cha
 	/*get filesize:*/
 	fseek(file , 0 , SEEK_END);
 	size = ftell(file);
+#if defined(rewind)
 	rewind(file);
+#else
+	fseek(file, 0, SEEK_SET);
+#endif
+	
 
 	/*read contents of the file into the vector*/
 	*outsize = 0;

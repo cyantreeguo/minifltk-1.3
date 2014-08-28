@@ -26,11 +26,11 @@ void Fl_Window::iconize()
 		fl_show_iconic = 1;
 		show();
 	} else {
-#ifdef WIN32
+#if __FLTK_WIN32__
 		ShowWindow(i->xid, SW_SHOWMINNOACTIVE);
-#elif defined(__APPLE__)
+#elif __FLTK_MACOSX__
 		i->collapse();
-#else
+#elif __FLTK_LINUX__
 		XIconifyWindow(fl_display, i->xid, fl_screen);
 #endif
 	}

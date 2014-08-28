@@ -17,13 +17,15 @@
  *     http://www.fltk.org/str.php
  */
 
+#include "Fl_Platform.h"
 
-#if defined(WIN32) && !defined(__CYGWIN__)
-#  include "Platform_win32_scandir.cxxprivate"
+#if __FLTK_WIN32__
+#  include "os/win32/scandir.cxx"
+#elif __FLTK_WINCE__
+#  include "os/wince/scandir.cxx"
 #else
-#  include "config.h"
 #  ifndef HAVE_SCANDIR
-#   include "Platform_posix_scandir.cxxprivate"
+#   include "os/posix_scandir.cxx"
 #  endif /* HAVE_SCANDIR */
 #endif
 

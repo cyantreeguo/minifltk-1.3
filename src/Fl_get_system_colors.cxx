@@ -317,18 +317,6 @@ static Fl_Pixmap	tile(tile_xpm);
 */
 int Fl::scheme(const char *s)
 {
-	if (!s) {
-		if ((s = getenv("FLTK_SCHEME")) == NULL) {
-#if !defined(WIN32) && !defined(__APPLE__)
-			const char* key = 0;
-			if (Fl::first_window()) key = Fl::first_window()->xclass();
-			if (!key) key = "fltk";
-			fl_open_display();
-			s = XGetDefault(fl_display, key, "scheme");
-#endif // !WIN32 && !__APPLE__
-		}
-	}
-
 	if (s) {
 		if (!fl_ascii_strcasecmp(s, "none") || !fl_ascii_strcasecmp(s, "base") || !*s) s = 0;
 		else if (!fl_ascii_strcasecmp(s, "gtk+")) s = strdup("gtk+");
@@ -344,7 +332,7 @@ int Fl::scheme(const char *s)
 	static char e[1024];
 	strcpy(e,"FLTK_SCHEME=");
 	if (s) strlcat(e,s,sizeof(e));
-	putenv(e);
+//	putenv(e);
 
 	// Load the scheme...
 	return reload_scheme();

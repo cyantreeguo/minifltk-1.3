@@ -223,6 +223,24 @@ void Fl_Widget::draw_focus(Fl_Boxtype B, int X, int Y, int W, int H) const
 	for (yy = 0; yy < H; yy ++, i ++) if (i & 1) fl_point(X + W, Y + yy);
 	for (xx = W; xx > 0; xx --, i ++) if (i & 1) fl_point(X + xx, Y + H);
 	for (yy = H; yy > 0; yy --, i ++) if (i & 1) fl_point(X, Y + yy);
+#elif __FLTK_WINCE__
+	// Windows 95/98/ME do not implement the dotted line style, so draw
+	// every other pixel around the focus area...
+	//
+	// Also, QuickDraw (MacOS) does not support line styles specifically,
+	// and the hack we use in fl_line_style() will not draw horizontal lines
+	// on odd-numbered rows...
+	int i, xx, yy;
+
+	X += Fl::box_dx(B);
+	Y += Fl::box_dy(B);
+	W -= Fl::box_dw(B) + 2;
+	H -= Fl::box_dh(B) + 2;
+
+	for (xx = 0, i = 1; xx < W; xx ++, i ++) if (i & 1) fl_point(X + xx, Y);
+	for (yy = 0; yy < H; yy ++, i ++) if (i & 1) fl_point(X + W, Y + yy);
+	for (xx = W; xx > 0; xx --, i ++) if (i & 1) fl_point(X + xx, Y + H);
+	for (yy = H; yy > 0; yy --, i ++) if (i & 1) fl_point(X, Y + yy);
 #elif __FLTK_MACOSX__
 	fl_line_style(FL_DOT);
 	fl_rect(X + Fl::box_dx(B), Y + Fl::box_dy(B),

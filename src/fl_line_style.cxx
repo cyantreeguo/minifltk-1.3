@@ -145,6 +145,45 @@ void Fl_Graphics_Driver::line_style(int style, int width, char* dashes)
 	DeleteObject(oldpen);
 	DeleteObject(fl_current_xmap->pen);
 	fl_current_xmap->pen = newpen;
+#elif __FLTK_WINCE__
+#define PS_ENDCAP_ROUND     0x00000000
+#define PS_ENDCAP_SQUARE    0x00000100
+#define PS_ENDCAP_FLAT      0x00000200
+#define PS_ENDCAP_MASK      0x00000F00
+
+#define PS_JOIN_ROUND       0x00000000
+#define PS_JOIN_BEVEL       0x00001000
+#define PS_JOIN_MITER       0x00002000
+#define PS_JOIN_MASK        0x0000F000
+
+#define PS_GEOMETRIC        0x00010000
+#define PS_USERSTYLE        7
+	// According to Bill, the "default" cap and join should be the
+	// "fastest" mode supported for the platform.  I don't know why
+	// they should be different (same graphics cards, etc., right?) MRS
+	static DWORD Cap[4]= {PS_ENDCAP_FLAT, PS_ENDCAP_FLAT, PS_ENDCAP_ROUND, PS_ENDCAP_SQUARE};
+	static DWORD Join[4]= {PS_JOIN_ROUND, PS_JOIN_MITER, PS_JOIN_ROUND, PS_JOIN_BEVEL};
+	int s1 = PS_GEOMETRIC | Cap[(style>>8)&3] | Join[(style>>12)&3];
+	DWORD a[16];
+	int n = 0;
+	if (dashes && dashes[0]) {
+		s1 |= PS_USERSTYLE;
+		for (n = 0; n < 16 && *dashes; n++) a[n] = *dashes++;
+	} else {
+		s1 |= style & 0xff; // allow them to pass any low 8 bits for style
+	}
+	if ((style || n) && !width) width = 1; // fix cards that do nothing for 0?
+	LOGBRUSH penbrush = {BS_SOLID,fl_RGB(),0}; // can this be fl_brush()?
+	//HPEN newpen = ExtCreatePen(s1, width, &penbrush, n, n ? a : 0);
+	HPEN newpen = CreatePen(s1, width, fl_RGB());
+	if (!newpen) {
+		Fl::error("fl_line_style(): Could not create GDI pen object.");
+		return;
+	}
+	HPEN oldpen = (HPEN)SelectObject(fl_gc, newpen);
+	DeleteObject(oldpen);
+	DeleteObject(fl_current_xmap->pen);
+	fl_current_xmap->pen = newpen;
 #elif __FLTK_MACOSX__
 #if defined(__APPLE_QUARTZ__)
 	static enum CGLineCap Cap[4] = { kCGLineCapButt, kCGLineCapButt,

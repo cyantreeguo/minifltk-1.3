@@ -104,6 +104,7 @@ Fl_Copy_Surface::Fl_Copy_Surface(int w, int h) :  Fl_Surface_Device(NULL)
 		SetTextAlign(gc, TA_BASELINE|TA_LEFT);
 		SetBkMode(gc, TRANSPARENT);
 	}
+#elif __FLTK_WINCE__
 #elif __FLTK_MACOSX__
 	helper = new Fl_Quartz_Surface_(width, height);
 	driver(helper->driver());
@@ -144,6 +145,7 @@ Fl_Copy_Surface::~Fl_Copy_Surface()
 	DeleteDC(gc);
 	fl_gc = oldgc;
 	delete (Fl_GDI_Surface_*)helper;
+#elif __FLTK_WINCE__
 #elif __FLTK_MACOSX__
 	complete_copy_pdf_and_tiff();
 	fl_gc = oldgc;
@@ -180,6 +182,7 @@ void Fl_Copy_Surface::set_current()
 	fl_gc = gc;
 	fl_window = (Window)1;
 	Fl_Surface_Device::set_current();
+#elif __FLTK_WINCE__
 #elif __FLTK_MACOSX__
 	fl_gc = gc;
 	fl_window = (Window)1;

@@ -309,6 +309,25 @@ void fl_beep(int type)
 		MessageBeep(0xFFFFFFFF);
 		break;
 	}
+#elif __FLTK_WINCE__
+	switch (type) {
+	case FL_BEEP_QUESTION :
+	case FL_BEEP_PASSWORD :
+		MessageBeep(MB_ICONQUESTION);
+		break;
+	case FL_BEEP_MESSAGE :
+		MessageBeep(MB_ICONASTERISK);
+		break;
+	case FL_BEEP_NOTIFICATION :
+		MessageBeep(MB_ICONASTERISK);
+		break;
+	case FL_BEEP_ERROR :
+		MessageBeep(MB_ICONERROR);
+		break;
+	default :
+		MessageBeep(0xFFFFFFFF);
+		break;
+	}
 #elif __FLTK_MACOSX__
 	switch (type) {
 	case FL_BEEP_DEFAULT :

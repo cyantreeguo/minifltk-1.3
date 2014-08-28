@@ -56,12 +56,17 @@
 #include "filename.H"	// fl_open_uri()
 #include "flstring.h"
 #include <ctype.h>
+#if __FLTK_WINCE__
+#include "wince_compate.h"
+#else
 #include <errno.h>
+#endif
 #include <math.h>
 
-#if defined(WIN32) && ! defined(__CYGWIN__)
+#if __FLTK_WIN32__
 #  include <io.h>
 #  include <direct.h>
+#elif __FLTK_WINCE__
 #else
 #  include <unistd.h>
 #endif // WIN32
@@ -3013,7 +3018,13 @@ Fl_Help_View::load(const char *f)// I - Filename to load (may also have target)
 	if ((fp = fl_fopen(localname, "rb")) != NULL) {
 		fseek(fp, 0, SEEK_END);
 		len = ftell(fp);
+
+		//rewind(fp);
+#if defined(rewind)
 		rewind(fp);
+#else
+		fseek(fp, 0, SEEK_SET);
+#endif
 
 		value_ = (const char *)calloc(len + 1, 1);
 		if (fread((void *)value_, 1, len, fp)==0) {

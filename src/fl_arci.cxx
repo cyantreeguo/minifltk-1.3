@@ -51,6 +51,15 @@ void Fl_Graphics_Driver::arc(int x,int y,int w,int h,double a1,double a2)
 		if (xa == xb && ya == yb) SetPixel(fl_gc, xa, ya, fl_RGB());
 		else Arc(fl_gc, x, y, x+w, y+h, xa, ya, xb, yb);
 	} else Arc(fl_gc, x, y, x+w, y+h, xa, ya, xb, yb);
+#elif __FLTK_WINCE__
+	int xa = x+w/2+int(w*cos(a1/180.0*M_PI));
+	int ya = y+h/2-int(h*sin(a1/180.0*M_PI));
+	int xb = x+w/2+int(w*cos(a2/180.0*M_PI));
+	int yb = y+h/2-int(h*sin(a2/180.0*M_PI));
+	if (fabs(a1 - a2) < 90) {
+		if (xa == xb && ya == yb) SetPixel(fl_gc, xa, ya, fl_RGB());
+		else Ellipse(fl_gc, x, y, x+w, y+h);
+	} else Ellipse(fl_gc, x, y, x+w, y+h);
 #elif __FLTK_MACOSX__
   #if defined(__APPLE_QUARTZ__)
 	a1 = (-a1)/180.0f*M_PI;
@@ -116,6 +125,20 @@ void Fl_Graphics_Driver::pie(int x,int y,int w,int h,double a1,double a2)
 			SetPixel(fl_gc, xa, ya, fl_RGB());
 		} else Pie(fl_gc, x, y, x+w, y+h, xa, ya, xb, yb);
 	} else Pie(fl_gc, x, y, x+w, y+h, xa, ya, xb, yb);
+#elif __FLTK_WINCE__
+	if (a1 == a2) return;
+	int xa = x+w/2+int(w*cos(a1/180.0*M_PI));
+	int ya = y+h/2-int(h*sin(a1/180.0*M_PI));
+	int xb = x+w/2+int(w*cos(a2/180.0*M_PI));
+	int yb = y+h/2-int(h*sin(a2/180.0*M_PI));
+	SelectObject(fl_gc, fl_brush());
+	if (fabs(a1 - a2) < 90) {
+		if (xa == xb && ya == yb) {
+			MoveToEx(fl_gc, x+w/2, y+h/2, 0L);
+			LineTo(fl_gc, xa, ya);
+			SetPixel(fl_gc, xa, ya, fl_RGB());
+		} //else Pie(fl_gc, x, y, x+w, y+h, xa, ya, xb, yb);
+	} //else Pie(fl_gc, x, y, x+w, y+h, xa, ya, xb, yb);
 #elif __FLTK_MACOSX__
   #if defined(__APPLE_QUARTZ__)
 	a1 = (-a1)/180.0f*M_PI;

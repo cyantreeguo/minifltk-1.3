@@ -20,12 +20,16 @@
    home directories.  Returns true if any changes were made.
    to & from may be the same buffer.
 */
+#include "Fl_Platform.h"
 
 #include "filename.H"
 #include "fl_utf8.h"
 #include <stdlib.h>
 #include "flstring.h"
-#if defined(WIN32) && !defined(__CYGWIN__)
+
+#if __FLTK_WIN32__
+#include <windows.h>
+#elif __FLTK_WINCE__
 #include <windows.h>
 #else
 # include <unistd.h>

@@ -22,13 +22,17 @@
    Returns true if any changes were made.
 */
 
+#include "Fl_Platform.h"
+
 #include "filename.H"
 #include "fl_utf8.h"
 #include <stdlib.h>
 #include "flstring.h"
 #include <ctype.h>
-#if defined(WIN32) && !defined(__CYGWIN__)
+#if __FLTK_WIN32__
 # include <direct.h>
+#elif __FLTK_WINCE__
+
 #else
 #  include <unistd.h>
 #endif

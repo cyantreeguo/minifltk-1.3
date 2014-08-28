@@ -16,12 +16,18 @@
 //     http://www.fltk.org/str.php
 //
 
-#ifdef WIN32
-#  include "Platform_win32_fl_dnd.cxxprivate"
-#elif defined(__APPLE__)
-//#  include "fl_dnd_mac.cxx"
+#include "Fl_Platform.h"
+
+#if __FLTK_WIN32__
+#  include "os/win32/fl_dnd.cxx"
+#elif __FLTK_IPHONEOS__
+#elif __FLTK_MACOSX__
+#elif __FLTK_LINUX__
+#  include "os/linux/x_fl_dnd.cxx"
+#elif __FLTK_WINCE__
+#  include "os/wince/fl_dnd.cxx"
 #else
-#  include "Platform_linux_x_fl_dnd.cxxprivate"
+#error unsupported platform
 #endif
 
 //

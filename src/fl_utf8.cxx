@@ -40,6 +40,15 @@ extern "C" {
 	int XUtf8Tolower(int ucs);
 	unsigned short XUtf8IsNonSpacing(unsigned int ucs);
 };
+#elif __FLTK_WINCE__
+# include <ctype.h>
+# include <windows.h>
+# include <winbase.h>
+#include "wince_compate.h"
+extern "C" {
+	int XUtf8Tolower(int ucs);
+	unsigned short XUtf8IsNonSpacing(unsigned int ucs);
+};
 #elif __FLTK_MACOSX__
 # include <stdio.h>
 # include <time.h>
@@ -512,7 +521,7 @@ static xchar *wbuf1 = NULL;
 
 char *fl_getenv(const char* v)
 {
-#if defined (WIN32) && !defined(__CYGWIN__)
+#if __FLTK_WIN32__
 	size_t l =  strlen(v);
 //	static xchar* wbuf = NULL;
 //	wbuf = (xchar*)realloc(wbuf, sizeof(xchar) * (l+1));
@@ -534,6 +543,8 @@ char *fl_getenv(const char* v)
 	} else {
 		return NULL;
 	}
+#elif __FLTK_WINCE__
+	return NULL;
 #else
 	return getenv(v);
 #endif
@@ -555,7 +566,7 @@ int fl_open(const char* f, int oflags, ...)
 	va_start(ap, oflags);
 	pmode = va_arg (ap, int);
 	va_end(ap);
-#if defined (WIN32) && !defined(__CYGWIN__)
+#if __FLTK_WIN32__
 	unsigned l = (unsigned) strlen(f);
 //		wbuf = (xchar*)realloc(wbuf, sizeof(xchar) * (l+1));
 //		wbuf[fl_utf2unicode((const unsigned char*)f, l, wbuf)] = 0;
@@ -565,6 +576,8 @@ int fl_open(const char* f, int oflags, ...)
 	wbuf[wn] = 0;
 	if (pmode == -1) return _wopen(wbuf, oflags);
 	else return _wopen(wbuf, oflags, pmode);
+#elif __FLTK_WINCE__
+	return 0;//wince_open(f, pmode); //FIXIT:cyantree
 #else
 	if (pmode == -1) return open(f, oflags);
 	else return open(f, oflags, pmode);
@@ -605,7 +618,7 @@ FILE *fl_fopen(const char* f, const char *mode)
 
 int fl_system(const char* f)
 {
-#if  defined (WIN32) && !defined(__CYGWIN__)
+#if __FLTK_WIN32__
 #  ifdef __MINGW32__
 	return system(fl_utf2mbcs(f));
 #  else
@@ -618,6 +631,8 @@ int fl_system(const char* f)
 	wbuf[wn] = 0;
 	return _wsystem(wbuf);
 #  endif
+#elif __FLTK_WINCE__
+	return 0;//system(fl_utf2mbcs(f));
 #else
 	return system(f);
 #endif
@@ -625,7 +640,7 @@ int fl_system(const char* f)
 
 int fl_execvp(const char *file, char *const *argv)
 {
-#if  defined (WIN32) && !defined(__CYGWIN__)
+#if __FLTK_WIN32__
 #ifdef __MINGW32__
 	return _execvp(fl_utf2mbcs(file), argv);
 #else
@@ -668,6 +683,8 @@ int fl_execvp(const char *file, char *const *argv)
 	free(ar);
 	return -1;	     // STR #3040
 #endif
+#elif __FLTK_WINCE__
+	return 0;
 #else
 	return execvp(file, argv);
 #endif
@@ -677,7 +694,7 @@ int fl_execvp(const char *file, char *const *argv)
 
 int fl_chmod(const char* f, int mode)
 {
-#if  defined (WIN32) && !defined(__CYGWIN__)
+#if __FLTK_WIN32__
 	size_t l = strlen(f);
 //		wbuf = (xchar*)realloc(wbuf, sizeof(xchar) * (l+1));
 //		wbuf[fl_utf2unicode((const unsigned char*)f, l, wbuf)] = 0;
@@ -686,6 +703,8 @@ int fl_chmod(const char* f, int mode)
 	wn = fl_utf8toUtf16(f, (unsigned) l, (unsigned short *)wbuf, wn); // Convert string
 	wbuf[wn] = 0;
 	return _wchmod(wbuf, mode);
+#elif __FLTK_WINCE__
+	return 0;
 #else
 	return chmod(f, mode);
 #endif
@@ -693,7 +712,7 @@ int fl_chmod(const char* f, int mode)
 
 int fl_access(const char* f, int mode)
 {
-#if defined (WIN32) && !defined(__CYGWIN__)
+#if __FLTK_WIN32__
 	size_t l = strlen(f);
 //		wbuf = (xchar*)realloc(wbuf, sizeof(xchar) * (l+1));
 //		wbuf[fl_utf2unicode((const unsigned char*)f, l, wbuf)] = 0;
@@ -702,6 +721,8 @@ int fl_access(const char* f, int mode)
 	wn = fl_utf8toUtf16(f, (unsigned) l, (unsigned short *)wbuf, wn); // Convert string
 	wbuf[wn] = 0;
 	return _waccess(wbuf, mode);
+#elif __FLTK_WINCE__
+	return 0;
 #else
 	return access(f, mode);
 #endif
@@ -729,7 +750,7 @@ char *fl_getcwd(char* b, int l)
 	if (b == NULL) {
 		b = (char*) malloc(l+1);
 	}
-#if defined(WIN32) && !defined(__CYGWIN__)
+#if __FLTK_WIN32__
 	static xchar *wbuf = NULL;
 	wbuf = (xchar*)realloc(wbuf, sizeof(xchar) * (l+1));
 //		xchar *ret = _wgetcwd(wbuf, l / 5);
@@ -744,6 +765,8 @@ char *fl_getcwd(char* b, int l)
 	} else {
 		return NULL;
 	}
+#elif __FLTK_WINCE__
+	return getcwd(b, l);
 #else
 	return getcwd(b, l);
 #endif
@@ -752,7 +775,7 @@ char *fl_getcwd(char* b, int l)
 
 int fl_unlink(const char* f)
 {
-#if defined(WIN32) && !defined(__CYGWIN__)
+#if __FLTK_WIN32__
 	size_t l = strlen(f);
 //		wbuf = (xchar*)realloc(wbuf, sizeof(xchar) * (l+1));
 //		wbuf[fl_utf2unicode((const unsigned char*)f, l, wbuf)] = 0;
@@ -761,6 +784,8 @@ int fl_unlink(const char* f)
 	wn = fl_utf8toUtf16(f, (unsigned) l, (unsigned short *)wbuf, wn); // Convert string
 	wbuf[wn] = 0;
 	return _wunlink(wbuf);
+#elif __FLTK_WINCE__
+	return _unlink(f);
 #else
 	return unlink(f);
 #endif
@@ -801,7 +826,7 @@ int fl_rmdir(const char* f)
 
 int fl_rename(const char* f, const char *n)
 {
-#if defined (WIN32) && !defined(__CYGWIN__)
+#if __FLTK_WIN32__
 	size_t l = strlen(f);
 	unsigned wn = fl_utf8toUtf16(f, (unsigned) l, NULL, 0) + 1; // Query length
 	wbuf = (xchar*)realloc(wbuf, sizeof(xchar)*wn);
@@ -813,6 +838,8 @@ int fl_rename(const char* f, const char *n)
 	wn = fl_utf8toUtf16(n, (unsigned) l, (unsigned short *)wbuf1, wn); // Convert string
 	wbuf1[wn] = 0;
 	return _wrename(wbuf, wbuf1);
+#elif __FLTK_WINCE__
+	return _rename(f, n);
 #else
 	return rename(f, n);
 #endif

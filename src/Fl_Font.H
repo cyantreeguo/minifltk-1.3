@@ -27,6 +27,7 @@
 #include "config.h"
 
 #if __FLTK_WIN32__
+#elif __FLTK_WINCE__
 #elif __FLTK_MACOSX__
 #elif __FLTK_IPHONEOS__
 #include <CoreText/CoreText.h>
@@ -60,6 +61,12 @@ public:
 	Fl_Fontsize size; /**< font size */
 #ifndef FL_DOXYGEN // don't bother with platorm dependant details in the doc. 
 #if __FLTK_WIN32__
+	HFONT fid;
+	int *width[64];
+	TEXTMETRIC metr;
+	int angle;
+	FL_EXPORT Fl_Font_Descriptor(const char* fontname, Fl_Fontsize size);
+#elif __FLTK_WINCE__
 	HFONT fid;
 	int *width[64];
 	TEXTMETRIC metr;

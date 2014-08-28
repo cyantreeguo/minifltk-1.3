@@ -22,7 +22,12 @@
 #include "config.h"
 #include <ctype.h>
 #include <stdlib.h>
+
+#if __FLTK_WINCE__
+#include "wince_compate.h"
+#else
 #include <sys/types.h>
+#endif
 
 #if !defined(WIN32) || defined(__CYGWIN__)
 #  ifdef HAVE_DIRENT_H

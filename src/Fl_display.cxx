@@ -31,9 +31,13 @@
 */
 void Fl::display(const char *d)
 {
-#if defined(__APPLE__) || defined(WIN32)
+#if __FLTK_WIN32__
 	(void)d;
-#else
+#elif __FLTK_IPHONEOS__
+	(void)d;
+#elif __FLTK_MACOSX__
+	(void)d;
+#elif __FLTK_LINUX__
 	static char e[1024];
 	strcpy(e,"DISPLAY=");
 	strlcat(e,d,sizeof(e));
@@ -44,7 +48,11 @@ void Fl::display(const char *d)
 		}
 	}
 	putenv(e);
-#endif // __APPLE__
+#elif __FLTK_WINCE__
+	(void)d;
+#else
+#error unsupported platform
+#endif
 }
 
 //

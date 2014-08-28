@@ -54,6 +54,9 @@ void Fl_Window::border(int b)
 #if __FLTK_WIN32__
 	// not yet implemented, but it's possible
 	// for full fullscreen we have to make the window topmost as well
+#elif __FLTK_WINCE__
+	// not yet implemented, but it's possible
+	// for full fullscreen we have to make the window topmost as well
 #elif __FLTK_MACOSX__
 #if defined(__APPLE_QUARTZ__)
 	// warning: not implemented in Quartz/Carbon

@@ -18,9 +18,15 @@
 
 // Used by fl_file_chooser
 
+#include "Fl_Platform.h"
+
 #include "flstring.h"
+#if __FLTK_WINCE__
+#include <windows.h>
+#else
 #include <sys/types.h>
 #include <sys/stat.h>
+#endif
 #include <ctype.h>
 #include "filename.H"
 #include "fl_utf8.h"
@@ -53,11 +59,34 @@ int _fl_filename_isdir_quick(const char* n)
    \param[in] n the filename to parse
    \return non zero if file exists and is a directory, zero otherwise
 */
+#if __FLTK_WINCE__
+int fl_filename_isdir(const char* n)
+{
+	if ( n == NULL ) return 0;
+
+	int nn = strlen(n);
+	wchar_t *buffer=NULL;
+	int lbuf = 0;
+	int newn;
+	newn = fl_utf8towc(n, nn, buffer, lbuf);
+	if (newn <= 0 ) return NULL;
+	lbuf = newn+8;
+	buffer = (wchar_t*)malloc(lbuf * sizeof(wchar_t) + 8);
+	fl_utf8towc(n, nn, (wchar_t*)buffer, lbuf);
+
+	int r = 1;
+	if( GetFileAttributes(buffer) == 0xFFFFFFFF ) r = 0;
+
+	free(buffer);
+
+	return r;
+}
+#else
 int fl_filename_isdir(const char* n)
 {
 	struct stat	s;
-	char		fn[FL_PATH_MAX];
-	int		length;
+	char fn[FL_PATH_MAX];
+	int length;
 
 	length = (int) strlen(n);
 
@@ -93,6 +122,7 @@ int fl_filename_isdir(const char* n)
 
 	return !fl_stat(n, &s) && (s.st_mode&0170000)==0040000;
 }
+#endif
 
 //
 // End of "$Id: filename_isdir.cxx 9325 2012-04-05 05:12:30Z fabien $".

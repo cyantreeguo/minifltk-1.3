@@ -46,17 +46,19 @@
 #include <stdlib.h>
 
 #if __FLTK_WIN32__
-#  include "Platform_win32_fl_font.cxxprivate"
+#  include "os/win32/fl_font.cxx"
 #elif __FLTK_MACOSX__
-#  include "Platform_mac_fl_font.cxxprivate"
+#  include "os/mac/fl_font.cxx"
 #elif __FLTK_IPHONEOS__
-#  include "Platform_ios_fl_font.cxxprivate"
+#  include "os/ios/fl_font.cxx"
 #elif __FLTK_LINUX__
 #if USE_XFT
-#  include "Platform_linux_xft_fl_font.cxxprivate"
+#  include "os/linux/xft_fl_font.cxx"
 #else
-#  include "Platform_linux_x_fl_font.cxxprivate"
+#  include "os/linux/x_fl_font.cxx"
 #endif
+#elif __FLTK_WINCE__
+#  include "os/wince/fl_font.cxx"
 #else
 #error unsupported platform
 #endif

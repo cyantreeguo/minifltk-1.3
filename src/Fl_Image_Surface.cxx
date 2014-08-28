@@ -43,6 +43,7 @@ Fl_Image_Surface::Fl_Image_Surface(int w, int h) : Fl_Surface_Device(NULL)
 #if __FLTK_WIN32__
 	helper = new Fl_GDI_Surface_();
 	driver(helper->driver());
+#elif __FLTK_WINCE__
 #elif __FLTK_MACOSX__
 	helper = new Fl_Quartz_Flipped_Surface_(width, height);
 	driver(helper->driver());
@@ -62,6 +63,7 @@ Fl_Image_Surface::~Fl_Image_Surface()
 	fl_delete_offscreen(offscreen);
 #if __FLTK_WIN32__
 	delete (Fl_GDI_Surface_*)helper;
+#elif __FLTK_WINCE__
 #elif __FLTK_MACOSX__
 	delete (Fl_Quartz_Flipped_Surface_*)helper;
 #elif __FLTK_IPHONEOS__
@@ -82,11 +84,11 @@ Fl_Image_Surface::~Fl_Image_Surface()
 Fl_RGB_Image* Fl_Image_Surface::image()
 {
 	unsigned char *data;
-#ifdef __APPLE__
+#if __FLTK_MACOSX__
 	CGContextFlush(offscreen);
 	data = fl_read_image(NULL, 0, 0, width, height, 0);
 	fl_end_offscreen();
-#elif defined(WIN32)
+#elif __FLTK_WIN32__
 	fl_pop_clip();
 	data = fl_read_image(NULL, 0, 0, width, height, 0);
 	RestoreDC(fl_gc, _savedc);
@@ -94,6 +96,7 @@ Fl_RGB_Image* Fl_Image_Surface::image()
 	_ss->set_current();
 	fl_window=_sw;
 	fl_gc = _sgc;
+#elif __FLTK_WINCE__
 #else
 	fl_pop_clip();
 	data = fl_read_image(NULL, 0, 0, width, height, 0);
@@ -119,12 +122,12 @@ void Fl_Image_Surface::draw(Fl_Widget *widget, int delta_x, int delta_y)
 
 void Fl_Image_Surface::set_current()
 {
-#if defined(__APPLE__)
+#if __FLTK_MACOSX__
 	fl_begin_offscreen(offscreen);
 	fl_pop_clip();
 	Fl_Surface_Device::set_current();
 	fl_push_no_clip();
-#elif defined(WIN32)
+#elif __FLTK_WIN32__
 	_sgc=fl_gc;
 	_sw=fl_window;
 	_ss = Fl_Surface_Device::surface();
@@ -133,6 +136,7 @@ void Fl_Image_Surface::set_current()
 	_savedc = SaveDC(fl_gc);
 	fl_window=(HWND)offscreen;
 	fl_push_no_clip();
+#elif __FLTK_WINCE__
 #else
 	pre_window = fl_window;
 	fl_window = offscreen;

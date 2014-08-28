@@ -22,7 +22,10 @@
 #include "fl_draw.H"
 #include <math.h>
 #include <time.h>
-#ifndef WIN32
+#if __FLTK_WIN32__
+#elif __FLTK_WINCE__
+#include "wince_compate.h"
+#else
 #  include <sys/time.h>
 #endif /* !WIN32 */
 

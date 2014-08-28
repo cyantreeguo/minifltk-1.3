@@ -180,7 +180,7 @@ int Fl::awake(Fl_Awake_Handler func, void *data)
 
     See also: \ref advanced_multithreading
 */
-#ifdef WIN32
+#if __FLTK_WIN32__
 #  include <windows.h>
 #  include <process.h>
 #  include <x.H>
@@ -252,6 +252,77 @@ void Fl::awake(void* msg)
 	PostThreadMessage( main_thread, fl_wake_msg, (WPARAM)msg, 0);
 }
 
+#elif __FLTK_WINCE__
+#  include <windows.h>
+//#  include <process.h>
+#  include <x.H>
+
+// These pointers are in Fl_win32.cxx:
+extern void (*fl_lock_function)();
+extern void (*fl_unlock_function)();
+
+// The main thread's ID
+static DWORD main_thread;
+
+// Microsoft's version of a MUTEX...
+CRITICAL_SECTION cs;
+CRITICAL_SECTION *cs_ring;
+
+void unlock_ring()
+{
+	LeaveCriticalSection(cs_ring);
+}
+
+void lock_ring()
+{
+	if (!cs_ring) {
+		cs_ring = (CRITICAL_SECTION*)malloc(sizeof(CRITICAL_SECTION));
+		InitializeCriticalSection(cs_ring);
+	}
+	EnterCriticalSection(cs_ring);
+}
+
+//
+// 'unlock_function()' - Release the lock.
+//
+
+static void unlock_function()
+{
+	LeaveCriticalSection(&cs);
+}
+
+//
+// 'lock_function()' - Get the lock.
+//
+
+static void lock_function()
+{
+	EnterCriticalSection(&cs);
+}
+
+int Fl::lock()
+{
+	if (!main_thread) InitializeCriticalSection(&cs);
+
+	lock_function();
+
+	if (!main_thread) {
+		fl_lock_function   = lock_function;
+		fl_unlock_function = unlock_function;
+		main_thread        = GetCurrentThreadId();
+	}
+	return 0;
+}
+
+void Fl::unlock()
+{
+	unlock_function();
+}
+
+void Fl::awake(void* msg)
+{
+	PostThreadMessage( main_thread, fl_wake_msg, (WPARAM)msg, 0);
+}
 ////////////////////////////////////////////////////////////////
 // POSIX threading...
 #elif HAVE_PTHREAD

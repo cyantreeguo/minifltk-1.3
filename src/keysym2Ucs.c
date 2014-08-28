@@ -25,9 +25,8 @@
 
 #define KEYSYM2UCS_INCLUDED
 
-#if !defined(WIN32) && !defined(__APPLE__)
-
 #include "Xutf8.h"
+#if __FLTK_LINUX__
 
 static unsigned short const keysym_to_unicode_1a1_1ff[] = {
 	0x0104, 0x02d8, 0x0141, 0x0000, 0x013d, 0x015a, 0x0000,         /* 0x01a0-0x01a7 */
