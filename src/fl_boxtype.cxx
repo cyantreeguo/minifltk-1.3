@@ -59,7 +59,7 @@ int Fl::draw_box_active()
 	return draw_it_active;
 }
 
-uchar *fl_gray_ramp()
+const uchar *fl_gray_ramp()
 {
 	return (unsigned char *)(draw_it_active?active_ramp:inactive_ramp)-'A';
 }

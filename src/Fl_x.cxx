@@ -139,12 +139,12 @@ void Fl::add_fd(int n, int events, void (*cb)(int, void*), void *v)
 	pollfds[i].fd = n;
 	pollfds[i].events = events;
 #  else
-fd[i].fd = n;
-fd[i].events = events;
-if (events & POLLIN) FD_SET(n, &fdsets[0]);
-if (events & POLLOUT) FD_SET(n, &fdsets[1]);
-if (events & POLLERR) FD_SET(n, &fdsets[2]);
-if (n > maxfd) maxfd = n;
+	fd[i].fd = n;
+	fd[i].events = events;
+	if (events & POLLIN) FD_SET(n, &fdsets[0]);
+	if (events & POLLOUT) FD_SET(n, &fdsets[1]);
+	if (events & POLLERR) FD_SET(n, &fdsets[2]);
+	if (n > maxfd) maxfd = n;
 #  endif
 }
 
@@ -167,12 +167,12 @@ void Fl::remove_fd(int n, int events)
 			pollfds[j].events = e;
 		}
 #  else
-if (fd[i].fd == n) {
-	int e = fd[i].events & ~events;
-	if (!e) continue; // if no events left, delete this fd
-	fd[i].events = e;
-}
-if (fd[i].fd > maxfd) maxfd = fd[i].fd;
+		if (fd[i].fd == n) {
+			int e = fd[i].events & ~events;
+			if (!e) continue; // if no events left, delete this fd
+			fd[i].events = e;
+		}
+		if (fd[i].fd > maxfd) maxfd = fd[i].fd;
 #  endif
 		// move it down in the array if necessary:
 		if (j<i) {
@@ -252,16 +252,16 @@ int fl_wait(double time_to_wait)
 #  if USE_POLL
 		n = ::poll(pollfds, nfds, int(time_to_wait*1000 + .5));
 #  else
-timeval t;
-t.tv_sec = int(time_to_wait);
-t.tv_usec = int(1000000 * (time_to_wait-t.tv_sec));
-n = ::select(maxfd+1,&fdt[0],&fdt[1],&fdt[2],&t);
+		timeval t;
+		t.tv_sec = int(time_to_wait);
+		t.tv_usec = int(1000000 * (time_to_wait-t.tv_sec));
+		n = ::select(maxfd+1,&fdt[0],&fdt[1],&fdt[2],&t);
 #  endif
 	} else {
 #  if USE_POLL
 		n = ::poll(pollfds, nfds, -1);
 #  else
-n = ::select(maxfd+1,&fdt[0],&fdt[1],&fdt[2],0);
+		n = ::select(maxfd+1,&fdt[0],&fdt[1],&fdt[2],0);
 #  endif
 	}
 
@@ -272,12 +272,12 @@ n = ::select(maxfd+1,&fdt[0],&fdt[1],&fdt[2],0);
 #  if USE_POLL
 			if (pollfds[i].revents) fd[i].cb(pollfds[i].fd, fd[i].arg);
 #  else
-int f = fd[i].fd;
-short revents = 0;
-if (FD_ISSET(f,&fdt[0])) revents |= POLLIN;
-if (FD_ISSET(f,&fdt[1])) revents |= POLLOUT;
-if (FD_ISSET(f,&fdt[2])) revents |= POLLERR;
-if (fd[i].events & revents) fd[i].cb(f, fd[i].arg);
+			int f = fd[i].fd;
+			short revents = 0;
+			if (FD_ISSET(f,&fdt[0])) revents |= POLLIN;
+			if (FD_ISSET(f,&fdt[1])) revents |= POLLOUT;
+			if (FD_ISSET(f,&fdt[2])) revents |= POLLERR;
+			if (fd[i].events & revents) fd[i].cb(f, fd[i].arg);
 #  endif
 		}
 	}
@@ -292,14 +292,14 @@ int fl_ready()
 #  if USE_POLL
 	return ::poll(pollfds, nfds, 0);
 #  else
-timeval t;
-t.tv_sec = 0;
-t.tv_usec = 0;
-fd_set fdt[3];
-fdt[0] = fdsets[0];
-fdt[1] = fdsets[1];
-fdt[2] = fdsets[2];
-return ::select(maxfd+1,&fdt[0],&fdt[1],&fdt[2],&t);
+	timeval t;
+	t.tv_sec = 0;
+	t.tv_usec = 0;
+	fd_set fdt[3];
+	fdt[0] = fdsets[0];
+	fdt[1] = fdsets[1];
+	fdt[2] = fdsets[2];
+	return ::select(maxfd+1,&fdt[0],&fdt[1],&fdt[2],&t);
 #  endif
 }
 
@@ -427,17 +427,17 @@ static void fl_new_ic()
 		                    &missing_count, &def_string);
 	}
 #else
-if (!fs) {
-	bool must_free_fnt = true;
-	fnt = fl_get_font_xfld(0, 14);
-	if (!fnt) {
-		fnt = (char*)"-misc-fixed-*";
-		must_free_fnt=false;
+	if (!fs) {
+		bool must_free_fnt = true;
+		fnt = fl_get_font_xfld(0, 14);
+		if (!fnt) {
+			fnt = (char*)"-misc-fixed-*";
+			must_free_fnt=false;
+		}
+		fs = XCreateFontSet(fl_display, fnt, &missing_list,
+		                    &missing_count, &def_string);
+		if (must_free_fnt) free(fnt);
 	}
-	fs = XCreateFontSet(fl_display, fnt, &missing_list,
-	                    &missing_count, &def_string);
-	if (must_free_fnt) free(fnt);
-}
 #endif
 	preedit_attr = XVaCreateNestedList(0,
 	                                   XNSpotLocation, &spot,
@@ -548,13 +548,13 @@ void fl_set_spot(int font, int size, int X, int Y, int W, int H, Fl_Window *win)
 		fs = XCreateFontSet(fl_display, fnt, &missing_list,
 		                    &missing_count, &def_string);
 #else
-fnt = fl_get_font_xfld(font, size);
-if (!fnt) {
-	fnt = (char*)"-misc-fixed-*";
-	must_free_fnt=false;
-}
-fs = XCreateFontSet(fl_display, fnt, &missing_list,
-                    &missing_count, &def_string);
+		fnt = fl_get_font_xfld(font, size);
+		if (!fnt) {
+			fnt = (char*)"-misc-fixed-*";
+			must_free_fnt=false;
+		}
+		fs = XCreateFontSet(fl_display, fnt, &missing_list,
+		                    &missing_count, &def_string);
 #endif
 	}
 	if (fl_xim_ic != ic) {
@@ -1337,26 +1337,26 @@ int fl_handle(const XEvent& thisevent)
 		}
 		fl_set_spot(spotf, spots, spot.x, spot.y, spot.width, spot.height);
 #else
-if (Fl::first_window() && Fl::first_window()->modal()) {
-	Window x  = fl_xid(Fl::first_window());
-	if (x != xim_win) {
-		xim_win  = x;
-		XSetICValues(fl_xim_ic,
-		             XNFocusWindow, xim_win,
-		             XNClientWindow, xim_win,
-		             NULL);
-		fl_set_spot(spotf, spots, spot.x, spot.y, spot.width, spot.height);
-	}
-} else if (xim_win != xid && xid) {
-	xim_win = xid;
-	XSetICValues(fl_xim_ic,
-	             XNFocusWindow, xevent.xclient.window,
-	             XNClientWindow, xid,
-	             //XNFocusWindow, xim_win,
-	             //XNClientWindow, xim_win,
-	             NULL);
-	fl_set_spot(spotf, spots, spot.x, spot.y, spot.width, spot.height);
-}
+		if (Fl::first_window() && Fl::first_window()->modal()) {
+			Window x  = fl_xid(Fl::first_window());
+			if (x != xim_win) {
+				xim_win  = x;
+				XSetICValues(fl_xim_ic,
+				             XNFocusWindow, xim_win,
+				             XNClientWindow, xim_win,
+				             NULL);
+				fl_set_spot(spotf, spots, spot.x, spot.y, spot.width, spot.height);
+			}
+		} else if (xim_win != xid && xid) {
+			xim_win = xid;
+			XSetICValues(fl_xim_ic,
+			             XNFocusWindow, xevent.xclient.window,
+			             XNClientWindow, xid,
+			             //XNFocusWindow, xim_win,
+			             //XNClientWindow, xim_win,
+			             NULL);
+			fl_set_spot(spotf, spots, spot.x, spot.y, spot.width, spot.height);
+		}
 #endif
 	}
 
@@ -2089,10 +2089,10 @@ KEYPRESS:
 			in_a_window = true;
 			return 0;
 #  else
-event = FL_MOVE;
-fl_xmousewin = window;
-in_a_window = true;
-break;
+			event = FL_MOVE;
+			fl_xmousewin = window;
+			in_a_window = true;
+			break;
 #  endif
 
 		case ButtonRelease:
@@ -2622,7 +2622,7 @@ void Fl_X::make_xid(Fl_Window* win, XVisualInfo *visual, Colormap colormap)
 
 	if (win->type() == FL_SHAPED_WINDOW) {
 		((Fl_Shaped_Window*)win)->combine_mask();
-    }
+	}
 	XMapWindow(fl_display, xp->xid);
 	if (showit) {
 		win->set_visible();
@@ -2819,68 +2819,94 @@ void Fl_X::set_icons()
 
 int Fl_X::set_cursor(Fl_Cursor c)
 {
-	unsigned int shape;
+	/* The cursors are cached, because creating one takes 0.5ms including
+	     opening, reading, and closing theme files. They are kept until program
+	     exit by design, which valgrind will note as reachable. */
+	static Cursor xc_arrow = None;
+	static Cursor xc_cross = None;
+	static Cursor xc_wait = None;
+	static Cursor xc_insert = None;
+	static Cursor xc_hand = None;
+	static Cursor xc_help = None;
+	static Cursor xc_move = None;
+	static Cursor xc_ns = None;
+	static Cursor xc_we = None;
+	static Cursor xc_ne = None;
+	static Cursor xc_n = None;
+	static Cursor xc_nw = None;
+	static Cursor xc_e = None;
+	static Cursor xc_w = None;
+	static Cursor xc_se = None;
+	static Cursor xc_s = None;
+	static Cursor xc_sw = None;
 	Cursor xc;
+
+#define cache_cursor(name, var) if (var == None) { \
+                                  var = XCreateFontCursor(fl_display, name); \
+                                } \
+                                xc = var
 
 	switch (c) {
 	case FL_CURSOR_ARROW:
-		shape = XC_left_ptr;
+		cache_cursor(XC_left_ptr, xc_arrow);
 		break;
 	case FL_CURSOR_CROSS:
-		shape = XC_tcross;
+		cache_cursor(XC_tcross, xc_cross);
 		break;
 	case FL_CURSOR_WAIT:
-		shape = XC_watch;
+		cache_cursor(XC_watch, xc_wait);
 		break;
 	case FL_CURSOR_INSERT:
-		shape = XC_xterm;
+		cache_cursor(XC_xterm, xc_insert);
 		break;
 	case FL_CURSOR_HAND:
-		shape = XC_hand2;
+		cache_cursor(XC_hand2, xc_hand);
 		break;
 	case FL_CURSOR_HELP:
-		shape = XC_question_arrow;
+		cache_cursor(XC_question_arrow, xc_help);
 		break;
 	case FL_CURSOR_MOVE:
-		shape = XC_fleur;
+		cache_cursor(XC_fleur, xc_move);
 		break;
 	case FL_CURSOR_NS:
-		shape = XC_sb_v_double_arrow;
+		cache_cursor(XC_sb_v_double_arrow, xc_ns);
 		break;
 	case FL_CURSOR_WE:
-		shape = XC_sb_h_double_arrow;
+		cache_cursor(XC_sb_h_double_arrow, xc_we);
 		break;
 	case FL_CURSOR_NE:
-		shape = XC_top_right_corner;
+		cache_cursor(XC_top_right_corner, xc_ne);
 		break;
 	case FL_CURSOR_N:
-		shape = XC_top_side;
+		cache_cursor(XC_top_side, xc_n);
 		break;
 	case FL_CURSOR_NW:
-		shape = XC_top_left_corner;
+		cache_cursor(XC_top_left_corner, xc_nw);
 		break;
 	case FL_CURSOR_E:
-		shape = XC_right_side;
+		cache_cursor(XC_right_side, xc_e);
 		break;
 	case FL_CURSOR_W:
-		shape = XC_left_side;
+		cache_cursor(XC_left_side, xc_w);
 		break;
 	case FL_CURSOR_SE:
-		shape = XC_bottom_right_corner;
+		cache_cursor(XC_bottom_right_corner, xc_se);
 		break;
 	case FL_CURSOR_S:
-		shape = XC_bottom_side;
+		cache_cursor(XC_bottom_side, xc_s);
 		break;
 	case FL_CURSOR_SW:
-		shape = XC_bottom_left_corner;
+		cache_cursor(XC_bottom_left_corner, xc_sw);
 		break;
 	default:
 		return 0;
 	}
 
-	xc = XCreateFontCursor(fl_display, shape);
+#undef cache_cursor
+
+	//xc = XCreateFontCursor(fl_display, shape);
 	XDefineCursor(fl_display, xid, xc);
-	XFreeCursor(fl_display, xc);
+	//XFreeCursor(fl_display, xc);
 
 	return 1;
 }
@@ -2890,52 +2916,52 @@ int Fl_X::set_cursor(const Fl_RGB_Image *image, int hotx, int hoty)
 #if ! HAVE_XCURSOR
 	return 0;
 #else
-XcursorImage *cursor;
-Cursor xc;
+	XcursorImage *cursor;
+	Cursor xc;
 
-if ((hotx < 0) || (hotx >= image->w()))
-	return 0;
-if ((hoty < 0) || (hoty >= image->h()))
-	return 0;
+	if ((hotx < 0) || (hotx >= image->w()))
+		return 0;
+	if ((hoty < 0) || (hoty >= image->h()))
+		return 0;
 
-cursor = XcursorImageCreate(image->w(), image->h());
-if (!cursor)
-	return 0;
+	cursor = XcursorImageCreate(image->w(), image->h());
+	if (!cursor)
+		return 0;
 
-const uchar *i = (const uchar*)*image->data();
-XcursorPixel *o = cursor->pixels;
-for (int y = 0; y < image->h(); y++) {
-	for (int x = 0; x < image->w(); x++) {
-		switch (image->d()) {
-		case 1:
-			*o = (0xff<<24) | (i[0]<<16) | (i[0]<<8) | i[0];
-			break;
-		case 2:
-			*o = (i[1]<<24) | (i[0]<<16) | (i[0]<<8) | i[0];
-			break;
-		case 3:
-			*o = (0xff<<24) | (i[0]<<16) | (i[1]<<8) | i[2];
-			break;
-		case 4:
-			*o = (i[3]<<24) | (i[0]<<16) | (i[1]<<8) | i[2];
-			break;
+	const uchar *i = (const uchar*)*image->data();
+	XcursorPixel *o = cursor->pixels;
+	for (int y = 0; y < image->h(); y++) {
+		for (int x = 0; x < image->w(); x++) {
+			switch (image->d()) {
+			case 1:
+				*o = (0xff<<24) | (i[0]<<16) | (i[0]<<8) | i[0];
+				break;
+			case 2:
+				*o = (i[1]<<24) | (i[0]<<16) | (i[0]<<8) | i[0];
+				break;
+			case 3:
+				*o = (0xff<<24) | (i[0]<<16) | (i[1]<<8) | i[2];
+				break;
+			case 4:
+				*o = (i[3]<<24) | (i[0]<<16) | (i[1]<<8) | i[2];
+				break;
+			}
+			i += image->d();
+			o++;
 		}
-		i += image->d();
-		o++;
+		i += image->ld();
 	}
-	i += image->ld();
-}
 
-cursor->xhot = hotx;
-cursor->yhot = hoty;
+	cursor->xhot = hotx;
+	cursor->yhot = hoty;
 
-xc = XcursorImageLoadCursor(fl_display, cursor);
-XDefineCursor(fl_display, xid, xc);
-XFreeCursor(fl_display, xc);
+	xc = XcursorImageLoadCursor(fl_display, cursor);
+	XDefineCursor(fl_display, xid, xc);
+	XFreeCursor(fl_display, xc);
 
-XcursorImageDestroy(cursor);
+	XcursorImageDestroy(cursor);
 
-return 1;
+	return 1;
 #endif
 }
 
@@ -3162,7 +3188,7 @@ void printFront(Fl_Widget *o, void *data)
 	printer.print_widget( win, - win->w()/2, - win->h()/2 );
 	//printer.print_window_part( win, 0,0, win->w(), win->h(), - win->w()/2, - win->h()/2 );
 #else
-printer.print_window(win);
+	printer.print_window(win);
 #endif
 
 	printer.end_page();

@@ -17,12 +17,14 @@
 #if ! ( defined(_Xutf8_h) || defined(FL_DOXYGEN) )
 #define _Xutf8_h
 
-//#  ifdef __cplusplus
-//extern "C" {
-//#  endif
+
 
 #include "Fl_Platform.h"
 #if __FLTK_LINUX__
+
+#  ifdef __cplusplus
+extern "C" {
+#  endif
 
 #include <X11/X.h>
 #include <X11/Xlib.h>
@@ -175,12 +177,11 @@ int
 XUtf8Toupper(
         int ucs);
 
+#  ifdef __cplusplus
+}
+#  endif
 
 #endif
-
-//#  ifdef __cplusplus
-//}
-//#  endif
 
 #endif
 

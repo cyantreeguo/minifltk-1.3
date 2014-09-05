@@ -88,7 +88,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	AllocConsole();
 	freopen("conin$", "r", stdin);
 	freopen("conout$", "w", stdout);
-	freopen("conout$", "w", stderr);
+	//freopen("conout$", "w", stderr);
 #  endif /* _DEBUG */
 
 	ar = (char**) malloc(sizeof(char*) * (__argc + 1));

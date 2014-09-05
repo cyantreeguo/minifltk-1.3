@@ -37,59 +37,6 @@ char fl_draw_shortcut;	// set by fl_labeltypes.cxx
 
 static char* underline_at;
 
-/* This function is no longer called
-    utf8 multibyte char seq. detection an pass-thru routine.
-    \retval false if no utf8 seq detected, no change made. true if utf8 and d copied with s seq.
-    note that for n bytes copied d incremented of n, but s of n-1 for compatible loop use see below.
-*
-#define C_IN(c,a,b) ((c)>=(a) && (c)<=(b))
-#define C_UTF8(c)   C_IN(c,0x80,0xBF)
-
-static bool handle_utf8_seq(const char * &s,char * &d) {
-  register const unsigned char* p=(const unsigned char*)s;
-  if (p[0] < 0xc2 || p[0] > 0xf4)
-    return false; // not adressed in this function
-  else if ( C_IN(p[0], 0xc2, 0xdf) && C_UTF8(p[1]) ) {
-    d[0]=s[0]; d[1]=s[1];
-    d+=2; s++;
-    // non-overlong 2-byte
-  }
-  else if ( p[0]==0xe0 && C_IN(p[1], 0xa0, 0xbf) && C_UTF8(p[2]) ) {
-    d[0]=s[0]; d[1]=s[1];d[2]=s[2];
-    d+=3; s+=2;
-    //  excluding overlongs
-  }
-  else if (p[0]==0xed && C_IN(p[1], 0x80, 0x9f) && C_UTF8(p[2]) ) {
-    d[0]=s[0]; d[1]=s[1];d[2]=s[2];
-    d+=3; s+=2;
-    //  excluding surrogates
-  }
-  else if (p[0]!=0xed && C_IN(p[0], 0xe1, 0xef) && C_UTF8(p[1]) && C_UTF8(p[2]) ) {
-    d[0]=s[0]; d[1]=s[1];d[2]=s[2];
-    d+=3; s+=2;
-    // straight 3-byte
-  }
-  else if (p[0]==0xf0 && C_IN(p[1], 0x90, 0xbf)   && C_UTF8(p[2]) && C_UTF8(p[3]) ) {
-    d[0]=s[0]; d[1]=s[1]; d[2]=s[2]; d[3]=s[3];
-    d+=4; s+=3;
-    // planes 1-3
-  }
-  else if (C_IN(p[0], 0xf1, 0xf3) && C_UTF8(p[1]) && C_UTF8(p[2]) && C_UTF8(p[3]) ) {
-    d[0]=s[0]; d[1]=s[1]; d[2]=s[2]; d[3]=s[3];
-    d+=4; s+=3;
-    // planes 4-15
-  }
-  else if (p[0]==0xf4 && C_IN(p[1], 0x80, 0x8f)   && C_UTF8(p[2]) && C_UTF8(p[3]) ) {
-    d[0]=s[0]; d[1]=s[1]; d[2]=s[2]; d[3]=s[3];
-    d+=4; s+=3;
-    // planes 16
-  } else { // non utf8 compliant, maybe CP125x or broken utf8 string
-    // fprintf(stderr, "Not UTF8 char \n");
-    return false;
-  }
-  return true; //  we handled and copied the utf8 multibyte char seq.
-}*/
-
 /* If called with maxbuf==0, use an internally allocated buffer and enlarge it as needed.
  Otherwise, use buf as buffer but don't go beyond its length of maxbuf.
  */
