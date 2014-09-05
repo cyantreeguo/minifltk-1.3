@@ -50,11 +50,12 @@
 #include "Fl_Platform.h"
 #if __FLTK_WIN32__ || __FLTK_WINCE__
 //#  if (defined(WIN32) || defined(CRAY)) && !defined(__MINGW32__) && !defined(__MWERKS__)
-
+#if !defined(__MINGW32__)
 inline double rint(double v)
 {
 	return floor(v+.5);
 }
+#endif
 inline double copysign(double a, double b)
 {
 	return b<0 ? -a : a;
