@@ -600,7 +600,7 @@ protected:
 
 		~menuwindow()
 		{
-			if ( browser_ != NULL ) free(browser_);
+			if ( browser_ != NULL ) delete browser_;
 			hide();
 		}
 
@@ -650,7 +650,7 @@ protected:
 		strcpy(old_s, s);
 
 		void *item;
-		int lineno, l;
+		int lineno=0, l=0;
 		item = mw.browser_->selection();
 		if ( item == 0 ) {
 			inp_->value("");
