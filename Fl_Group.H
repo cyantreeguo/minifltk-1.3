@@ -32,6 +32,11 @@
   including Fl_Group. The most important subclass of Fl_Group
   is Fl_Window, however groups can also be used to control radio buttons
   or to enforce resize behavior.
+
+  The tab and arrow keys are used to move the focus between widgets of
+  this group, and to other groups. The only modifier grabbed is shift
+  (for shift-tab), so that ctrl-tab, alt-up, and such are free
+  for the app to use as shortcuts.
 */
 class FL_EXPORT Fl_Group : public Fl_Widget
 {
