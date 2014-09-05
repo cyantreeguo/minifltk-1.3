@@ -621,7 +621,10 @@ const Fl_Menu_Item* Fl_TrayPopMenu::pulldown(Fl_Window *w, int X, int Y) const
 
 	traymenuwindow mw(w, menu(), X, Y, scr_x, scr_y, scr_w, scr_h);
 	killfocus_ = 0;
+#if __FLTK_LINUX__
+#else
 	Fl::event_dispatch(owenevent);
+#endif	
 	Fl::grab(mw);
 	menustate pp;
 	p = &pp;
