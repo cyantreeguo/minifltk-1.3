@@ -1,4 +1,8 @@
 ﻿2014-08-27 cyantree
+修正Fl_ComboBox.h的一个错误，错把delete写成了free，会导致gcc编译时出错
+
+===================
+2014-08-27 cyantree
 官方添加Fl_Shaped_Window，同步更新
 
 ===================
