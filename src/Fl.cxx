@@ -122,7 +122,7 @@ unsigned char   Fl::options_[] = { 0, 0 };
 unsigned char   Fl::options_read_ = 0;
 
 
-Fl_Window *fl_xfocus;	// which window X thinks has focus
+Fl_Window *fl_xfocus = NULL;	// which window X thinks has focus
 Fl_Window *fl_xmousewin;// which window X thinks has FL_ENTER
 Fl_Window *Fl::grab_;	// most recent Fl::grab()
 Fl_Window *Fl::modal_;	// topmost modal() window
@@ -910,7 +910,7 @@ void Fl::flush()
 	if (fl_display) XFlush(fl_display);
 #else
 #error unsupported platform
-#endif	
+#endif
 }
 
 
@@ -1027,6 +1027,14 @@ void Fl::focus(Fl_Widget *o)
 				if (fl_xfocus != win) {
 					Fl_X *x = Fl_X::i(win);
 					if (x) x->set_key_window();
+				}
+#elif defined(USE_X11)
+				if (fl_xfocus != win) {
+					Fl_X *x = Fl_X::i(win);
+					if (!Fl_X::ewmh_supported())
+						win->show(); // Old WMs, XMapRaised
+					else if (x) // New WMs use the NETWM attribute:
+						Fl_X::activate_window(x->xid);
 				}
 #endif
 				fl_xfocus = win;
@@ -1677,9 +1685,9 @@ void Fl_Window::hide()
 #elif __FLTK_IPHONEOS__
 	ip->destroy();
 #elif __FLTK_LINUX__
-	# if USE_XFT
+# if USE_XFT
 	fl_destroy_xft_draw(ip->xid);
-	# endif
+# endif
 	// this test makes sure ip->xid has not been destroyed already
 	if (ip->xid) XDestroyWindow(fl_display, ip->xid);
 #else
@@ -1760,7 +1768,7 @@ int Fl_Window::handle(int ev)
 				XUnmapWindow(fl_display, fl_xid(this));
 #else
 #error unsupported platform
-#endif			
+#endif
 			}
 			break;
 		}

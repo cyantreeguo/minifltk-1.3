@@ -367,6 +367,7 @@ static Atom fl_NET_WM_STATE_FULLSCREEN;
 static Atom fl_NET_WM_FULLSCREEN_MONITORS;
 static Atom fl_NET_WORKAREA;
 static Atom fl_NET_WM_ICON;
+static Atom fl_NET_ACTIVE_WINDOW;
 
 /*
   X defines 32-bit-entities to have a format value of max. 32,
@@ -693,6 +694,7 @@ void fl_open_display(Display* d)
 	fl_NET_WM_FULLSCREEN_MONITORS = XInternAtom(d, "_NET_WM_FULLSCREEN_MONITORS", 0);
 	fl_NET_WORKAREA       = XInternAtom(d, "_NET_WORKAREA",       0);
 	fl_NET_WM_ICON        = XInternAtom(d, "_NET_WM_ICON",        0);
+	fl_NET_ACTIVE_WINDOW  = XInternAtom(d, "_NET_ACTIVE_WINDOW",  0);
 
 	if (sizeof(Atom) < 4)
 		atom_bits = sizeof(Atom) * 8;
@@ -2302,6 +2304,26 @@ int Fl_X::ewmh_supported()
 	}
 
 	return result;
+}
+
+extern Fl_Window *fl_xfocus;
+
+void Fl_X::activate_window(Window w)
+{
+	if (!ewmh_supported())
+		return;
+
+	Window prev = 0;
+
+	if (fl_xfocus) {
+		Fl_X *x = Fl_X::i(fl_xfocus);
+		if (!x)
+			return;
+		prev = x->xid;
+	}
+
+	send_wm_event(w, fl_NET_ACTIVE_WINDOW, 1 /* application */,
+	              0 /* timestamp */, prev /* previously active window */);
 }
 
 /* Change an existing window to fullscreen */
