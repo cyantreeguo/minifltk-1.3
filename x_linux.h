@@ -144,6 +144,7 @@ public:
 		wi->y(Y);
 	}
 	static int ewmh_supported();
+	static void activate_window(Window w);
 };
 
 extern FL_EXPORT char fl_override_redirect; // hack into Fl_X::make_xid()
