@@ -1,4 +1,8 @@
-﻿2014-08-27 cyantree
+﻿2014-09-09 cyantree
+添加linux下的trayicon控件，偶然会出现无法显示icon的问题，另外当有子窗口出现时icon无法操作，待修复
+
+===================
+2014-08-27 cyantree
 修正Fl_ComboBox.h的一个错误，错把delete写成了free，会导致gcc编译时出错
 
 ===================
