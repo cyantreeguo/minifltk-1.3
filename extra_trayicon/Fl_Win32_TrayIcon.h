@@ -11,16 +11,19 @@
 
 class Fl_Win32_TrayIcon {
 public:
-	enum TrayMouseType {
-		tmt_MBUTTONDOWN,
-		tmt_RBUTTONDOWN,
+	enum TrayMouseType {		
 		tmt_LBUTTONDOWN,
 		tmt_LBUTTONUP,
 		tmt_LBUTTONDBLCLK,
+		
+		tmt_RBUTTONDOWN,
 		tmt_RBUTTONUP,
 		tmt_RBUTTONDBLCLK,
+		
+		tmt_MBUTTONDOWN,
 		tmt_MBUTTONUP,
 		tmt_MBUTTONDBLCLK,
+		
 		tmt_MOUSEHOVER,
 		tmt_MOUSELEAVE,
 	};
