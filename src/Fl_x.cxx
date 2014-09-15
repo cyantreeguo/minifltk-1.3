@@ -196,6 +196,8 @@ void Fl::remove_fd(int n)
 	remove_fd(n, -1);
 }
 
+extern int fl_send_system_handlers(void *e);
+
 #if CONSOLIDATE_MOTION
 static Fl_Window* send_motion;
 extern Fl_Window* fl_xmousewin;
@@ -207,6 +209,8 @@ static void do_queued_events()
 	while (XEventsQueued(fl_display,QueuedAfterReading)) {
 		XEvent xevent;
 		XNextEvent(fl_display, &xevent);
+		if (fl_send_system_handlers(&xevent))
+			continue;
 		fl_handle(xevent);
 	}
 	// we send FL_LEAVE only if the mouse did not enter some other window:
@@ -326,6 +330,7 @@ XVisualInfo *fl_visual;
 Colormap fl_colormap;
 static XIM fl_xim_im = 0;
 XIC fl_xim_ic = 0;
+static Window fl_xim_win = 0;
 static char fl_is_over_the_spot = 0;
 static XRectangle status_area;
 
@@ -632,6 +637,59 @@ static void fl_init_xim()
 	}
 	// if xim_styles is still allocated, free it now
 	if(xim_styles) XFree(xim_styles);
+}
+
+void fl_xim_deactivate(void);
+
+void fl_xim_activate(Window xid)
+{
+	if (!fl_xim_im)
+		return;
+
+	// If the focused window has changed, then use the brute force method
+	// of completely recreating the input context.
+	if (fl_xim_win != xid) {
+		fl_xim_deactivate();
+
+		fl_new_ic();
+		fl_xim_win = xid;
+
+		XSetICValues(fl_xim_ic,
+		             XNFocusWindow, fl_xim_win,
+		             XNClientWindow, fl_xim_win,
+		             NULL);
+	}
+
+	fl_set_spot(spotf, spots, spot.x, spot.y, spot.width, spot.height);
+}
+
+void fl_xim_deactivate(void)
+{
+	if (!fl_xim_ic)
+		return;
+
+	XDestroyIC(fl_xim_ic);
+	fl_xim_ic = NULL;
+
+	fl_xim_win = 0;
+}
+
+void Fl::enable_im()
+{
+	Fl_Window *win;
+
+	win = Fl::first_window();
+	if (win && win->shown()) {
+		fl_xim_activate(fl_xid(win));
+		XSetICFocus(fl_xim_ic);
+	} else {
+		fl_new_ic();
+	}
+}
+
+void Fl::disable_im()
+{
+	fl_xim_deactivate();
 }
 
 void fl_open_display()
@@ -1307,10 +1365,8 @@ int fl_handle(const XEvent& thisevent)
 	XEvent xevent = thisevent;
 	fl_xevent = &thisevent;
 	Window xid = xevent.xany.window;
-	static Window xim_win = 0;
 
-	if (fl_xim_ic && xevent.type == DestroyNotify &&
-	    xid != xim_win && !fl_find(xid)) {
+	if (fl_xim_ic && xevent.type == DestroyNotify && xid != fl_xim_win && !fl_find(xid)) {
 		XIM xim_im;
 		xim_im = XOpenIM(fl_display, NULL, NULL, NULL);
 		if (!xim_im) {
@@ -1324,45 +1380,10 @@ int fl_handle(const XEvent& thisevent)
 		return 0;
 	}
 
-	if (fl_xim_ic && (xevent.type == FocusIn)) {
-#define POOR_XIM
-#ifdef POOR_XIM
-		if (xim_win != xid) {
-			xim_win  = xid;
-			XDestroyIC(fl_xim_ic);
-			fl_xim_ic = NULL;
-			fl_new_ic();
-			XSetICValues(fl_xim_ic,
-			             XNFocusWindow, xevent.xclient.window,
-			             XNClientWindow, xid,
-			             NULL);
-		}
-		fl_set_spot(spotf, spots, spot.x, spot.y, spot.width, spot.height);
-#else
-		if (Fl::first_window() && Fl::first_window()->modal()) {
-			Window x  = fl_xid(Fl::first_window());
-			if (x != xim_win) {
-				xim_win  = x;
-				XSetICValues(fl_xim_ic,
-				             XNFocusWindow, xim_win,
-				             XNClientWindow, xim_win,
-				             NULL);
-				fl_set_spot(spotf, spots, spot.x, spot.y, spot.width, spot.height);
-			}
-		} else if (xim_win != xid && xid) {
-			xim_win = xid;
-			XSetICValues(fl_xim_ic,
-			             XNFocusWindow, xevent.xclient.window,
-			             XNClientWindow, xid,
-			             //XNFocusWindow, xim_win,
-			             //XNClientWindow, xim_win,
-			             NULL);
-			fl_set_spot(spotf, spots, spot.x, spot.y, spot.width, spot.height);
-		}
-#endif
-	}
+	if (fl_xim_ic && (xevent.type == FocusIn)) 
+		fl_xim_activate(xid);
 
-	if ( XFilterEvent((XEvent *)&xevent, 0) )
+	if (fl_xim_ic && XFilterEvent((XEvent *)&xevent, 0))
 		return(1);
 
 #if USE_XRANDR
