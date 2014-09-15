@@ -60,62 +60,56 @@
 #include <ole2.h>
 #include <shellapi.h>
 
-#include "aimm.h"
-
 #ifndef WM_TOUCH
- #define WM_TOUCH 0x0240
- #define TOUCH_COORD_TO_PIXEL(l)  ((l) / 100)
- #define TOUCHEVENTF_MOVE    0x0001
- #define TOUCHEVENTF_DOWN    0x0002
- #define TOUCHEVENTF_UP      0x0004
- #define TOUCHEVENTF_PRIMARY 0x0010
- DECLARE_HANDLE (HTOUCHINPUT);
- DECLARE_HANDLE (HGESTUREINFO);
+#define WM_TOUCH 0x0240
+#define TOUCH_COORD_TO_PIXEL(l)  ((l) / 100)
+#define TOUCHEVENTF_MOVE    0x0001
+#define TOUCHEVENTF_DOWN    0x0002
+#define TOUCHEVENTF_UP      0x0004
+#define TOUCHEVENTF_PRIMARY 0x0010
+DECLARE_HANDLE (HTOUCHINPUT);
+DECLARE_HANDLE (HGESTUREINFO);
 
- struct TOUCHINPUT
- {
-    LONG x;
-    LONG y;
-    HANDLE hSource;
-    DWORD dwID;
-    DWORD dwFlags;
-    DWORD dwMask;
-    DWORD dwTime;
-    ULONG_PTR dwExtraInfo;
-    DWORD cxContact;
-    DWORD cyContact;
- };
+struct TOUCHINPUT {
+	LONG x;
+	LONG y;
+	HANDLE hSource;
+	DWORD dwID;
+	DWORD dwFlags;
+	DWORD dwMask;
+	DWORD dwTime;
+	ULONG_PTR dwExtraInfo;
+	DWORD cxContact;
+	DWORD cyContact;
+};
 
- struct GESTUREINFO
- {
-    UINT cbSize;
-    DWORD dwFlags;
-    DWORD dwID;
-    HWND hwndTarget;
-    POINTS ptsLocation;
-    DWORD dwInstanceID;
-    DWORD dwSequenceID;
-    ULONGLONG ullArguments;
-    UINT cbExtraArgs;
- };
+struct GESTUREINFO {
+	UINT cbSize;
+	DWORD dwFlags;
+	DWORD dwID;
+	HWND hwndTarget;
+	POINTS ptsLocation;
+	DWORD dwInstanceID;
+	DWORD dwSequenceID;
+	ULONGLONG ullArguments;
+	UINT cbExtraArgs;
+};
 
 #endif
 
 #ifndef MONITOR_DPI_TYPE
-  enum Monitor_DPI_Type
-  {
-    MDT_Effective_DPI  = 0,
-    MDT_Angular_DPI    = 1,
-    MDT_Raw_DPI        = 2,
-    MDT_Default        = MDT_Effective_DPI
-  };
+enum Monitor_DPI_Type {
+	MDT_Effective_DPI  = 0,
+	MDT_Angular_DPI    = 1,
+	MDT_Raw_DPI        = 2,
+	MDT_Default        = MDT_Effective_DPI
+};
 
-  enum Process_DPI_Awareness
-  {
-    Process_DPI_Unaware            = 0,
-    Process_System_DPI_Aware       = 1,
-    Process_Per_Monitor_DPI_Aware  = 2
-  };
+enum Process_DPI_Awareness {
+	Process_DPI_Unaware            = 0,
+	Process_System_DPI_Aware       = 1,
+	Process_Per_Monitor_DPI_Aware  = 2
+};
 #endif
 
 typedef BOOL (WINAPI* RegisterTouchWindowFunc) (HWND, ULONG);
@@ -138,24 +132,23 @@ static bool hasCheckedForMultiTouch = false;
 
 static void* getUser32Function (const char* functionName)
 {
-    HMODULE module = GetModuleHandleA("user32.dll");
-    if (module == 0) return 0;
-    return (void*) GetProcAddress (module, functionName);
+	HMODULE module = GetModuleHandleA("user32.dll");
+	if (module == 0) return 0;
+	return (void*) GetProcAddress (module, functionName);
 }
 
 static bool canUseMultiTouch()
 {
-    if (registerTouchWindow == NULL && ! hasCheckedForMultiTouch)
-    {
-        hasCheckedForMultiTouch = true;
+	if (registerTouchWindow == NULL && ! hasCheckedForMultiTouch) {
+		hasCheckedForMultiTouch = true;
 
-        registerTouchWindow   = (RegisterTouchWindowFunc)   getUser32Function ("RegisterTouchWindow");
-        getTouchInputInfo     = (GetTouchInputInfoFunc)     getUser32Function ("GetTouchInputInfo");
-        closeTouchInputHandle = (CloseTouchInputHandleFunc) getUser32Function ("CloseTouchInputHandle");
-        getGestureInfo        = (GetGestureInfoFunc)        getUser32Function ("GetGestureInfo");
-    }
+		registerTouchWindow   = (RegisterTouchWindowFunc)   getUser32Function ("RegisterTouchWindow");
+		getTouchInputInfo     = (GetTouchInputInfoFunc)     getUser32Function ("GetTouchInputInfo");
+		closeTouchInputHandle = (CloseTouchInputHandleFunc) getUser32Function ("CloseTouchInputHandle");
+		getGestureInfo        = (GetGestureInfoFunc)        getUser32Function ("GetGestureInfo");
+	}
 
-    return registerTouchWindow != NULL;
+	return registerTouchWindow != NULL;
 }
 
 //
@@ -218,28 +211,25 @@ static HMODULE get_wsock_mod()
  * size and link dependencies.
  */
 static HMODULE s_imm_module = 0;
+typedef BOOL (WINAPI* flTypeImmAssociateContextEx)(HWND, HIMC, DWORD);
+static flTypeImmAssociateContextEx flImmAssociateContextEx = 0;
 typedef HIMC (WINAPI* flTypeImmGetContext)(HWND);
 static flTypeImmGetContext flImmGetContext = 0;
 typedef BOOL (WINAPI* flTypeImmSetCompositionWindow)(HIMC, LPCOMPOSITIONFORM);
 static flTypeImmSetCompositionWindow flImmSetCompositionWindow = 0;
 typedef BOOL (WINAPI* flTypeImmReleaseContext)(HWND, HIMC);
 static flTypeImmReleaseContext flImmReleaseContext = 0;
-typedef BOOL (WINAPI* flTypeImmIsIME)(HKL);
-static flTypeImmIsIME flImmIsIME = 0;
 
-static HMODULE get_imm_module()
+static void get_imm_module()
 {
-	if (!s_imm_module) {
-		s_imm_module = LoadLibraryA("IMM32.DLL");
-		if (!s_imm_module)
-			Fl::fatal("FLTK Lib Error: IMM32.DLL file not found!\n\n"
-			          "Please check your input method manager library accessibility.");
-		flImmGetContext = (flTypeImmGetContext)GetProcAddress(s_imm_module, "ImmGetContext");
-		flImmSetCompositionWindow = (flTypeImmSetCompositionWindow)GetProcAddress(s_imm_module, "ImmSetCompositionWindow");
-		flImmReleaseContext = (flTypeImmReleaseContext)GetProcAddress(s_imm_module, "ImmReleaseContext");
-		flImmIsIME = (flTypeImmIsIME)GetProcAddress(s_imm_module, "ImmIsIME");
-	}
-	return s_imm_module;
+	s_imm_module = LoadLibrary("IMM32.DLL");
+	if (!s_imm_module)
+		Fl::fatal("FLTK Lib Error: IMM32.DLL file not found!\n\n"
+		          "Please check your input method manager library accessibility.");
+	flImmAssociateContextEx = (flTypeImmAssociateContextEx)GetProcAddress(s_imm_module, "ImmAssociateContextEx");
+	flImmGetContext = (flTypeImmGetContext)GetProcAddress(s_imm_module, "ImmGetContext");
+	flImmSetCompositionWindow = (flTypeImmSetCompositionWindow)GetProcAddress(s_imm_module, "ImmSetCompositionWindow");
+	flImmReleaseContext = (flTypeImmReleaseContext)GetProcAddress(s_imm_module, "ImmReleaseContext");
 }
 
 // USE_TRACK_MOUSE - define NO_TRACK_MOUSE if you don't have
@@ -357,7 +347,9 @@ void fl_set_spot(int font, int size, int X, int Y, int W, int H, Fl_Window *win)
 	Fl_Window* tw = win;
 	while (tw->parent()) tw = tw->window(); // find top level window
 
-	get_imm_module();
+	if (!tw->shown())
+		return;
+
 	HIMC himc = flImmGetContext(fl_xid(tw));
 
 	if (himc) {
@@ -439,7 +431,7 @@ void* Fl::thread_message()
 	return r;
 }
 
-IActiveIMMApp *fl_aimm = NULL;
+extern int fl_send_system_handlers(void *e);
 MSG fl_msg;
 
 // This is never called with time_to_wait < 0.0.
@@ -505,28 +497,25 @@ int fl_wait(double time_to_wait)
 
 	// Execute the message we got, and all other pending messages:
 	// have_message = PeekMessage(&fl_msg, NULL, 0, 0, PM_REMOVE);
-	have_message = PeekMessageW(&fl_msg, NULL, 0, 0, PM_REMOVE);
-	//printf("fl_wait1:%x\n", fl_msg.message);
-	if (have_message > 0) {
-		while (have_message != 0 && have_message != -1) {
-			// Let applications treat WM_QUIT identical to SIGTERM on *nix
-			if (fl_msg.message == WM_QUIT)
-				raise(SIGTERM);
-			if (fl_msg.message == fl_wake_msg) {
-				// Used for awaking wait() from another thread
-				thread_message_ = (void*)fl_msg.wParam;
-				Fl_Awake_Handler func;
-				void *data;
-				while (Fl::get_awake_handler_(func, data)==0) {
-					func(data);
-				}
-			}
+	while ((have_message = PeekMessageW(&fl_msg, NULL, 0, 0, PM_REMOVE)) > 0) {
+		if (fl_send_system_handlers(&fl_msg))
+			continue;
 
-			TranslateMessage(&fl_msg);
-			DispatchMessageW(&fl_msg);
-			have_message = PeekMessageW(&fl_msg, NULL, 0, 0, PM_REMOVE);
-			//printf("fl_wait2:%x\n", fl_msg.message);
+		// Let applications treat WM_QUIT identical to SIGTERM on *nix
+		if (fl_msg.message == WM_QUIT)
+			raise(SIGTERM);
+
+		if (fl_msg.message == fl_wake_msg) {
+			// Used for awaking wait() from another thread
+			thread_message_ = (void*)fl_msg.wParam;
+			Fl_Awake_Handler func;
+			void *data;
+			while (Fl::get_awake_handler_(func, data)==0)
+				func(data);
 		}
+
+		TranslateMessage(&fl_msg);
+		DispatchMessageW(&fl_msg);
 	}
 	Fl::flush();
 
@@ -546,6 +535,62 @@ int fl_ready()
 	fd_set fdt[3];
 	memcpy(fdt, fdsets, sizeof fdt);
 	return get_wsock_mod() ? s_wsock_select(0,&fdt[0],&fdt[1],&fdt[2],&t) : 0;
+}
+
+void fl_open_display()
+{
+	static char beenHereDoneThat = 0;
+
+	if (beenHereDoneThat)
+		return;
+
+	beenHereDoneThat = 1;
+
+	OleInitialize(0L);
+
+	get_imm_module();
+}
+
+class Fl_Win32_At_Exit
+{
+public:
+	Fl_Win32_At_Exit() { }
+	~Fl_Win32_At_Exit() {
+		fl_free_fonts();        // do some WIN32 cleanup
+		fl_cleanup_pens();
+		OleUninitialize();
+		fl_brush_action(1);
+		fl_cleanup_dc_list();
+	}
+};
+static Fl_Win32_At_Exit win32_at_exit;
+
+static char im_enabled = 1;
+
+void Fl::enable_im()
+{
+	fl_open_display();
+
+	Fl_X* i = Fl_X::first;
+	while (i) {
+		flImmAssociateContextEx(i->xid, 0, IACE_DEFAULT);
+		i = i->next;
+	}
+
+	im_enabled = 1;
+}
+
+void Fl::disable_im()
+{
+	fl_open_display();
+
+	Fl_X* i = Fl_X::first;
+	while (i) {
+		flImmAssociateContextEx(i->xid, 0, 0);
+		i = i->next;
+	}
+
+	im_enabled = 0;
 }
 
 ////////////////////////////////////////////////////////////////
@@ -902,7 +947,6 @@ void fl_clipboard_notify_untarget(HWND wnd)
 }
 
 ////////////////////////////////////////////////////////////////
-char fl_is_ime = 0;
 void fl_get_codepage()
 {
 	HKL hkl = GetKeyboardLayout(0);
@@ -910,14 +954,7 @@ void fl_get_codepage()
 
 	GetLocaleInfo (LOWORD(hkl), LOCALE_IDEFAULTANSICODEPAGE, ld, 6);
 	DWORD ccp = atol(ld);
-	fl_is_ime = 0;
-
 	fl_codepage = ccp;
-	if (fl_aimm) {
-		fl_aimm->GetCodePageA(GetKeyboardLayout(0), &fl_codepage);
-	} else if (get_imm_module() && flImmIsIME(hkl)) {
-		fl_is_ime = 1;
-	}
 }
 
 HWND fl_capture;
@@ -1260,7 +1297,7 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 			break;
 
 		case WM_KILLFOCUS:
-		//printf("kill focus\n");
+			//printf("kill focus\n");
 			Fl::handle(FL_UNFOCUS, window);
 			Fl::flush(); // it never returns to main loop when deactivated...
 			break;
@@ -1312,7 +1349,7 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 			Fl::e_keysym = Fl::e_original_keysym = ms2fltk(wParam,lParam&(1<<24));
 			// See if TranslateMessage turned it into a WM_*CHAR message:
 			if (PeekMessageW(&fl_msg, hWnd, WM_CHAR, WM_SYSDEADCHAR, PM_REMOVE)) {
-			//printf("WM_SYSKEYUP:%x\n", fl_msg.message);
+				//printf("WM_SYSKEYUP:%x\n", fl_msg.message);
 				uMsg = fl_msg.message;
 				wParam = fl_msg.wParam;
 				lParam = fl_msg.lParam;
@@ -1531,16 +1568,16 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 				SendMessage(next_clipboard_wnd, WM_DRAWCLIPBOARD, wParam, lParam);
 
 			return 0;
-			
+
 		case WM_TOUCH:
 			//printf("touch\n");
 			//if (getTouchInputInfo != NULL) return doTouchEvent((int)wParam, (HTOUCHINPUT)lParam);
-            break;
+			break;
 
-        case 0x119: /* WM_GESTURE */
+		case 0x119: /* WM_GESTURE */
 			//printf("gesture\n");
-            //if (doGestureEvent (lParam)) return 0;
-            break;
+			//if (doGestureEvent (lParam)) return 0;
+			break;
 
 		default:
 			if (Fl::handle(0,0)) return 0;
@@ -1835,6 +1872,8 @@ int fl_disable_transient_for; // secret method of removing TRANSIENT_FOR
 Fl_X* Fl_X::make(Fl_Window* w)
 {
 	Fl_Group::current(0); // get rid of very common user bug: forgot end()
+	
+	fl_open_display();
 
 	// if the window is a subwindow and our parent is not mapped yet, we
 	// mark this window visible, so that mapping the parent at a later
@@ -2049,25 +2088,16 @@ Fl_X* Fl_X::make(Fl_Window* w)
 	           (Fl::grab() || (styleEx & WS_EX_TOOLWINDOW)) ? SW_SHOWNOACTIVATE : SW_SHOWNORMAL);
 
 	// Register all windows for potential drag'n'drop operations
-	fl_OleInitialize();
 	RegisterDragDrop(x->xid, flIDropTarget);
-	
+
 	if (canUseMultiTouch())
 		registerTouchWindow(x->xid, 0);
 
-	if (!fl_aimm) {
-		CoCreateInstance(CLSID_CActiveIMM, NULL, CLSCTX_INPROC_SERVER,
-		                 IID_IActiveIMMApp, (void**) &fl_aimm);
-		if (fl_aimm) {
-			fl_aimm->Activate(TRUE);
-		}
-	}
+	if (!im_enabled)
+		flImmAssociateContextEx(x->xid, 0, 0);
 
 	return x;
 }
-
-
-
 
 /////////////////////////////////////////////////////////////////////////////
 /// Win32 timers
@@ -2133,17 +2163,17 @@ void Fl::repeat_timeout(double time, Fl_Timeout_Handler cb, void* data)
 		RegisterClassEx(&wc);
 		// create a zero size window to handle timer events
 		s_TimerWnd = CreateWindowExA(WS_EX_LEFT | WS_EX_TOOLWINDOW,
-		                            timer_class, "",
-		                            WS_POPUP,
-		                            0, 0, 0, 0,
-		                            NULL, NULL, fl_display, NULL);
+		                             timer_class, "",
+		                             WS_POPUP,
+		                             0, 0, 0, 0,
+		                             NULL, NULL, fl_display, NULL);
 		// just in case this OS won't let us create a 0x0 size window:
 		if (!s_TimerWnd)
 			s_TimerWnd = CreateWindowExA(WS_EX_LEFT | WS_EX_TOOLWINDOW,
-			                            timer_class, "",
-			                            WS_POPUP,
-			                            0, 0, 1, 1,
-			                            NULL, NULL, fl_display, NULL);
+			                             timer_class, "",
+			                             WS_POPUP,
+			                             0, 0, 1, 1,
+			                             NULL, NULL, fl_display, NULL);
 		ShowWindow(s_TimerWnd, SW_SHOWNOACTIVATE);
 	}
 
