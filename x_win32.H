@@ -119,6 +119,8 @@ inline Window fl_xid(const Fl_Window* w)
 	return temp ? temp->xid : 0;
 }
 
+extern FL_EXPORT void fl_open_display();
+
 /*
 #else
 FL_EXPORT Window fl_xid_(const Fl_Window* w);

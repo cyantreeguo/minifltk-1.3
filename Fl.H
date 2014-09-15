@@ -96,6 +96,9 @@ typedef void (*Fl_FD_Handler)(FL_SOCKET fd, void *data);
 /** Signature of add_handler functions passed as parameters */
 typedef int (*Fl_Event_Handler)(int event);
 
+/** Signature of add_system_handler functions passed as parameters */
+typedef int (*Fl_System_Handler)(void *event, void *data);
+
 /** Signature of set_abort functions passed as parameters */
 typedef void (*Fl_Abort_Handler)(const char *format,...);
 
@@ -805,6 +808,17 @@ public:
 	static int event_inside(const Fl_Widget*);
 	static int test_shortcut(Fl_Shortcut);
 
+	/**
+	    Enables the system input methods facilities. This is the default.
+	    \see disable_im()
+	  */
+	static void enable_im();
+	/**
+	  Disables the system input methods facilities.
+	  \see enable_im()
+	*/
+	static void disable_im();
+
 	// event destinations:
 	static int handle(int, Fl_Window*);
 	static int handle_(int, Fl_Window*);
@@ -827,6 +841,8 @@ public:
 	static void focus(Fl_Widget*);
 	static void add_handler(Fl_Event_Handler h);
 	static void remove_handler(Fl_Event_Handler h);
+	static void add_system_handler(Fl_System_Handler h, void *data);
+	static void remove_system_handler(Fl_System_Handler h);
 	static void event_dispatch(Fl_Event_Dispatch d);
 	static Fl_Event_Dispatch event_dispatch();
 	/** @} */
@@ -1390,14 +1406,12 @@ class FL_EXPORT Fl_Widget_Tracker
 
 public:
 	// The constructor adds a widget to the watch list.
-	Fl_Widget_Tracker(Fl_Widget *wi)
-	{
+	Fl_Widget_Tracker(Fl_Widget *wi) {
 		wp_ = wi;
 		Fl::watch_widget_pointer(wp_); // add pointer to watch list
 	}
 	// The destructor removes a widget from the watch list.
-	~Fl_Widget_Tracker()
-	{
+	~Fl_Widget_Tracker() {
 		Fl::release_widget_pointer(wp_); // remove pointer from watch list
 	}
 
@@ -1406,7 +1420,9 @@ public:
 
 	  This pointer is \c NULL, if the widget has been deleted.
 	*/
-	Fl_Widget *widget() { return wp_; }
+	Fl_Widget *widget() {
+		return wp_;
+	}
 
 	/**
 	  Returns 1, if the watched widget has been deleted.
@@ -1417,7 +1433,9 @@ public:
 
 	  where \p wp is an Fl_Widget_Tracker object.
 	*/
-	int deleted() { return wp_ == 0; }
+	int deleted() {
+		return wp_ == 0;
+	}
 
 	/**
 	  Returns 1, if the watched widget exists (has not been deleted).
@@ -1428,7 +1446,9 @@ public:
 
 	  where \p wp is an Fl_Widget_Tracker object.
 	*/
-	int exists()  { return wp_ != 0; }
+	int exists()  {
+		return wp_ != 0;
+	}
 
 };
 
