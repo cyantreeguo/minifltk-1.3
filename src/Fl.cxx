@@ -619,44 +619,7 @@ int Fl::run()
 	return 0;
 }
 
-#if __FLTK_WIN32__
-// Function to initialize COM/OLE for usage. This must be done only once.
-// We define a flag to register whether we called it:
-static char oleInitialized = 0;
-
-// This calls the Windows function OleInitialize() exactly once.
-void fl_OleInitialize()
-{
-	if (!oleInitialized) {
-		OleInitialize(0L);
-		oleInitialized = 1;
-	}
-}
-
-// This calls the Windows function OleUninitialize() only, if
-// OleInitialize has been called before.
-void fl_OleUninitialize()
-{
-	if (oleInitialized) {
-		OleUninitialize();
-		oleInitialized = 0;
-	}
-}
-
-class Fl_Win32_At_Exit
-{
-public:
-	Fl_Win32_At_Exit() { }
-	~Fl_Win32_At_Exit() {
-		fl_free_fonts();        // do some WIN32 cleanup
-		fl_cleanup_pens();
-		fl_OleUninitialize();
-		fl_brush_action(1);
-		fl_cleanup_dc_list();
-	}
-};
-static Fl_Win32_At_Exit win32_at_exit;
-#elif __FLTK_WINCE__
+#if __FLTK_WINCE__
 // Function to initialize COM/OLE for usage. This must be done only once.
 // We define a flag to register whether we called it:
 static char oleInitialized = 0;
@@ -987,6 +950,81 @@ static int send_handlers(int e)
 	for (const handler_link *hl = handlers; hl; hl = hl->next)
 		if (hl->handle(e)) return 1;
 	return 0;
+}
+
+////////////////////////////////////////////////////////////////
+// System event handlers:
+
+
+struct system_handler_link {
+  Fl_System_Handler handle;
+  void *data;
+  system_handler_link *next;
+};
+
+
+static system_handler_link *sys_handlers = 0;
+
+
+/**
+ \brief Install a function to intercept system events.
+
+ FLTK calls each of these functions as soon as a new system event is
+ received. The processing will stop at the first function to return
+ non-zero. If all functions return zero then the event is passed on
+ for normal handling by FLTK.
+
+ Each function will be called with a pointer to the system event as
+ the first argument and \p data as the second argument. The system
+ event pointer will always be void *, but will point to different
+ objects depending on the platform:
+   - X11: XEvent
+   - Windows: MSG
+   - OS X: NSEvent
+
+ \param ha The event handler function to register
+ \param data User data to include on each call
+
+ \see Fl::remove_system_handler(Fl_System_Handler)
+*/
+void Fl::add_system_handler(Fl_System_Handler ha, void *data) {
+  system_handler_link *l = new system_handler_link;
+  l->handle = ha;
+  l->data = data;
+  l->next = sys_handlers;
+  sys_handlers = l;
+}
+
+
+/**
+ Removes a previously added system event handler.
+
+ \param ha The event handler function to remove
+
+ \see Fl::add_system_handler(Fl_System_Handler)
+*/
+void Fl::remove_system_handler(Fl_System_Handler ha) {
+  system_handler_link *l, *p;
+
+  // Search for the handler in the list...
+  for (l = sys_handlers, p = 0; l && l->handle != ha; p = l, l = l->next);
+
+  if (l) {
+    // Found it, so remove it from the list...
+    if (p) p->next = l->next;
+    else sys_handlers = l->next;
+
+    // And free the record...
+    delete l;
+  }
+}
+
+int fl_send_system_handlers(void *e) {
+  for (const system_handler_link *hl = sys_handlers; hl; hl = hl->next) {
+    if (hl->handle(e, hl->data))
+      return 1;
+  }
+  return 0;
 }
 
 ////////////////////////////////////////////////////////////////
