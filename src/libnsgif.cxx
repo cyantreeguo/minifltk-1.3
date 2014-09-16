@@ -7,6 +7,8 @@
  *                http://www.opensource.org/licenses/mit-license.php
  */
 
+#include "Fl_Platform.h"
+
 //#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
@@ -306,7 +308,11 @@ gif_result gif_initialise(gif_animation *gif, int size, unsigned char *data)
 
 		/*	Initialise the sprite header
 		*/
+#if __FLTK_WINCE__
 		assert((int)(gif->bitmap_callbacks.bitmap_create));
+#else
+		assert(gif->bitmap_callbacks.bitmap_create);
+#endif
 		if ((gif->frame_image = gif->bitmap_callbacks.bitmap_create(gif->width, gif->height)) == NULL) {
 			gif_finalise(gif);
 			return GIF_INSUFFICIENT_MEMORY;
@@ -404,10 +410,18 @@ static gif_result gif_initialise_sprite(gif_animation *gif, unsigned int width, 
 
 	/*	Allocate some more memory
 	*/
+#if __FLTK_WINCE__
 	assert((int)(gif->bitmap_callbacks.bitmap_create));
+#else
+	assert(gif->bitmap_callbacks.bitmap_create);
+#endif
 	if ((buffer = (struct bitmap *)(gif->bitmap_callbacks.bitmap_create(max_width, max_height))) == NULL)
 		return GIF_INSUFFICIENT_MEMORY;
+#if __FLTK_WINCE__		
 	assert((int)(gif->bitmap_callbacks.bitmap_destroy));
+#else
+	assert(gif->bitmap_callbacks.bitmap_destroy);
+#endif
 	gif->bitmap_callbacks.bitmap_destroy(gif->frame_image);
 	gif->frame_image = buffer;
 	gif->width = max_width;
@@ -908,7 +922,11 @@ gif_result gif_decode_frame(gif_animation *gif, unsigned int frame)
 
 	/*	Get the frame data
 	*/
+#if __FLTK_WINCE__	
 	assert((int)(gif->bitmap_callbacks.bitmap_get_buffer));
+#else
+	assert(gif->bitmap_callbacks.bitmap_get_buffer);
+#endif
 	frame_data = (unsigned int *)gif->bitmap_callbacks.bitmap_get_buffer(gif->frame_image);
 	if (!frame_data)
 		return GIF_INSUFFICIENT_MEMORY;
@@ -959,7 +977,11 @@ gif_result gif_decode_frame(gif_animation *gif, unsigned int frame)
 					goto gif_decode_frame_exit;
 				/*	Get this frame's data
 				*/
+#if __FLTK_WINCE__				
 				assert((int)(gif->bitmap_callbacks.bitmap_get_buffer));
+#else
+				assert(gif->bitmap_callbacks.bitmap_get_buffer);
+#endif				
 				frame_data = (unsigned int *)gif->bitmap_callbacks.bitmap_get_buffer(gif->frame_image);
 				if (!frame_data)
 					return GIF_INSUFFICIENT_MEMORY;
@@ -1141,7 +1163,11 @@ void gif_finalise(gif_animation *gif)
 	/*	Release all our memory blocks
 	*/
 	if (gif->frame_image) {
+#if __FLTK_WINCE__	
 		assert((int)(gif->bitmap_callbacks.bitmap_destroy));
+#else
+		assert(gif->bitmap_callbacks.bitmap_destroy);
+#endif		
 		gif->bitmap_callbacks.bitmap_destroy(gif->frame_image);
 	}
 	gif->frame_image = NULL;
