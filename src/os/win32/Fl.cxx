@@ -1176,7 +1176,6 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 	Fl_Window *window = fl_find(hWnd);
 
 	if (window) switch (uMsg) {
-
 		case WM_QUIT: // this should not happen?
 			Fl::fatal("WM_QUIT message");
 
