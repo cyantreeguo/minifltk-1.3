@@ -369,6 +369,7 @@ void fl_set_status(int x, int y, int w, int h)
 
 void Fl::add_fd(int n, int events, void (*cb)(FL_SOCKET, void*), void *v)
 {
+	//printf("Fl::add_fd 1\n");
 	remove_fd(n,events);
 	int i = nfds++;
 	if (i >= fd_array_size) {
@@ -388,11 +389,13 @@ void Fl::add_fd(int n, int events, void (*cb)(FL_SOCKET, void*), void *v)
 
 void Fl::add_fd(int fd, void (*cb)(FL_SOCKET, void*), void* v)
 {
+	//printf("Fl::add_fd 2\n");
 	Fl::add_fd(fd, FL_READ, cb, v);
 }
 
 void Fl::remove_fd(int n, int events)
 {
+	//printf("Fl::remove_fd 1\n");
 	int i,j;
 	for (i=j=0; i<nfds; i++) {
 		if (fd[i].fd == n) {
@@ -415,6 +418,7 @@ void Fl::remove_fd(int n, int events)
 
 void Fl::remove_fd(int n)
 {
+	//printf("Fl::remove_fd 2\n");
 	remove_fd(n, -1);
 }
 
@@ -426,6 +430,7 @@ void (*fl_unlock_function)() = nothing;
 static void* thread_message_;
 void* Fl::thread_message()
 {
+	//printf("Fl::thread_message\n");
 	void* r = thread_message_;
 	thread_message_ = 0;
 	return r;
@@ -569,6 +574,7 @@ static char im_enabled = 1;
 
 void Fl::enable_im()
 {
+	//printf("Fl::enable_im\n");
 	fl_open_display();
 
 	Fl_X* i = Fl_X::first;
@@ -582,6 +588,7 @@ void Fl::enable_im()
 
 void Fl::disable_im()
 {
+	//printf("Fl::disable_im\n");
 	fl_open_display();
 
 	Fl_X* i = Fl_X::first;
@@ -597,6 +604,7 @@ void Fl::disable_im()
 
 int Fl::x()
 {
+	//printf("Fl::x\n");
 	RECT r;
 
 	SystemParametersInfo(SPI_GETWORKAREA, 0, &r, 0);
@@ -605,6 +613,7 @@ int Fl::x()
 
 int Fl::y()
 {
+	//printf("Fl::y\n");
 	RECT r;
 
 	SystemParametersInfo(SPI_GETWORKAREA, 0, &r, 0);
@@ -613,6 +622,7 @@ int Fl::y()
 
 int Fl::h()
 {
+	//printf("Fl::h\n");
 	RECT r;
 
 	SystemParametersInfo(SPI_GETWORKAREA, 0, &r, 0);
@@ -621,6 +631,7 @@ int Fl::h()
 
 int Fl::w()
 {
+	//printf("Fl::w\n");
 	RECT r;
 
 	SystemParametersInfo(SPI_GETWORKAREA, 0, &r, 0);
@@ -629,6 +640,7 @@ int Fl::w()
 
 void Fl::get_mouse(int &x, int &y)
 {
+	//printf("Fl::get_mouse\n");
 	POINT p;
 	GetCursorPos(&p);
 	x = p.x;
@@ -736,6 +748,7 @@ void fl_update_clipboard(void)
 // call this when you create a selection:
 void Fl::copy(const char *stuff, int len, int clipboard, const char *type)
 {
+	//printf("Fl::copy\n");
 	if (!stuff || len<0) return;
 
 	// Convert \n -> \r\n (for old apps like Notepad, DOS)
@@ -759,6 +772,7 @@ void Fl::copy(const char *stuff, int len, int clipboard, const char *type)
 // Call this when a "paste" operation happens:
 void Fl::paste(Fl_Widget &receiver, int clipboard, const char *type)
 {
+	//printf("Fl::paste\n");
 	if (!clipboard || (fl_i_own_selection[clipboard] && strcmp(type, Fl::clipboard_plain_text) == 0)) {
 		// We already have it, do it quickly without window server.
 		// Notice that the text is clobbered if set_selection is
@@ -890,6 +904,7 @@ void Fl::paste(Fl_Widget &receiver, int clipboard, const char *type)
 
 int Fl::clipboard_contains(const char *type)
 {
+	//printf("Fl::clipboard_contains\n");
 	int retval = 0;
 	if (!OpenClipboard(NULL)) return 0;
 	if (strcmp(type, Fl::clipboard_plain_text) == 0 || type[0] == 0) {
@@ -1699,6 +1714,7 @@ int Fl_X::fake_X_wm(const Fl_Window* w,int &X,int &Y, int &bt,int &bx, int &by)
 
 void Fl_Window::resize(int X,int Y,int W,int H)
 {
+	//printf("Fl_Window::resize\n");
 	UINT flags = SWP_NOSENDCHANGING | SWP_NOZORDER
 	             | SWP_NOACTIVATE | SWP_NOOWNERZORDER;
 	int is_a_resize = (W != w() || H != h());
@@ -1780,6 +1796,7 @@ void Fl_X::make_fullscreen(int X, int Y, int W, int H)
 
 void Fl_Window::fullscreen_x()
 {
+	//printf("Fl_Window::fullscreen_x\n");
 	_set_fullscreen();
 	i->make_fullscreen(x(), y(), w(), h());
 	Fl::handle(FL_FULLSCREEN, this);
@@ -1787,6 +1804,7 @@ void Fl_Window::fullscreen_x()
 
 void Fl_Window::fullscreen_off_x(int X, int Y, int W, int H)
 {
+	//printf("Fl_Window::fullscreen_off_x\n");
 	_clear_fullscreen();
 	DWORD style = GetWindowLong(fl_xid(this), GWL_STYLE);
 	// Remove the xid temporarily so that Fl_X::fake_X_wm() behaves like it
@@ -2129,11 +2147,13 @@ static LRESULT CALLBACK s_TimerProc(HWND hwnd, UINT msg,
 
 void Fl::add_timeout(double time, Fl_Timeout_Handler cb, void* data)
 {
+	//printf("Fl::add_timeout\n");
 	repeat_timeout(time, cb, data);
 }
 
 void Fl::repeat_timeout(double time, Fl_Timeout_Handler cb, void* data)
 {
+	//printf("Fl::repeat_timeout\n");
 	int timer_id = -1;
 	for (int i = 0;  i < win32_timer_used;  ++i) {
 		if ( !win32_timers[i].handle ) {
@@ -2185,6 +2205,7 @@ void Fl::repeat_timeout(double time, Fl_Timeout_Handler cb, void* data)
 
 int Fl::has_timeout(Fl_Timeout_Handler cb, void* data)
 {
+	//printf("Fl::has_timeout\n");
 	for (int i = 0;  i < win32_timer_used;  ++i) {
 		Win32Timer& t = win32_timers[i];
 		if (t.handle  &&  t.callback == cb  &&  t.data == data) {
@@ -2196,6 +2217,7 @@ int Fl::has_timeout(Fl_Timeout_Handler cb, void* data)
 
 void Fl::remove_timeout(Fl_Timeout_Handler cb, void* data)
 {
+	//printf("Fl::remove_timeout\n");
 	int i;
 	for (i = 0;  i < win32_timer_used;  ++i) {
 		Win32Timer& t = win32_timers[i];
@@ -2217,6 +2239,7 @@ HINSTANCE fl_display = GetModuleHandle(NULL);
 
 void Fl_Window::size_range_()
 {
+	//printf("Fl_Window::size_range_\n");
 	size_range_set = 1;
 }
 
@@ -2258,6 +2281,7 @@ const char *fl_filename_name(const char *name)
 
 void Fl_Window::label(const char *name,const char *iname)
 {
+	//printf("Fl_Window::label\n");
 	Fl_Widget::label(name);
 	iconlabel_ = iname;
 	if (shown() && !parent()) {
@@ -2497,6 +2521,7 @@ void Fl_X::set_icons()
  */
 void Fl_Window::default_icons(HICON big_icon, HICON small_icon)
 {
+	//printf("Fl_Window::default_icons\n");
 	Fl_X::set_default_icons(big_icon, small_icon);
 }
 
@@ -2519,6 +2544,7 @@ void Fl_Window::default_icons(HICON big_icon, HICON small_icon)
  */
 void Fl_Window::icons(HICON big_icon, HICON small_icon)
 {
+	//printf("Fl_Window::icons\n");
 	free_icons();
 
 	if (big_icon != NULL)
@@ -2645,6 +2671,7 @@ int Fl_X::set_cursor(const Fl_RGB_Image *image, int hotx, int hoty)
 
 void Fl_Window::show()
 {
+	//printf("Fl_Window::show\n");
 	image(Fl::scheme_bg_);
 	if (Fl::scheme_bg_) {
 		labeltype(FL_NORMAL_LABEL);
@@ -2654,9 +2681,11 @@ void Fl_Window::show()
 	}
 	Fl_Tooltip::exit(this);
 	if (!shown()) {
+		//printf("Fl_Window::show 1\n");
 		// if (can_boxcheat(box())) fl_background_pixel = fl_xpixel(color());
 		Fl_X::make(this);
 	} else {
+		//printf("Fl_Window::show 2\n");
 		// Once again, we would lose the capture if we activated the window.
 		if (IsIconic(i->xid)) OpenIcon(i->xid);
 		if (!fl_capture) BringWindowToTop(i->xid);
@@ -2695,6 +2724,7 @@ HDC fl_GetDC(HWND w)
 // make X drawing go into this window (called by subclass flush() impl.)
 void Fl_Window::make_current()
 {
+	//printf("Fl_Window::make_current\n");
 	fl_GetDC(fl_xid(this));
 
 #if USE_COLORMAP
@@ -2827,6 +2857,7 @@ FL_EXPORT Window fl_xid_(const Fl_Window *w)
 
 int Fl_Window::decorated_w()
 {
+	//printf("Fl_Window::decorated_w\n");
 	if (!shown() || parent() || !border() || !visible()) return w();
 	int X, Y, bt, bx, by;
 	Fl_X::fake_X_wm(this, X, Y, bt, bx, by);
@@ -2835,6 +2866,7 @@ int Fl_Window::decorated_w()
 
 int Fl_Window::decorated_h()
 {
+	//printf("Fl_Window::decorated_h\n");
 	if (!shown() || parent() || !border() || !visible()) return h();
 	int X, Y, bt, bx, by;
 	Fl_X::fake_X_wm(this, X, Y, bt, bx, by);
