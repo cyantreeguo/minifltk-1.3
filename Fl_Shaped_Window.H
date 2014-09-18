@@ -55,6 +55,8 @@ private:
 	Fl_Image* shape_;
 #if __FLTK_MACOSX__
 	CGImageRef mask;
+#elif __FLTK_IPHONEOS__
+    CGImageRef mask;
 #endif
 	Fl_Bitmap *todelete_;
 	void shape_bitmap_(Fl_Bitmap*);
