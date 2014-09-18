@@ -506,6 +506,7 @@ Fl_File_Browser::load(const char     *directory,// I - Directory to load
 				num_files ++;
 			}
 #elif defined(__APPLE__)
+#if __FLTK_MACOSX__
 		// MacOS X and Darwin use getfsstat() system call...
 		int			numfs;	// Number of file systems
 		struct statfs	*fs;	// Buffer for file system info
@@ -535,6 +536,7 @@ Fl_File_Browser::load(const char     *directory,// I - Directory to load
 			// Free the memory used for the file system info array...
 			delete[] fs;
 		}
+#endif
 #elif defined(_AIX)
 		// AIX don't write the mounted filesystems to a file like '/etc/mnttab'.
 		// But reading the list of mounted filesystems from the kernel is possible:

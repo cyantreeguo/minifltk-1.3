@@ -66,10 +66,6 @@ HBRUSH fl_brush_action(int action);
 void fl_cleanup_pens(void);
 void fl_release_dc(HWND,HDC);
 void fl_cleanup_dc_list(void);
-#elif __FLTK_MACOSX__
-extern double fl_mac_flush_and_wait(double time_to_wait);
-#elif __FLTK_IPHONEOS__
-extern double fl_mac_flush_and_wait(double time_to_wait);
 #elif __FLTK_WINCE__
 #  include <ole2.h>
 void fl_free_fonts(void);
@@ -77,6 +73,10 @@ HBRUSH fl_brush_action(int action);
 void fl_cleanup_pens(void);
 void fl_release_dc(HWND,HDC);
 void fl_cleanup_dc_list(void);
+#elif __FLTK_MACOSX__
+extern double fl_mac_flush_and_wait(double time_to_wait);
+#elif __FLTK_IPHONEOS__
+extern double fl_mac_flush_and_wait(double time_to_wait);
 #endif
 
 //
@@ -233,6 +233,7 @@ int Fl::event_inside(const Fl_Widget *o) /*const*/
 // timer support
 //
 
+/*
 #ifdef WIN32
 
 // implementation in Fl_win32.cxx
@@ -242,6 +243,9 @@ int Fl::event_inside(const Fl_Widget *o) /*const*/
 // implementation in Fl_cocoa.mm (was Fl_mac.cxx)
 
 #else
+*/
+
+#if __FLTK_LINUX__
 
 //
 // X11 timers
@@ -546,17 +550,17 @@ double Fl::wait(double time_to_wait)
 	// delete all widgets that were listed during callbacks
 	do_widget_deletion();
 
-#ifdef WIN32
-
+#if __FLTK_WIN32__
 	return fl_wait(time_to_wait);
-
-#elif defined(__APPLE__)
-
+#elif __FLTK_WINCE__
+	return fl_wait(time_to_wait);
+#elif __FLTK_MACOSX__
 	run_checks();
 	return fl_mac_flush_and_wait(time_to_wait);
-
-#else
-
+#elif __FLTK_IPHONEOS__
+	run_checks();
+	return fl_mac_flush_and_wait(time_to_wait);
+#elif __FLTK_LINUX__
 	if (first_timeout) {
 		elapse_timeouts();
 		Timeout *t;
@@ -601,6 +605,8 @@ double Fl::wait(double time_to_wait)
 			time_to_wait = 0.0;
 		return fl_wait(time_to_wait);
 	}
+#else
+#error unsupported platform
 #endif
 }
 
@@ -2066,6 +2072,8 @@ void Fl_Window::flush()
 #  include "os/win32/Fl.cxx"
 #elif __FLTK_WINCE__
 #  include "os/wince/Fl.cxx"
+#elif __FLTK_LINUX__
+#  include "os/linux/Fl.cxx"
 #else
 //#elif defined(__APPLE__)
 #endif

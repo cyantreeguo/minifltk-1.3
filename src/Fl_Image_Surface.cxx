@@ -88,6 +88,10 @@ Fl_RGB_Image* Fl_Image_Surface::image()
 	CGContextFlush(offscreen);
 	data = fl_read_image(NULL, 0, 0, width, height, 0);
 	fl_end_offscreen();
+#elif __FLTK_IPHONEOS__
+    CGContextFlush(offscreen);
+	data = fl_read_image(NULL, 0, 0, width, height, 0);
+	fl_end_offscreen();
 #elif __FLTK_WIN32__
 	fl_pop_clip();
 	data = fl_read_image(NULL, 0, 0, width, height, 0);
@@ -97,11 +101,13 @@ Fl_RGB_Image* Fl_Image_Surface::image()
 	fl_window=_sw;
 	fl_gc = _sgc;
 #elif __FLTK_WINCE__
-#else
+#elif __FLTK_LINUX
 	fl_pop_clip();
 	data = fl_read_image(NULL, 0, 0, width, height, 0);
 	fl_window = pre_window;
 	previous->set_current();
+#else
+#error unsupported platform
 #endif
 	Fl_RGB_Image *image = new Fl_RGB_Image(data, width, height);
 	image->alloc_array = 1;
@@ -123,6 +129,11 @@ void Fl_Image_Surface::draw(Fl_Widget *widget, int delta_x, int delta_y)
 void Fl_Image_Surface::set_current()
 {
 #if __FLTK_MACOSX__
+	fl_begin_offscreen(offscreen);
+	fl_pop_clip();
+	Fl_Surface_Device::set_current();
+	fl_push_no_clip();
+#elif __FLTK_IPHONEOS__
 	fl_begin_offscreen(offscreen);
 	fl_pop_clip();
 	Fl_Surface_Device::set_current();

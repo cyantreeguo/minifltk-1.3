@@ -21,7 +21,9 @@
 //        Possibly 'preset_file' could be used to select the filename.
 //
 
-#ifdef __APPLE__
+#include "Fl_Platform.h"
+
+#if __FLTK_MACOSX__
 
 #include "Fl_Native_File_Chooser_common.cxx"		// strnew/strfree/strapp/chrcat
 #include <libgen.h>		// dirname(3)
@@ -656,7 +658,7 @@ int Fl_Native_File_Chooser::post() {
   return (retval == NSOKButton ? 0 : 1);
 }
 
-#endif // __APPLE__
+#endif // __FLTK_MACOSX__
 
 //
 // End of "$Id: Fl_Native_File_Chooser_MAC.mm 9825 2013-02-19 15:19:58Z manolo $".

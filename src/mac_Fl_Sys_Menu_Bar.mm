@@ -32,7 +32,11 @@
  * Many other calls of the parent class don't work.
  */
 
-#if defined(__APPLE__) || defined(FL_DOXYGEN)
+#include "Fl_Platform.h"
+
+#if __FLTK_MACOSX__
+//#if defined(__APPLE__) || defined(FL_DOXYGEN)
+
 #include "Fl_Menu_Item.H"
 #include "Fl_Sys_Menu_Bar.H"
 #include "x.H"
@@ -501,7 +505,7 @@ Fl_Sys_Menu_Bar::~Fl_Sys_Menu_Bar()
   Fl::remove_handler(process_sys_menu_shortcuts);
 }
 
-#endif /* __APPLE__ */
+#endif /* __FLTK_MACOSX__ */
 
 //
 // End of "$Id: Fl_Sys_Menu_Bar.mm 10106 2014-02-19 16:02:56Z manolo $".

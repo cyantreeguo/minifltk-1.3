@@ -40,6 +40,7 @@ extern "C" {
 	int XUtf8Tolower(int ucs);
 	unsigned short XUtf8IsNonSpacing(unsigned int ucs);
 };
+
 #elif __FLTK_WINCE__
 # include <ctype.h>
 # include <windows.h>
@@ -49,6 +50,7 @@ extern "C" {
 	int XUtf8Tolower(int ucs);
 	unsigned short XUtf8IsNonSpacing(unsigned int ucs);
 };
+
 #elif __FLTK_MACOSX__
 # include <stdio.h>
 # include <time.h>
@@ -87,6 +89,7 @@ unsigned short XUtf8IsNonSpacing(unsigned int ucs);
 # include <sys/stat.h>
 # include <fcntl.h>
 # include <unistd.h>
+
 #else
 # include <Xutf8.h>
 # include <sys/types.h>

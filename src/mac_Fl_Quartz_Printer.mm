@@ -16,7 +16,10 @@
 //     http://www.fltk.org/str.php
 //
 
-#ifdef __APPLE__
+#include "Fl_Platform.h"
+
+#if __FLTK_MACOSX__
+
 #include "Fl_Printer.H"
 
 #include "Fl.H"
@@ -297,7 +300,7 @@ void Fl_System_Printer::end_job (void)
   if (w) w->show();
 }
 
-#endif // __APPLE__
+#endif // __FLTK_MACOSX__
 
 //
 // End of "$Id: Fl_Quartz_Printer.mm 10057 2014-01-14 12:49:44Z manolo $".

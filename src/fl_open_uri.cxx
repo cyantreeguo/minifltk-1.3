@@ -157,6 +157,17 @@ fl_open_uri(const char *uri, char *msg, int msglen)
 
 	return run_program("/usr/bin/open", argv, msg, msglen) != 0;
 
+#elif __FLTK_IPHONEOS__
+	char	*argv[3];			// Command-line arguments
+    
+	argv[0] = (char*)"open";
+	argv[1] = (char*)uri;
+	argv[2] = (char*)0;
+    
+	if (msg) snprintf(msg, msglen, "open %s", uri);
+    
+	return run_program("/usr/bin/open", argv, msg, msglen) != 0;
+
 #else // !WIN32 && !__APPLE__
 	// Run any of several well-known commands to open the URI.
 	//

@@ -29,14 +29,15 @@
 // One Compile to copy them all and in the bundle bind them,
 // in the Land of MacOS X where the Drop-Shadows lie."
 
-#ifdef __APPLE__
+#include "Fl_Platform.h"
+
+#if __FLTK_MACOSX__
 
 #define CONSOLIDATE_MOTION 0
 extern "C"
 {
 #include <pthread.h>
 }
-
 
 #include "Fl.H"
 #include "x.H"
@@ -4033,7 +4034,7 @@ static int calc_mac_os_version()
 	return M*10000 + m*100 + b;
 }
 
-#endif // __APPLE__
+#endif // __FLTK_MACOSX__
 
 //
 // End of "$Id: Fl_cocoa.mm 10159 2014-05-23 16:47:21Z manolo $".

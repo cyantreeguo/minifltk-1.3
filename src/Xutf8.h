@@ -17,8 +17,6 @@
 #if ! ( defined(_Xutf8_h) || defined(FL_DOXYGEN) )
 #define _Xutf8_h
 
-
-
 #include "Fl_Platform.h"
 #if __FLTK_LINUX__
 
