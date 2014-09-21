@@ -25,7 +25,7 @@
 #if __FLTK_WIN32__
 #  include "os/win32/fl_set_fonts.cxx"
 #elif __FLTK_MACOSX__
-#  include "os/mac/fl_set_fonts.cxx"
+#  include "os/osx/fl_set_fonts.cxx"
 #elif __FLTK_IPHONEOS__
 #  include "os/ios/fl_set_fonts.cxx"
 #elif __FLTK_WINCE__

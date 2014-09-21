@@ -23,7 +23,7 @@
 #elif __FLTK_IPHONEOS__
 #  include "os/ios/fl_get_key.cxx"
 #elif __FLTK_MACOSX__
-#  include "os/mac/fl_get_key.cxx"
+#  include "os/osx/fl_get_key.cxx"
 #elif __FLTK_LINUX__
 #  include "os/linux/fl_get_key.cxx"
 #elif __FLTK_WINCE__

@@ -27,7 +27,7 @@
 #if __FLTK_WIN32__
 #  include "os/win32/fl_color.cxx"
 #elif __FLTK_MACOSX__
-#  include "os/mac/fl_color.cxx"
+#  include "os/osx/fl_color.cxx"
 #elif __FLTK_IPHONEOS__
 #  include "os/ios/fl_color.cxx"
 #elif __FLTK_WINCE__

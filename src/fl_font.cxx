@@ -48,7 +48,7 @@
 #if __FLTK_WIN32__
 #  include "os/win32/fl_font.cxx"
 #elif __FLTK_MACOSX__
-#  include "os/mac/fl_font.cxx"
+#  include "os/osx/fl_font.cxx"
 #elif __FLTK_IPHONEOS__
 #  include "os/ios/fl_font.cxx"
 #elif __FLTK_LINUX__

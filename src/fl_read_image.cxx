@@ -28,7 +28,7 @@
 #if __FLTK_WIN32__
 #  include "os/win32/fl_read_image.cxx"
 #elif __FLTK_MACOSX__
-#  include "os/mac/fl_read_image.cxx"
+#  include "os/osx/fl_read_image.cxx"
 #elif __FLTK_IPHONEOS__
 #  include "os/ios/fl_read_image.cxx"
 #elif __FLTK_WINCE__

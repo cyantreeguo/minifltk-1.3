@@ -31,7 +31,7 @@
 #if __FLTK_WIN32__
 #  include "os/win32/fl_draw_image.cxx"
 #elif __FLTK_MACOSX__
-#  include "os/mac/fl_draw_image.cxx"
+#  include "os/osx/fl_draw_image.cxx"
 #elif __FLTK_IPHONEOS__
 #  include "os/ios/fl_draw_image.cxx"
 #elif __FLTK_LINUX__
