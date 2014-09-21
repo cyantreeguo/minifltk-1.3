@@ -34,7 +34,6 @@
 #  include "fl_draw.H"
 #  include "Fl_Paged_Device.H"
 #  include "Fl_Shared_Image.H"
-#  include "Fl_Shaped_Window.H"
 #  include "fl_ask.H"
 #  include "filename.H"
 #  include <stdio.h>
@@ -2665,9 +2664,9 @@ void Fl_X::make_xid(Fl_Window* win, XVisualInfo *visual, Colormap colormap)
 	}
 #endif
 
-	if (win->type() == FL_SHAPED_WINDOW) {
-		((Fl_Shaped_Window*)win)->combine_mask();
-	}
+	if (win->shape_data_) {
+		win->combine_mask();
+    }
 	XMapWindow(fl_display, xp->xid);
 	if (showit) {
 		win->set_visible();
