@@ -29,7 +29,6 @@
 #include "Fl_Device.H"
 #include "Fl_Dial.H"
 #include "Fl_Double_Window.H"
-#include "Fl_Shaped_Window.H"
 #include "fl_draw.H"
 #include "Fl_Export.H"
 #include "Fl_File_Browser.H"
