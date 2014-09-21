@@ -41,7 +41,7 @@
 #if __FLTK_WIN32__
 #include "x_win32.H"
 #elif __FLTK_MACOSX__
-#include "x_mac.H"
+#include "x_osx.H"
 #elif __FLTK_IPHONEOS__
 #include "x_ios.H"
 #elif __FLTK_LINUX__
