@@ -5,7 +5,7 @@
 #elif __FLTK_IPHONEOS__
 #include "config_ios.h"
 #elif __FLTK_MACOSX__
-#include "config_mac.h"
+#include "config_osx.h"
 #elif __FLTK_LINUX__
 #include "config_linux.h"
 #elif __FLTK_WINCE__
