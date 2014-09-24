@@ -230,12 +230,9 @@ void Fl_GDI_Graphics_Driver::copy_offscreen_with_alpha(int x,int y,int w,int h,H
 	HDC new_gc = CreateCompatibleDC(fl_gc);
 	int save = SaveDC(new_gc);
 	SelectObject(new_gc, bitmap);
-	fl_can_do_alpha_blending(); // make sure this is called
 	BOOL alpha_ok = 0;
 	// first try to alpha blend
-	// if to printer, always try alpha_blend
-	if ( (fl_graphics_driver->class_name() == Fl_GDI_Printer_Graphics_Driver::class_id && fl_alpha_blend) ||
-	     (Fl_Surface_Device::surface() == Fl_Display_Device::display_device() && fl_can_do_alpha_blending() ) ) {
+	if ( fl_can_do_alpha_blending() ) {
 		alpha_ok = fl_alpha_blend(fl_gc, x, y, w, h, new_gc, srcx, srcy, w, h, blendfunc);
 	}
 	// if that failed (it shouldn't), still copy the bitmap over, but now alpha is 1
@@ -245,8 +242,6 @@ void Fl_GDI_Graphics_Driver::copy_offscreen_with_alpha(int x,int y,int w,int h,H
 	RestoreDC(new_gc, save);
 	DeleteDC(new_gc);
 }
-
-extern void fl_restore_clip();
 
 #elif __FLTK_WINCE__
 // Code used to switch output to an off-screen window.  See macros in
@@ -337,13 +332,10 @@ void Fl_GDI_Graphics_Driver::copy_offscreen_with_alpha(int x,int y,int w,int h,H
 	HDC new_gc = CreateCompatibleDC(fl_gc);
 	int save = SaveDC(new_gc);
 	SelectObject(new_gc, bitmap);
-	fl_can_do_alpha_blending(); // make sure this is called
 	BOOL alpha_ok = 0;
 	// first try to alpha blend
-	// if to printer, always try alpha_blend
-	if ( (fl_graphics_driver->class_name() == Fl_GDI_Printer_Graphics_Driver::class_id) ||
-	     (Fl_Surface_Device::surface() == Fl_Display_Device::display_device() && fl_can_do_alpha_blending() ) ) {
-		alpha_ok = AlphaBlend(fl_gc, x, y, w, h, new_gc, srcx, srcy, w, h, blendfunc);
+	if ( fl_can_do_alpha_blending() ) {
+		alpha_ok = fl_alpha_blend(fl_gc, x, y, w, h, new_gc, srcx, srcy, w, h, blendfunc);
 	}
 	// if that failed (it shouldn't), still copy the bitmap over, but now alpha is 1
 	if (!alpha_ok) {
@@ -352,8 +344,6 @@ void Fl_GDI_Graphics_Driver::copy_offscreen_with_alpha(int x,int y,int w,int h,H
 	RestoreDC(new_gc, save);
 	DeleteDC(new_gc);
 }
-
-extern void fl_restore_clip();
 
 #elif __FLTK_MACOSX__
 
@@ -481,8 +471,6 @@ void fl_end_offscreen()
 
 /** @} */
 
-extern void fl_restore_clip();
-
 #elif __FLTK_IPHONEOS__
 char fl_can_do_alpha_blending()
 {
@@ -495,7 +483,7 @@ Fl_Offscreen Fl_Quartz_Graphics_Driver::create_offscreen_with_alpha(int w, int h
 	void *data = calloc(w*h,4);
 	CGColorSpaceRef lut = CGColorSpaceCreateDeviceRGB();
 	CGContextRef ctx = CGBitmapContextCreate(
-	                           data, w, h, 8, w*4, lut, kCGImageAlphaPremultipliedLast);
+	        data, w, h, 8, w*4, lut, kCGImageAlphaPremultipliedLast);
 	CGColorSpaceRelease(lut);
 	return (Fl_Offscreen)ctx;
 }
@@ -515,7 +503,7 @@ Fl_Offscreen fl_create_offscreen(int w, int h)
 	void *data = calloc(w*h,4);
 	CGColorSpaceRef lut = CGColorSpaceCreateDeviceRGB();
 	CGContextRef ctx = CGBitmapContextCreate(
-	                           data, w, h, 8, w*4, lut, kCGImageAlphaNoneSkipLast);
+	        data, w, h, 8, w*4, lut, kCGImageAlphaNoneSkipLast);
 	CGColorSpaceRelease(lut);
 	return (Fl_Offscreen)ctx;
 }
@@ -540,7 +528,7 @@ void Fl_Quartz_Graphics_Driver::copy_offscreen(int x,int y,int w,int h,Fl_Offscr
 	CFRetain(src);
 	CGDataProviderRef src_bytes = CGDataProviderCreateWithData( src, data, sw*sh*4, bmProviderRelease);
 	CGImageRef img = CGImageCreate( sw, sh, 8, 4*8, 4*sw, lut, alpha,
-	                                src_bytes, 0L, false, kCGRenderingIntentDefault);
+	src_bytes, 0L, false, kCGRenderingIntentDefault);
 	// fl_push_clip();
 	CGRect rect = { { (CGFloat)x, (CGFloat)y }, { (CGFloat)w, (CGFloat)h } };
 	Fl_X::q_begin_image(rect, srcx, srcy, sw, sh);
@@ -608,7 +596,6 @@ void fl_end_offscreen()
 
 /** @} */
 
-extern void fl_restore_clip();
 #else
 # error unsupported platform
 #endif
@@ -646,7 +633,7 @@ void Fl_Double_Window::flush(int eraseoverlay)
 			myi->other_xid = fl_create_offscreen(w(), h());
 		clear_damage(FL_DAMAGE_ALL);
 #elif __FLTK_WINCE__
-		myi->other_xid = fl_create_offscreen(w(), h());
+			myi->other_xid = fl_create_offscreen(w(), h());
 		clear_damage(FL_DAMAGE_ALL);
 #elif __FLTK_MACOSX__
 			if (force_doublebuffering_) {
@@ -658,7 +645,7 @@ void Fl_Double_Window::flush(int eraseoverlay)
 				myi->other_xid = fl_create_offscreen(w(), h());
 				clear_damage(FL_DAMAGE_ALL);
 			}
-#elif __FLTK_LINUX__	
+#elif __FLTK_LINUX__
 			myi->other_xid = fl_create_offscreen(w(), h());
 		clear_damage(FL_DAMAGE_ALL);
 #else
