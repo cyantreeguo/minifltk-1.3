@@ -93,6 +93,7 @@
 */
 class FL_EXPORT Fl_Input_ : public Fl_Widget
 {
+	unsigned char caret_;
 
 	/** \internal Storage for the text field. */
 	const char* value_;
@@ -554,6 +555,8 @@ public:
 	int tab_nav() const {
 		return tab_nav_;
 	}
+
+	void caret();
 };
 
 #endif
