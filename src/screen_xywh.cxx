@@ -174,6 +174,7 @@ static void screen_init()
 	}
 	num_screens = count;
      */
+    num_screens = 1;
 }
 
 #elif __FLTK_LINUX__
