@@ -39,7 +39,7 @@ typedef class FLWindow_opaque *Window; // pointer to the FLWindow objective-c cl
 #if !(defined(FL_LIBRARY) || defined(FL_INTERNALS)) // this part is used when compiling an application program
 #  include <Fl_Widget.H>
 
-typedef struct flCocoaRegion* Fl_Region;
+typedef struct flIOSRegion* Fl_Region;
 typedef struct CGContext* CGContextRef;
 typedef struct OpaquePMPrintSettings*   PMPrintSettings;
 typedef struct OpaquePMPageFormat*      PMPageFormat;
@@ -64,7 +64,7 @@ class NSCursor;
 
 typedef CGContextRef Fl_Offscreen;
 
-typedef struct flCocoaRegion {
+typedef struct flIOSRegion {
 	int count;
 	CGRect *rects;
 } *Fl_Region;  // a region is the union of a series of rectangles
@@ -123,7 +123,7 @@ public:
 	static Fl_X* i(const Fl_Window* w) {
 		return w->i;
 	}
-	static int fake_X_wm(const Fl_Window*,int&,int&,int&,int&,int&);
+	//static int fake_X_wm(const Fl_Window*,int&,int&,int&,int&,int&);
 	static void make(Fl_Window*);
 	void flush();
 	// Quartz additions:
@@ -139,7 +139,6 @@ public:
 	void unmap(void);
 	int unlink(Fl_X* start = NULL);
 	void collapse(void);
-	//WindowRef window_ref(void);
 	void set_key_window(void);
 	// OS X doesn't have per window icons
 	static void set_default_icons(const Fl_RGB_Image*[], int) {};
@@ -155,7 +154,6 @@ public:
 	static CGContextRef nesw_cursor_image(void);
 	static CGContextRef nwse_cursor_image(void);
 	static CGContextRef none_cursor_image(void);
-	static void *get_carbon_function(const char *name);
 	static void screen_work_area(int &X, int &Y, int &W, int &H, int n); // compute work area of a given screen
 	static int next_marked_length; // next length of marked text after current marked text will have been replaced
 	static int insertion_point_location(int *px, int *py, int *pheight); // computes window coordinates & height of insertion point
@@ -205,20 +203,6 @@ extern void fl_open_display();
  If multiple files were dropped, \e cb will be called multiple times.
  */
 extern void fl_open_callback(void (*cb)(const char *));
-
-/**
- * \brief Attaches a callback to the "About myprog" item of the system application menu.
- *
- * \param cb   a callback that will be called by "About myprog" menu item
- *		   with NULL 1st argument.
- * \param user_data   a pointer transmitted as 2nd argument to the callback.
- * \param shortcut    optional shortcut to attach to the "About myprog" menu item (e.g., FL_META+'a')
- */
-extern void fl_mac_set_about( Fl_Callback *cb, void *user_data, int shortcut = 0);
-
-/** \brief The version number of the running Mac OS X (e.g., 100604 for 10.6.4)
- */
-extern int fl_mac_os_version;
 
 /** @} */
 

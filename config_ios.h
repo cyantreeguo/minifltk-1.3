@@ -8,7 +8,7 @@
 
 #if __FLTK_IPHONEOS__
 
-#define BORDER_WIDTH 2
+#define BORDER_WIDTH 1
 #define HAVE_GL 1
 #define HAVE_GL_GLU_H 1
 #define USE_COLORMAP 1
@@ -16,6 +16,7 @@
 #define USE_XFT 0
 #define HAVE_XDBE 0
 #define USE_XDBE HAVE_XDBE
+#define __APPLE_QUARTZ__ 1
 #define HAVE_OVERLAY 0
 #define HAVE_GL_OVERLAY HAVE_OVERLAY
 #if defined(__BIG_ENDIAN__)
