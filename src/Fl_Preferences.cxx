@@ -50,14 +50,19 @@
 #elif __FLTK_MACOSX__
 #  include <ApplicationServices/ApplicationServices.h>
 #  include <unistd.h>
+#  include "config.h"
 #  include <dlfcn.h>
 #elif __FLTK_IPHONEOS__
 #  include <UIKit/UIKit.h>
 #  include <unistd.h>
+#  include "config.h"
 #  include <dlfcn.h>
 #elif __FLTK_LINUX__
 #  include <unistd.h>
-#  include <dlfcn.h>
+#  include "config.h"
+#  if HAVE_DLFCN_H
+#    include <dlfcn.h>
+#  endif
 #else
 #error unsupported platform
 #endif
@@ -102,7 +107,7 @@ const char *Fl_Preferences::newUUID()
 	        b.byte0, b.byte1, b.byte2, b.byte3, b.byte4, b.byte5, b.byte6, b.byte7,
 	        b.byte8, b.byte9, b.byte10, b.byte11, b.byte12, b.byte13, b.byte14, b.byte15);
 	CFRelease(theUUID);
-#elif __FLTK_IPHONEOS__	
+#elif __FLTK_IPHONEOS__
 #elif __FLTK_WIN32__
 	// First try and use the win API function UuidCreate(), but if that is not
 	// available, fall back to making something up from scratch.
@@ -1991,7 +1996,10 @@ int Fl_Plugin_Manager::load(const char *filename)
 #elif __FLTK_WINCE__
 	HMODULE dl = 0;
 #else
-	void * dl = dlopen(filename, RTLD_LAZY);
+	void * dl = NULL;
+# if HAVE_DLSYM
+	dl = dlopen(filename, RTLD_LAZY);
+# endif
 #endif
 	// There is no way of unloading a plugin!
 	return (dl!=0) ? 0 : -1;

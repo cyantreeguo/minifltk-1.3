@@ -27,7 +27,10 @@
 #ifdef WIN32
 # include <malloc.h> // needed for VisualC2010
 #elif !defined(__APPLE__)
+#include "config.h"
+#if HAVE_DLFCN_H
 #include <dlfcn.h>
+#endif
 #define ShapeBounding			0
 #define ShapeSet			0
 #endif
@@ -142,16 +145,18 @@ void Fl_Window::combine_mask()
 	static XShapeCombineMask_type XShapeCombineMask_f = NULL;
 	static int beenhere = 0;
 	typedef Bool (*XShapeQueryExtension_type)(Display*, int*, int*);
-	int error_base, shapeEventBase;
 	if (!beenhere) {
 		beenhere = 1;
+#if HAVE_DLSYM && HAVE_DLFCN_H
 		fl_open_display();
 		void *handle = dlopen(NULL, RTLD_LAZY); // search symbols in executable
 		XShapeQueryExtension_type XShapeQueryExtension_f = (XShapeQueryExtension_type)dlsym(handle, "XShapeQueryExtension");
 		XShapeCombineMask_f = (XShapeCombineMask_type)dlsym(handle, "XShapeCombineMask");
 		// make sure that the X server has the SHAPE extension
+		int error_base, shapeEventBase;
 		if ( !( XShapeQueryExtension_f && XShapeCombineMask_f &&
 		        XShapeQueryExtension_f(fl_display, &shapeEventBase, &error_base) ) ) XShapeCombineMask_f = NULL;
+#endif
 	}
 	if (!XShapeCombineMask_f) return;
 	shape_data_->lw_ = w();
@@ -285,23 +290,23 @@ Fl_Window::shape_data_type* Fl_Window::shape_data_ = NULL;
 /** Assigns a non-rectangular shape to the window.
  This function gives an arbitrary shape (not just a rectangular region) to an Fl_Window.
  An Fl_Image of any dimension can be used as mask; it is rescaled to the window's dimension as needed.
- 
+
  The layout and widgets inside are unaware of the mask shape, and most will act as though the window's
  rectangular bounding box is available
  to them. It is up to you to make sure they adhere to the bounds of their masking shape.
- 
+
  The \p img argument can be an Fl_Bitmap, Fl_Pixmap or Fl_RGB_Image:
  \li With Fl_Bitmap or Fl_Pixmap, the shaped window covers the image part where bitmap bits equal one,
  or where the pixmap is not fully transparent.
  \li With an Fl_RGB_Image with an alpha channel (depths 2 or 4), the shaped window covers the image part
  that is not fully transparent.
  \li With an Fl_RGB_Image of depth 1 (gray-scale) or 3 (RGB), the shaped window covers the non-black image part.
- 
+
  Platform details:
  \li On the unix/linux platform, the SHAPE extension of the X server is required.
  This function does control the shape of Fl_Gl_Window instances.
  \li On the MSWindows platform, this function does nothing with class Fl_Gl_Window.
- \li On the Mac platform, OS version 10.4 or above is required. 
+ \li On the Mac platform, OS version 10.4 or above is required.
  An 8-bit shape-mask is used when \p img is an Fl_RGB_Image:
  with depths 2 or 4, the image alpha channel becomes the shape mask such that areas with alpha = 0
  are out of the shaped window;
@@ -311,9 +316,9 @@ Fl_Window::shape_data_type* Fl_Window::shape_data_ = NULL;
 
  The window borders and caption created by the window system are turned off by default. They
  can be re-enabled by calling Fl_Window::border(1).
- 
+
  A usage example is found at example/shapedwindow.cxx.
- 
+
  \version 1.3.3 (and requires compilation with -DFLTK_ABI_VERSION = 10303)
  */
 void Fl_Window::shape(const Fl_Image* img)
@@ -376,6 +381,7 @@ void Fl_Window::draw()
 	}
 	draw_children();
 
+# if __FLTK_MACOSX__
 #ifdef __APPLE_QUARTZ__
 	// on OS X, windows have no frame. Before OS X 10.7, to resize a window, we drag the lower right
 	// corner. This code draws a little ribbed triangle for dragging.
@@ -398,6 +404,30 @@ void Fl_Window::draw()
 			fl_line(x1--, y1, x2, y2--);
 		}
 	}
+#endif
+#elif __FLTK_IPHONEOS__
+#ifdef __APPLE_QUARTZ__
+	// on OS X, windows have no frame. Before OS X 10.7, to resize a window, we drag the lower right
+	// corner. This code draws a little ribbed triangle for dragging.
+	if ( fl_gc && !parent() && resizable() && (!size_range_set || minh!=maxh || minw!=maxw)) {
+		int dx = Fl::box_dw(box())-Fl::box_dx(box());
+		int dy = Fl::box_dh(box())-Fl::box_dy(box());
+		if (dx<=0) dx = 1;
+		if (dy<=0) dy = 1;
+		int x1 = w()-dx-1, x2 = x1, y1 = h()-dx-1, y2 = y1;
+		Fl_Color c[4] = {
+			color(),
+			fl_color_average(color(), FL_WHITE, 0.7f),
+			fl_color_average(color(), FL_BLACK, 0.6f),
+			fl_color_average(color(), FL_BLACK, 0.8f),
+		};
+		int i;
+		for (i=dx; i<12; i++) {
+			fl_color(c[i&3]);
+			fl_line(x1--, y1, x2, y2--);
+		}
+	}
+#endif
 #endif
 # if defined(__APPLE__) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_4
 	if (shape_data_) CGContextRestoreGState(fl_gc);

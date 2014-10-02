@@ -146,10 +146,16 @@ void Fl_Graphics_Driver::transformed_vertex0(COORD_T x, COORD_T y)
 
 void Fl_Graphics_Driver::transformed_vertex(double xf, double yf)
 {
+#if __FLTK_MACOSX__
 #ifdef __APPLE_QUARTZ__
 	transformed_vertex0(COORD_T(xf), COORD_T(yf));
 #else
 	transformed_vertex0(COORD_T(rint(xf)), COORD_T(rint(yf)));
+#endif
+#elif __FLTK_IPHONOS__
+    transformed_vertex0(COORD_T(xf), COORD_T(yf));
+#else
+    transformed_vertex0(COORD_T(rint(xf)), COORD_T(rint(yf)));
 #endif
 }
 
@@ -175,7 +181,7 @@ void Fl_Graphics_Driver::end_points()
 	if (fl_quartz_line_width_ > 1.5f) CGContextSetShouldAntialias(fl_gc, false);
   #endif
 #elif __FLTK_IPHONEOS__
-  #if defined(__APPLE_QUARTZ__)
+  //#if defined(__APPLE_QUARTZ__)
 	if (fl_quartz_line_width_ > 1.5f) CGContextSetShouldAntialias(fl_gc, true);
 	for (int i=0; i<n; i++) {
 		CGContextMoveToPoint(fl_gc, p[i].x, p[i].y);
@@ -183,7 +189,7 @@ void Fl_Graphics_Driver::end_points()
 		CGContextStrokePath(fl_gc);
 	}
 	if (fl_quartz_line_width_ > 1.5f) CGContextSetShouldAntialias(fl_gc, false);
-  #endif
+  //#endif
 #elif __FLTK_LINUX__
   #if defined(USE_X11)
 	if (n>1) XDrawPoints(fl_display, fl_window, fl_gc, p, n, 0);
@@ -215,7 +221,7 @@ void Fl_Graphics_Driver::end_line()
 	CGContextSetShouldAntialias(fl_gc, false);
   #endif
 #elif __FLTK_IPHONEOS__
-  #if defined(__APPLE_QUARTZ__)
+  //#if defined(__APPLE_QUARTZ__)
 	if (n<=1) return;
 	CGContextSetShouldAntialias(fl_gc, true);
 	CGContextMoveToPoint(fl_gc, p[0].x, p[0].y);
@@ -223,7 +229,7 @@ void Fl_Graphics_Driver::end_line()
 		CGContextAddLineToPoint(fl_gc, p[i].x, p[i].y);
 	CGContextStrokePath(fl_gc);
 	CGContextSetShouldAntialias(fl_gc, false);
-  #endif
+  //#endif
 #elif __FLTK_LINUX__
   #if defined(USE_X11)
 	if (n>1) XDrawLines(fl_display, fl_window, fl_gc, p, n, 0);
@@ -274,7 +280,7 @@ void Fl_Graphics_Driver::end_polygon()
 	CGContextSetShouldAntialias(fl_gc, false);
   #endif
 #elif __FLTK_IPHONEOS__
-  #if defined(__APPLE_QUARTZ__)
+  //#if defined(__APPLE_QUARTZ__)
 	if (n<=1) return;
 	CGContextSetShouldAntialias(fl_gc, true);
 	CGContextMoveToPoint(fl_gc, p[0].x, p[0].y);
@@ -283,7 +289,7 @@ void Fl_Graphics_Driver::end_polygon()
 	CGContextClosePath(fl_gc);
 	CGContextFillPath(fl_gc);
 	CGContextSetShouldAntialias(fl_gc, false);
-  #endif
+  //#endif
 #elif __FLTK_LINUX__
   #if defined(USE_X11)
 	if (n>2) XFillPolygon(fl_display, fl_window, fl_gc, p, n, Convex, 0);
@@ -299,6 +305,8 @@ void Fl_Graphics_Driver::begin_complex_polygon()
 	gap_ = 0;
 #if __FLTK_WIN32__
 	numcount = 0;
+#elif __FLTK_WINCE__
+    numcount = 0;
 #endif
 }
 
@@ -309,6 +317,8 @@ void Fl_Graphics_Driver::gap()
 		transformed_vertex((COORD_T)p[gap_].x, (COORD_T)p[gap_].y);
 #if __FLTK_WIN32__
 		counts[numcount++] = n-gap_;
+#elif __FLTK_WINCE__
+        counts[numcount++] = n-gap_;
 #endif
 		gap_ = n;
 	} else {
@@ -352,7 +362,7 @@ void Fl_Graphics_Driver::end_complex_polygon()
 	CGContextSetShouldAntialias(fl_gc, false);
   #endif
 #elif __FLTK_IPHONEOS__
-  #if defined(__APPLE_QUARTZ__)
+  //#if defined(__APPLE_QUARTZ__)
 	if (n<=1) return;
 	CGContextSetShouldAntialias(fl_gc, true);
 	CGContextMoveToPoint(fl_gc, p[0].x, p[0].y);
@@ -361,7 +371,7 @@ void Fl_Graphics_Driver::end_complex_polygon()
 	CGContextClosePath(fl_gc);
 	CGContextFillPath(fl_gc);
 	CGContextSetShouldAntialias(fl_gc, false);
-  #endif
+ // #endif
 #elif __FLTK_LINUX__
   #if defined(USE_X11)
 	if (n>2) XFillPolygon(fl_display, fl_window, fl_gc, p, n, 0, 0);
@@ -409,14 +419,14 @@ void Fl_Graphics_Driver::circle(double x, double y,double r)
 	CGContextSetShouldAntialias(fl_gc, false);
   #endif
 #elif __FLTK_IPHONEOS__
-  #if defined(__APPLE_QUARTZ__)
+  //#if defined(__APPLE_QUARTZ__)
 	// Quartz warning: circle won't scale to current matrix!
 	// Last argument must be 0 (counter-clockwise) or it draws nothing under __LP64__ !!!!
 	CGContextSetShouldAntialias(fl_gc, true);
 	CGContextAddArc(fl_gc, xt, yt, (w+h)*0.25f, 0, 2.0f*M_PI, 0);
 	(what == POLYGON ? CGContextFillPath : CGContextStrokePath)(fl_gc);
 	CGContextSetShouldAntialias(fl_gc, false);
-  #endif
+  //#endif
 #elif __FLTK_LINUX__
   #if defined(USE_X11)
 	(what == POLYGON ? XFillArc : XDrawArc)
