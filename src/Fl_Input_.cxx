@@ -404,7 +404,8 @@ CONTINUE2:
 				        (int)(xpos+curx+3.5f), Y+ypos+height-1);
 						*/
 			} else {
-				fl_rectf((int)(xpos+curx+0.5), Y+ypos, 2, height);
+				if ( caret_ == 2 ) fl_color(color());
+				fl_rectf((int)(xpos+curx+0.5), Y+ypos, 1, height);
 			}
 #ifdef __APPLE__
 			Fl::insertion_point_location(xpos+curx, Y+ypos+height, height);
@@ -1027,6 +1028,23 @@ void Fl_Input_::maybe_do_callback()
 	}
 }
 
+void Fl_Input_::caret()
+{
+	if ( caret_ == 0 ) caret_ = 1;
+	else if ( caret_ == 1 ) caret_ = 2;
+	else caret_ = 1;
+
+	if (mark_ == position_) {
+		minimal_update(size()+1);
+	} else //if (Fl::selection_owner() != this)
+		minimal_update(mark_, position_);
+}
+static void tick(void *v)
+{
+	((Fl_Input_*)v)->caret();
+	Fl::add_timeout(0.38, tick, v);
+}
+
 /**
   Handles all kinds of text field related events.
 
@@ -1036,7 +1054,6 @@ void Fl_Input_::maybe_do_callback()
 int Fl_Input_::handletext(int event, int X, int Y, int W, int H)
 {
 	switch (event) {
-
 	case FL_ENTER:
 	case FL_MOVE:
 		if (active_r() && window()) window()->cursor(FL_CURSOR_INSERT);
@@ -1052,9 +1069,13 @@ int Fl_Input_::handletext(int event, int X, int Y, int W, int H)
 			minimal_update(size()+1);
 		} else //if (Fl::selection_owner() != this)
 			minimal_update(mark_, position_);
+		caret_ = 1;
+		Fl::add_timeout(0.38, tick, this);
 		return 1;
 
 	case FL_UNFOCUS:
+		Fl::remove_timeout(tick, this);
+		caret_ = 0;
 		if (active_r() && window()) window()->cursor(FL_CURSOR_DEFAULT);
 		if (mark_ == position_) {
 			if (!(damage()&FL_DAMAGE_EXPOSE)) {
@@ -1167,6 +1188,8 @@ int Fl_Input_::handletext(int event, int X, int Y, int W, int H)
 Fl_Input_::Fl_Input_(int X, int Y, int W, int H, const char* l)
 	: Fl_Widget(X, Y, W, H, l)
 {
+	caret_ = 0;
+
 	box(FL_DOWN_BOX);
 	color(FL_BACKGROUND2_COLOR, FL_SELECTION_COLOR);
 	align(FL_ALIGN_LEFT);
