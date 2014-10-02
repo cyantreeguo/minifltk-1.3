@@ -17,7 +17,9 @@
 //
 
 #include "x.H"
+#if HAVE_DLSYM && HAVE_DLFCN_H
 #include <dlfcn.h>   // for dlopen et al
+#endif
 #include <locale.h>  // for setlocale
 
 /* --------------------- Type definitions from GLIB and GTK --------------------- */
@@ -617,8 +619,9 @@ int Fl_GTK_File_Chooser::fl_gtk_chooser_wrapper()
 	return result;
 } // fl_gtk_chooser_wrapper
 
+#if HAVE_DLSYM && HAVE_DLFCN_H
 // macro to help with the symbol loading boilerplate...
-#define GET_SYM(SSS, LLL) \
+#  define GET_SYM(SSS, LLL) \
 dlerror();    /* Clear any existing error */  \
 fl_##SSS = (XX_##SSS)dlsym(LLL, #SSS);        \
 if ((pc_dl_error = dlerror()) != NULL)  {     \
@@ -632,6 +635,7 @@ static void* fl_dlopen(const char *filename1, const char *filename2)
 	if (!ptr) ptr = dlopen(filename2, RTLD_LAZY | RTLD_GLOBAL);
 	return ptr;
 }
+#endif
 
 /*
  * Use dlopen to see if we can load the gtk dynamic libraries that
@@ -640,6 +644,7 @@ static void* fl_dlopen(const char *filename1, const char *filename2)
  */
 void Fl_GTK_File_Chooser::probe_for_GTK_libs(void)
 {
+#if HAVE_DLSYM && HAVE_DLFCN_H
 	void *ptr_glib    = NULL;
 	void *ptr_gtk     = NULL;
 
@@ -719,6 +724,7 @@ void Fl_GTK_File_Chooser::probe_for_GTK_libs(void)
 	GET_SYM(gtk_toggle_button_set_active, ptr_gtk);
 
 	did_find_GTK_libs = 1;
+#endif	
 } // probe_for_GTK_libs
 
 //
