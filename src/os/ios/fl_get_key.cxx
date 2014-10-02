@@ -254,12 +254,12 @@ int Fl::event_key(int k)
 //: returns true, if that key is pressed right now
 int Fl::get_key(int k)
 {
+    return 0;
+/*
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_4
-    /*
-	if(CGEventSourceKeyState != NULL) {
+	//if(CGEventSourceKeyState != NULL) {
 		return (int)CGEventSourceKeyState(kCGEventSourceStateCombinedSessionState, fltk2mac(k) );
-	} else
-     */
+	//} else
 #endif
 	{
 		typedef UInt32 fl_KeyMap[4];
@@ -284,6 +284,7 @@ int Fl::get_key(int k)
 		int i = fltk2mac(k);
 		return (b[i>>3]>>(i&7))&1;
 	}
+ */
 }
 
 #endif

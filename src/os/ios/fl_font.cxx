@@ -23,9 +23,7 @@
 extern unsigned fl_utf8toUtf16(const char* src, unsigned srclen, unsigned short* dst, unsigned dstlen);
 
 static CGAffineTransform font_mx = { 1, 0, 0, -1, 0, 0 };
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_5
 static CFMutableDictionaryRef attributes = NULL;
-#endif
 
 const int Fl_X::CoreText_threshold = 100500; // this represents Mac OS 10.5
 
@@ -39,54 +37,50 @@ Fl_Font_Descriptor::Fl_Font_Descriptor(const char* name, Fl_Fontsize Size)
 //  knowWidths = 0;
 	// OpenGL needs those for its font handling
 	size = Size;
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_5
-	if (fl_mac_os_version >= Fl_X::CoreText_threshold) {
-		CFStringRef str = CFStringCreateWithCString(NULL, name, kCFStringEncodingUTF8);
-		fontref = CTFontCreateWithName(str, size, NULL);
-		CGGlyph glyph[2];
-		const UniChar A[2]= {'W','.'};
-		CTFontGetGlyphsForCharacters(fontref, A, glyph, 2);
-		CGSize advances[2];
-		double w;
-		CTFontGetAdvancesForGlyphs(fontref, kCTFontHorizontalOrientation, glyph, advances, 2);
-		w = advances[0].width;
-		if ( abs(advances[0].width - advances[1].width) < 1E-2 ) {//this is a fixed-width font
-			// slightly rescale fixed-width fonts so the character width has an integral value
-			CFRelease(fontref);
-			CGFloat fsize = size / ( w/floor(w + 0.5) );
-			fontref = CTFontCreateWithName(str, fsize, NULL);
-			w = CTFontGetAdvancesForGlyphs(fontref, kCTFontHorizontalOrientation, glyph, NULL, 1);
-		}
-		CFRelease(str);
-		ascent = (short)(CTFontGetAscent(fontref) + 0.5);
-		descent = (short)(CTFontGetDescent(fontref) + 0.5);
-		q_width = w + 0.5;
-		for (unsigned i = 0; i < sizeof(width)/sizeof(float*); i++) width[i] = NULL;
-		if (!attributes) {
-			static CFNumberRef zero_ref;
-			float zero = 0.;
-			zero_ref = CFNumberCreate(NULL, kCFNumberFloat32Type, &zero);
-			// deactivate kerning for all fonts, so that string width = sum of character widths
-			// which allows fast fl_width() implementation.
-			attributes = CFDictionaryCreateMutable(kCFAllocatorDefault,
-			                                       3,
-			                                       &kCFTypeDictionaryKeyCallBacks,
-			                                       &kCFTypeDictionaryValueCallBacks);
-			CFDictionarySetValue (attributes, kCTKernAttributeName, zero_ref);
-		}
-		if (ascent == 0) { // this may happen with some third party fonts
-			CFDictionarySetValue (attributes, kCTFontAttributeName, fontref);
-			CFAttributedStringRef mastr = CFAttributedStringCreate(kCFAllocatorDefault, CFSTR("Wj"), attributes);
-			CTLineRef ctline = CTLineCreateWithAttributedString(mastr);
-			CFRelease(mastr);
-			CGFloat fascent, fdescent;
-			CTLineGetTypographicBounds(ctline, &fascent, &fdescent, NULL);
-			CFRelease(ctline);
-			ascent = (short)(fascent + 0.5);
-			descent = (short)(fdescent + 0.5);
-		}
+	CFStringRef str = CFStringCreateWithCString(NULL, name, kCFStringEncodingUTF8);
+	fontref = CTFontCreateWithName(str, size, NULL);
+	CGGlyph glyph[2];
+	const UniChar A[2]= {'W','.'};
+	CTFontGetGlyphsForCharacters(fontref, A, glyph, 2);
+	CGSize advances[2];
+	double w;
+	CTFontGetAdvancesForGlyphs(fontref, kCTFontHorizontalOrientation, glyph, advances, 2);
+	w = advances[0].width;
+	if ( abs(advances[0].width - advances[1].width) < 1E-2 ) {//this is a fixed-width font
+		// slightly rescale fixed-width fonts so the character width has an integral value
+		CFRelease(fontref);
+		CGFloat fsize = size / ( w/floor(w + 0.5) );
+		fontref = CTFontCreateWithName(str, fsize, NULL);
+		w = CTFontGetAdvancesForGlyphs(fontref, kCTFontHorizontalOrientation, glyph, NULL, 1);
 	}
-#endif
+	CFRelease(str);
+	ascent = (short)(CTFontGetAscent(fontref) + 0.5);
+	descent = (short)(CTFontGetDescent(fontref) + 0.5);
+	q_width = w + 0.5;
+	for (unsigned i = 0; i < sizeof(width)/sizeof(float*); i++) width[i] = NULL;
+	if (!attributes) {
+		static CFNumberRef zero_ref;
+		float zero = 0.;
+		zero_ref = CFNumberCreate(NULL, kCFNumberFloat32Type, &zero);
+		// deactivate kerning for all fonts, so that string width = sum of character widths
+		// which allows fast fl_width() implementation.
+		attributes = CFDictionaryCreateMutable(kCFAllocatorDefault,
+		                                       3,
+		                                       &kCFTypeDictionaryKeyCallBacks,
+		                                       &kCFTypeDictionaryValueCallBacks);
+		CFDictionarySetValue (attributes, kCTKernAttributeName, zero_ref);
+	}
+	if (ascent == 0) { // this may happen with some third party fonts
+		CFDictionarySetValue (attributes, kCTFontAttributeName, fontref);
+		CFAttributedStringRef mastr = CFAttributedStringCreate(kCFAllocatorDefault, CFSTR("Wj"), attributes);
+		CTLineRef ctline = CTLineCreateWithAttributedString(mastr);
+		CFRelease(mastr);
+		CGFloat fascent, fdescent;
+		CTLineGetTypographicBounds(ctline, &fascent, &fdescent, NULL);
+		CFRelease(ctline);
+		ascent = (short)(fascent + 0.5);
+		descent = (short)(fdescent + 0.5);
+	}
 }
 
 Fl_Font_Descriptor::~Fl_Font_Descriptor()
@@ -106,17 +100,32 @@ Fl_Font_Descriptor::~Fl_Font_Descriptor()
 	#endif
 	  */
 	if (this == fl_graphics_driver->font_descriptor()) fl_graphics_driver->font_descriptor(NULL);
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_5
-	if (fl_mac_os_version >= Fl_X::CoreText_threshold)  {
-		CFRelease(fontref);
-		for (unsigned i = 0; i < sizeof(width)/sizeof(float*); i++) {
-			if (width[i]) free(width[i]);
-		}
+	CFRelease(fontref);
+	for (unsigned i = 0; i < sizeof(width)/sizeof(float*); i++) {
+		if (width[i]) free(width[i]);
 	}
-#endif
 }
 
 ////////////////////////////////////////////////////////////////
+static Fl_Fontdesc built_in_table_PS[] = { // PostScript font names preferred when Mac OS 閳?10.5
+	{"ArialMT"},
+	{"Arial-BoldMT"},
+	{"Arial-ItalicMT"},
+	{"Arial-BoldItalicMT"},
+	{"CourierNewPSMT"},
+	{"CourierNewPS-BoldMT"},
+	{"CourierNewPS-ItalicMT"},
+	{"CourierNewPS-BoldItalicMT"},
+	{"TimesNewRomanPSMT"},
+	{"TimesNewRomanPS-BoldMT"},
+	{"TimesNewRomanPS-ItalicMT"},
+	{"TimesNewRomanPS-BoldItalicMT"},
+	{"Symbol"},
+	{"Monaco"},
+	{"AndaleMono"}, // there is no bold Monaco font on standard Mac
+	{"ZapfDingbatsITC"}
+};
+
 static Fl_Fontdesc built_in_table_full[] = { // full font names used before 10.5
 	{"Arial"},
 	{"Arial Bold"},
@@ -154,7 +163,7 @@ static UniChar *ios_Utf8_to_Utf16(const char *txt, int len, int *new_len)
 
 Fl_Fontdesc* Fl_X::calc_fl_fonts(void)
 {
-	return built_in_table_full;
+	return built_in_table_PS;// : built_in_table_full);
 }
 
 static Fl_Font_Descriptor* find(Fl_Font fnum, Fl_Fontsize size)
@@ -197,7 +206,6 @@ int Fl_Quartz_Graphics_Driver::descent()
 	return fl_fontsize->descent+1;
 }
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_5
 // returns width of a pair of UniChar's in the surrogate range
 static CGFloat surrogate_width(const UniChar *txt, Fl_Font_Descriptor *fl_fontsize)
 {
@@ -219,74 +227,66 @@ static CGFloat surrogate_width(const UniChar *txt, Fl_Font_Descriptor *fl_fontsi
 	if(must_release) CFRelease(font2);
 	return a.width;
 }
-#endif
 
 static double fl_ios_width(const UniChar* txt, int n, Fl_Font_Descriptor *fl_fontsize)
 {
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_5
-	if (fl_mac_os_version >= Fl_X::CoreText_threshold) {
-		double retval = 0;
-		UniChar uni;
-		int i;
-		for (i = 0; i < n; i++) { // loop over txt
-			uni = txt[i];
-			if (uni >= 0xD800 && uni <= 0xDBFF) { // handles the surrogate range
-				retval += surrogate_width(&txt[i], fl_fontsize);
-				i++; // because a pair of UniChar's represent a single character
-				continue;
-			}
-			const int block = 0x10000 / (sizeof(fl_fontsize->width)/sizeof(float*)); // block size
-			// r: index of the character block containing uni
-			unsigned int r = uni >> 7; // change 7 if sizeof(width) is changed
-			if (!fl_fontsize->width[r]) { // this character block has not been hit yet
-				//fprintf(stderr,"r=%d size=%d name=%s\n",r,fl_fontsize->size,fl_fonts[fl_font()].name);
-				// allocate memory to hold width of each character in the block
-				fl_fontsize->width[r] = (float*) malloc(sizeof(float) * block);
-				UniChar ii = r * block;
-				CGSize advance_size;
-				CGGlyph glyph;
-				for (int j = 0; j < block; j++) { // loop over the block
-					// ii spans all characters of this block
-					bool b = CTFontGetGlyphsForCharacters(fl_fontsize->fontref, &ii, &glyph, 1);
-					if (b)
-						CTFontGetAdvancesForGlyphs(fl_fontsize->fontref, kCTFontHorizontalOrientation, &glyph, &advance_size, 1);
-					else
-						advance_size.width = -1e9; // calculate this later
-					// the width of one character of this block of characters
-					fl_fontsize->width[r][j] = advance_size.width;
-					ii++;
-				}
-			}
-			// sum the widths of all characters of txt
-			double wdt = fl_fontsize->width[r][uni & (block-1)];
-			if (wdt == -1e9) {
-				CGSize advance_size;
-				CGGlyph glyph;
-				CTFontRef font2 = fl_fontsize->fontref;
-				bool must_release = false;
-				bool b = CTFontGetGlyphsForCharacters(font2, &uni, &glyph, 1);
-				if (!b) { // the current font doesn't contain this char
-					CFStringRef str = CFStringCreateWithCharactersNoCopy(NULL, &uni, 1, kCFAllocatorNull);
-					// find a font that contains it
-					font2 = CTFontCreateForString(font2, str, CFRangeMake(0,1));
-					must_release = true;
-					CFRelease(str);
-					b = CTFontGetGlyphsForCharacters(font2, &uni, &glyph, 1);
-				}
-				if (b) CTFontGetAdvancesForGlyphs(font2, kCTFontHorizontalOrientation, &glyph, &advance_size, 1);
-				else advance_size.width = 0.;
-				// the width of the 'uni' character
-				wdt = fl_fontsize->width[r][uni & (block-1)] = advance_size.width;
-				if (must_release) CFRelease(font2);
-			}
-			retval += wdt;
+	double retval = 0;
+	UniChar uni;
+	int i;
+	for (i = 0; i < n; i++) { // loop over txt
+		uni = txt[i];
+		if (uni >= 0xD800 && uni <= 0xDBFF) { // handles the surrogate range
+			retval += surrogate_width(&txt[i], fl_fontsize);
+			i++; // because a pair of UniChar's represent a single character
+			continue;
 		}
-		return retval;
-	} else {
-#endif
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_5
+		const int block = 0x10000 / (sizeof(fl_fontsize->width)/sizeof(float*)); // block size
+		// r: index of the character block containing uni
+		unsigned int r = uni >> 7; // change 7 if sizeof(width) is changed
+		if (!fl_fontsize->width[r]) { // this character block has not been hit yet
+			//fprintf(stderr,"r=%d size=%d name=%s\n",r,fl_fontsize->size,fl_fonts[fl_font()].name);
+			// allocate memory to hold width of each character in the block
+			fl_fontsize->width[r] = (float*) malloc(sizeof(float) * block);
+			UniChar ii = r * block;
+			CGSize advance_size;
+			CGGlyph glyph;
+			for (int j = 0; j < block; j++) { // loop over the block
+				// ii spans all characters of this block
+				bool b = CTFontGetGlyphsForCharacters(fl_fontsize->fontref, &ii, &glyph, 1);
+				if (b)
+					CTFontGetAdvancesForGlyphs(fl_fontsize->fontref, kCTFontHorizontalOrientation, &glyph, &advance_size, 1);
+				else
+					advance_size.width = -1e9; // calculate this later
+				// the width of one character of this block of characters
+				fl_fontsize->width[r][j] = advance_size.width;
+				ii++;
+			}
+		}
+		// sum the widths of all characters of txt
+		double wdt = fl_fontsize->width[r][uni & (block-1)];
+		if (wdt == -1e9) {
+			CGSize advance_size;
+			CGGlyph glyph;
+			CTFontRef font2 = fl_fontsize->fontref;
+			bool must_release = false;
+			bool b = CTFontGetGlyphsForCharacters(font2, &uni, &glyph, 1);
+			if (!b) { // the current font doesn't contain this char
+				CFStringRef str = CFStringCreateWithCharactersNoCopy(NULL, &uni, 1, kCFAllocatorNull);
+				// find a font that contains it
+				font2 = CTFontCreateForString(font2, str, CFRangeMake(0,1));
+				must_release = true;
+				CFRelease(str);
+				b = CTFontGetGlyphsForCharacters(font2, &uni, &glyph, 1);
+			}
+			if (b) CTFontGetAdvancesForGlyphs(font2, kCTFontHorizontalOrientation, &glyph, &advance_size, 1);
+			else advance_size.width = 0.;
+			// the width of the 'uni' character
+			wdt = fl_fontsize->width[r][uni & (block-1)] = advance_size.width;
+			if (must_release) CFRelease(font2);
+		}
+		retval += wdt;
 	}
-#endif
+	return retval;
 	return 0;
 }
 
@@ -321,32 +321,24 @@ void Fl_Quartz_Graphics_Driver::text_extents(const char *str8, int n, int &dx, i
 	if (!font_descriptor()) font(FL_HELVETICA, FL_NORMAL_SIZE);
 	Fl_Font_Descriptor *fl_fontsize = font_descriptor();
 	UniChar *txt = ios_Utf8_to_Utf16(str8, n, &n);
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_5
-	if (fl_mac_os_version >= Fl_X::CoreText_threshold) {
-		CFStringRef str16 = CFStringCreateWithCharactersNoCopy(NULL, txt, n,  kCFAllocatorNull);
-		CFDictionarySetValue (attributes, kCTFontAttributeName, fl_fontsize->fontref);
-		CFAttributedStringRef mastr = CFAttributedStringCreate(kCFAllocatorDefault, str16, attributes);
-		CFRelease(str16);
-		CTLineRef ctline = CTLineCreateWithAttributedString(mastr);
-		CFRelease(mastr);
-		CGContextSetTextPosition(fl_gc, 0, 0);
-		CGContextSetShouldAntialias(fl_gc, true);
-		CGRect rect = CTLineGetImageBounds(ctline, fl_gc);
-		CGContextSetShouldAntialias(fl_gc, false);
-		CFRelease(ctline);
-		dx = floor(rect.origin.x + 0.5);
-		dy = floor(- rect.origin.y - rect.size.height + 0.5);
-		w = rect.size.width + 0.5;
-		h = rect.size.height + 0.5;
-	} else {
-#endif
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_5
-	}
-#endif
+	CFStringRef str16 = CFStringCreateWithCharactersNoCopy(NULL, txt, n,  kCFAllocatorNull);
+	CFDictionarySetValue (attributes, kCTFontAttributeName, fl_fontsize->fontref);
+	CFAttributedStringRef mastr = CFAttributedStringCreate(kCFAllocatorDefault, str16, attributes);
+	CFRelease(str16);
+	CTLineRef ctline = CTLineCreateWithAttributedString(mastr);
+	CFRelease(mastr);
+	CGContextSetTextPosition(fl_gc, 0, 0);
+	CGContextSetShouldAntialias(fl_gc, true);
+	CGRect rect = CTLineGetImageBounds(ctline, fl_gc);
+	CGContextSetShouldAntialias(fl_gc, false);
+	CFRelease(ctline);
+	dx = floor(rect.origin.x + 0.5);
+	dy = floor(- rect.origin.y - rect.size.height + 0.5);
+	w = rect.size.width + 0.5;
+	h = rect.size.height + 0.5;
 	return;
 } // fl_text_extents
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_5
 static CGColorRef flcolortocgcolor(Fl_Color i)
 {
 	uchar r, g, b;
@@ -354,40 +346,32 @@ static CGColorRef flcolortocgcolor(Fl_Color i)
 	CGFloat components[4] = {r/255.0f, g/255.0f, b/255.0f, 1.};
 	static CGColorSpaceRef cspace = NULL;
 	if (cspace == NULL) {
-        cspace = CGColorSpaceCreateDeviceRGB();
+		cspace = CGColorSpaceCreateDeviceRGB();
 		//cspace = CGColorSpaceCreateWithName(kCGColorSpaceGenericRGB);
 	}
 	return CGColorCreate(cspace, components);
 }
-#endif
 
 static void fl_ios_draw(const char *str, int n, float x, float y, Fl_Graphics_Driver *driver)
 {
 	// convert to UTF-16 first
 	UniChar *uniStr = ios_Utf8_to_Utf16(str, n, &n);
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_5
-	if (fl_mac_os_version >= Fl_X::CoreText_threshold) {
-		CFStringRef str16 = CFStringCreateWithCharactersNoCopy(NULL, uniStr, n,  kCFAllocatorNull);
-		if (str16 == NULL) return; // shd not happen
-		CGColorRef color = flcolortocgcolor(driver->color());
-		CFDictionarySetValue (attributes, kCTFontAttributeName, driver->font_descriptor()->fontref);
-		CFDictionarySetValue (attributes, kCTForegroundColorAttributeName, color);
-		CFAttributedStringRef mastr = CFAttributedStringCreate(kCFAllocatorDefault, str16, attributes);
-		CFRelease(str16);
-		CFRelease(color);
-		CTLineRef ctline = CTLineCreateWithAttributedString(mastr);
-		CFRelease(mastr);
-		CGContextSetTextMatrix(fl_gc, font_mx);
-		CGContextSetTextPosition(fl_gc, x, y);
-		CGContextSetShouldAntialias(fl_gc, true);
-		CTLineDraw(ctline, fl_gc);
-		CGContextSetShouldAntialias(fl_gc, false);
-		CFRelease(ctline);
-	} else {
-#endif
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_5
-	}
-#endif
+	CFStringRef str16 = CFStringCreateWithCharactersNoCopy(NULL, uniStr, n,  kCFAllocatorNull);
+	if (str16 == NULL) return; // shd not happen
+	CGColorRef color = flcolortocgcolor(driver->color());
+	CFDictionarySetValue (attributes, kCTFontAttributeName, driver->font_descriptor()->fontref);
+	CFDictionarySetValue (attributes, kCTForegroundColorAttributeName, color);
+	CFAttributedStringRef mastr = CFAttributedStringCreate(kCFAllocatorDefault, str16, attributes);
+	CFRelease(str16);
+	CFRelease(color);
+	CTLineRef ctline = CTLineCreateWithAttributedString(mastr);
+	CFRelease(mastr);
+	CGContextSetTextMatrix(fl_gc, font_mx);
+	CGContextSetTextPosition(fl_gc, x, y);
+	CGContextSetShouldAntialias(fl_gc, true);
+	CTLineDraw(ctline, fl_gc);
+	CGContextSetShouldAntialias(fl_gc, false);
+	CFRelease(ctline);
 }
 
 void Fl_Quartz_Graphics_Driver::draw(const char *str, int n, float x, float y)

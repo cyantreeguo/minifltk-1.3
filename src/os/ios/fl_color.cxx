@@ -34,7 +34,7 @@
 static unsigned fl_cmap[256] = {
 #include "fl_cmap.h" // this is a file produced by "cmap.cxx":
 };
-/*
+
 void Fl_Quartz_Graphics_Driver::color(Fl_Color i)
 {
 	Fl_Graphics_Driver::color(i);
@@ -70,7 +70,7 @@ void Fl_Quartz_Graphics_Driver::color(uchar r, uchar g, uchar b)
 	CGContextSetRGBFillColor(fl_gc, fr, fg, fb, 1.0f);
 	CGContextSetRGBStrokeColor(fl_gc, fr, fg, fb, 1.0f);
 }
-*/
+
 void Fl::set_color(Fl_Color i, unsigned c)
 {
 	if (fl_cmap[i] != c) {
