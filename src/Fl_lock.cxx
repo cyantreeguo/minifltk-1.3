@@ -324,6 +324,35 @@ void Fl::awake(void* msg)
 	PostThreadMessage( main_thread, fl_wake_msg, (WPARAM)msg, 0);
 }
 ////////////////////////////////////////////////////////////////
+#elif __FLTK_IPHONEOS__
+// in ios no implentment Fl::lock() and Fl::unlock()
+void unlock_ring()
+{
+}
+
+void lock_ring()
+{
+}
+
+void Fl::awake(void*)
+{
+}
+
+int Fl::lock()
+{
+	return 1;
+}
+
+void Fl::unlock()
+{
+}
+
+void* Fl::thread_message()
+{
+	return NULL;
+}
+
+////////////////////////////////////////////////////////////////
 // POSIX threading...
 #elif HAVE_PTHREAD
 #  include <unistd.h>
