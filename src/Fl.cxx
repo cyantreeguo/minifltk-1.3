@@ -245,7 +245,7 @@ int Fl::event_inside(const Fl_Widget *o) /*const*/
 #else
 */
 
-#if __FLTK_LINUX__
+#if __FLTK_LINUX__ || __FLTK_IPHONEOS__
 
 //
 // X11 timers
@@ -462,8 +462,11 @@ static void run_checks()
 	}
 }
 
-#if !defined(WIN32) && !defined(__APPLE__)
-static char in_idle;
+//#if !defined(WIN32) && !defined(__APPLE__)
+#if __FLTK_LINUX__
+static unsigned char in_idle;
+#elif __FLTK_IPHONEOS__
+static unsigned char in_idle;
 #endif
 
 ////////////////////////////////////////////////////////////////
@@ -558,8 +561,52 @@ double Fl::wait(double time_to_wait)
 	run_checks();
 	return fl_mac_flush_and_wait(time_to_wait);
 #elif __FLTK_IPHONEOS__
-	run_checks();
-	return fl_mac_flush_and_wait(time_to_wait);
+    if (first_timeout) {
+        elapse_timeouts();
+        Timeout *t;
+        while ((t = first_timeout)) {
+            if (t->time > 0) break;
+            // The first timeout in the array has expired.
+            missed_timeout_by = t->time;
+            // We must remove timeout from array before doing the callback:
+            void (*cb)(void*) = t->cb;
+            void *argp = t->arg;
+            first_timeout = t->next;
+            t->next = free_timeout;
+            free_timeout = t;
+            // Now it is safe for the callback to do add_timeout:
+            cb(argp);
+        }
+    } else {
+        reset_clock = 1; // we are not going to check the clock
+    }
+    run_checks();
+    //  if (idle && !fl_ready()) {
+    if (idle) {
+        if (!in_idle) {
+            in_idle = 1;
+            idle();
+            in_idle = 0;
+        }
+        // the idle function may turn off idle, we can then wait:
+        if (idle) time_to_wait = 0.0;
+    }
+    if (first_timeout && first_timeout->time < time_to_wait)
+        time_to_wait = first_timeout->time;
+    if (time_to_wait <= 0.0) {
+        // do flush second so that the results of events are visible:
+        int ret = fl_mac_flush_and_wait(0.0);
+        flush();
+        return ret;
+    } else {
+        // do flush first so that user sees the display:
+        flush();
+        if (idle && !in_idle) // 'idle' may have been set within flush()
+            time_to_wait = 0.0;
+        return fl_mac_flush_and_wait(time_to_wait);
+    }
+	//run_checks();
+	//return fl_mac_flush_and_wait(time_to_wait);
 #elif __FLTK_LINUX__
 	if (first_timeout) {
 		elapse_timeouts();
@@ -739,13 +786,21 @@ int Fl::check()
 */
 int Fl::ready()
 {
-#if ! defined( WIN32 )  &&  ! defined(__APPLE__)
+//#if ! defined( WIN32 )  &&  ! defined(__APPLE__)
+#if __FLTK_LINUX__
 	if (first_timeout) {
 		elapse_timeouts();
 		if (first_timeout->time <= 0) return 1;
 	} else {
 		reset_clock = 1;
 	}
+#elif __FLTK_IPHONEOS__
+    if (first_timeout) {
+        elapse_timeouts();
+        if (first_timeout->time <= 0) return 1;
+    } else {
+        reset_clock = 1;
+    }
 #endif
 	return fl_ready();
 }
