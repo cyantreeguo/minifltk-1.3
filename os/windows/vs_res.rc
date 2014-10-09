@@ -1,3 +1,0 @@
-#include "vs_res.h"
-
-IDI_APPICON ICON DISCARDABLE "app.ico"
