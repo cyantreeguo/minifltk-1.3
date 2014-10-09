@@ -1,4 +1,8 @@
-﻿2014-10-02 cyantree
+﻿2014-10-09 cyantree
+在ios上编译时，注意2点：1.将新建工程里的plist中的storyboard删除 2.选中"Hide during application launch"，否则无法全屏
+
+===================
+2014-10-02 cyantree
 首次移植到ios平台，可以运行，细节还需要继续补充，目前多个UIView的显示还有问题，另外还没有加入键盘和多点触控
 
 ===================
