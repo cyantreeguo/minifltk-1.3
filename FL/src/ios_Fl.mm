@@ -60,10 +60,13 @@ void (*fl_lock_function)() = nothing;
 void (*fl_unlock_function)() = nothing;
 
 static int device_w, device_h, work_y=0;
+static int real_device_w, real_device_h;
 
 static void handleUpdateEvent(Fl_Window *window);
 
 static NSDate *endDate = [NSDate dateWithTimeIntervalSinceNow:-0.001];
+
+static Fl_Window *resize_from_system;
 
 // ************************* main begin ****************************************
 static int forward_argc;
@@ -129,10 +132,11 @@ static void SetEventPump(unsigned char enabled)
 {
     NSUInteger orientationMask = UIInterfaceOrientationMaskAll;
 
-    /* Don't allow upside-down orientation on the phone, so answering calls is in the natural orientation */
+    // Don't allow upside-down orientation on the phone, so answering calls is in the natural orientation
     if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone) {
         orientationMask &= ~UIInterfaceOrientationMaskPortraitUpsideDown;
     }
+    
     return orientationMask;
 }
 
@@ -144,8 +148,15 @@ static void SetEventPump(unsigned char enabled)
 
 - (void)willAnimateRotationToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation duration:(NSTimeInterval)duration
 {
+    /*
+    if ( interfaceOrientation == UIInterfaceOrientationLandscapeLeft || interfaceOrientation == UIInterfaceOrientationLandscapeRight ) {
+        device_h = real_device_w; device_w = real_device_h;
+    } else {
+        device_h = real_device_h; device_w = real_device_w;
+    }
+    */
+    
     [self updateSplashImage:interfaceOrientation];
-    printf("will rotation\n");
 }
 
 - (void)updateSplashImage:(UIInterfaceOrientation)interfaceOrientation
@@ -187,16 +198,26 @@ static UIWindow *launch_window=nil;
 - (void)postFinishLaunch
 {
 	CGSize size = [UIScreen mainScreen].bounds.size;
+    real_device_w = (int)size.width; real_device_h = (int)size.height;
+    device_w = real_device_w; device_h = real_device_h;
     Fl_Window::DisplayOrientation ori = Fl_Window::getCurrentOrientation();
-    if ( ori == Fl_Window::upright || ori == Fl_Window::upsideDown )
-    device_w = (int)size.width; device_h = (int)size.height;
+    if ( ori == Fl_Window::rotatedAntiClockwise || ori == Fl_Window::rotatedClockwise ) {
+        device_h = real_device_w; device_w = real_device_h;
+    }
     //printf("decive_h=%d\n", device_h);
     
     [[UIApplication sharedApplication] setStatusBarHidden:NO];
-    //[[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleBlackTranslucent animated:NO];
+    //[[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleLightContent animated:NO];
+    /*
+    [launch_window.rootViewController.navigationController.navigationBar setOpaque:YES];
+    [launch_window.rootViewController.navigationController.navigationBar setTranslucent:NO];
+    [launch_window.rootViewController.tabBarController.tabBar setOpaque: YES];
+    [launch_window.rootViewController.tabBarController.tabBar setTranslucent: NO];
+     */
     
     CGRect bounds = [[UIScreen mainScreen] applicationFrame];
-	work_y = bounds.origin.y;
+    work_y = bounds.origin.y;
+    printf("work_y=%d\n", work_y);
 	
     /* run the user's application, passing argc and argv */
     SetEventPump(1);
@@ -372,6 +393,7 @@ static void iosMouseHandler(NSSet *touches, UIEvent *event, UIView *view, int ty
 - (BOOL) canBecomeFirstResponder;
 
 - (BOOL) textView: (UITextView*) textView shouldChangeTextInRange: (NSRange) range replacementText: (NSString*) text;
+- (void) textViewDidChange:(UITextView *)textView;
 @end
 
 //==============================================================================
@@ -1055,15 +1077,23 @@ Fl_Fontdesc *fl_fonts = Fl_X::calc_fl_fonts();
 
 void fl_reset_spot()
 {
+    printf("reset_spot\n");
+    if ( Fl_X::first == NULL ) return;
+    FLView *view = (FLView*)[[Fl_X::first->xid rootViewController] view];
+    [view->hiddenTextView resignFirstResponder];
 }
 
 void fl_set_spot(int font, int size, int X, int Y, int W, int H, Fl_Window *win)
 {
-    
+    printf("set_spot\n");
+    FLView *view = (FLView*)[[Fl_X::first->xid rootViewController] view];
+    [view->hiddenTextView becomeFirstResponder];
 }
 
 void fl_set_status(int x, int y, int w, int h)
 {
+    printf("set_status\n");
+    
 }
 
 static void FLTK_IdleTimerDisabledChanged(void *userdata, const char *name, const char *oldValue, const char *hint)
@@ -1334,6 +1364,7 @@ void Fl_X::make(Fl_Window *w)
 		}
 		*/
 	} else {            // create a desktop window
+        printf("make\n");
 		Fl_Group::current(0);
 		fl_open_display();
 
@@ -1371,13 +1402,14 @@ void Fl_X::make(Fl_Window *w)
                 w->y(y_ios6);
             }
         }
+        printf("make(), x=%d, y=%d, w=%d, h=%d\n", w->x(), w->y(), w->w(), w->h());
 		crect.origin.x = w->x();
         crect.origin.y = w->y();
         printf("y = %f, height=%d\n", crect.origin.y, w->h());
 		crect.size.width = w->w();
 		crect.size.height = w->h();
 		FLWindow *cw = [[FLWindow alloc] initWithFlWindow: w contentRect: crect];
-        if (w->fullscreen_active()) cw.windowLevel = UIWindowLevelAlert;
+        //if (w->fullscreen_active()) cw.windowLevel = UIWindowLevelAlert;
         cw.opaque = YES;
         cw.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:0];
 
@@ -1396,11 +1428,18 @@ void Fl_X::make(Fl_Window *w)
 		FLViewController* controller;
 		controller = [[FLViewController alloc] init];
         controller.view = myview;
+        
+        /*
+        controller.edgesForExtendedLayout = UIRectEdgeNone;
+        controller.extendedLayoutIncludesOpaqueBars = NO;
+        controller.modalPresentationCapturesStatusBarAppearance = NO;
+         */
+        
         cw.rootViewController = controller;
 		
         myview.backgroundColor = [UIColor whiteColor];
 		[cw addSubview: myview];
-		[myview release];
+		//[myview release];
         
         /*
         if ([controller respondsToSelector:@selector(setNeedsStatusBarAppearanceUpdate)]) {
@@ -1448,6 +1487,16 @@ void Fl_X::make(Fl_Window *w)
 		if (w->border() || (!w->modal() && !w->tooltip_window())) Fl::handle(FL_FOCUS, w);
 		Fl::first_window(w);
         [cw makeKeyAndVisible];
+        
+        /*
+        if ( launch_window != nil ) {
+            [[[launch_window rootViewController] view] release];
+            [[launch_window rootViewController] release];
+            [launch_window release];
+            launch_window = nil;
+            printf("release\n");
+        }
+        //*/
 
 		int old_event = Fl::e_number;
 		w->handle(Fl::e_number = FL_SHOW);
@@ -1525,6 +1574,38 @@ void Fl_Window::show()
  */
 void Fl_Window::resize(int X, int Y, int W, int H)
 {
+    CGRect r = [[UIScreen mainScreen] bounds];
+    printf("resize: %d %d, %d %d\n", (int)r.size.width, (int)r.size.height, device_w, device_h);
+    
+	if ((!parent()) && shown()) {
+        //size_range(W, H, W, H);
+		//int bx, by, bt;
+		//if (!this->border()) bt = 0;
+		//else get_window_frame_sizes(bx, by, bt);
+        x(X); y(Y);w(W);h(H);
+        
+        printf("resize(), x=%d, y=%d, w=%d, h=%d\n", X, Y, W, H);
+		CGRect dim;
+		dim.origin.x = 0;//X;
+		dim.origin.y = 0;//Y;//main_screen_height - (Y + H);
+		dim.size.width = W;
+		dim.size.height = H;// + bt;
+		//[i->xid frame: dim display: YES]; // calls windowDidResize
+        i->xid.frame = dim;
+        //[i->xid setNeedsDisplay];
+        i->xid.rootViewController.view.frame = dim;
+        [i->xid.rootViewController.view setNeedsDisplay];
+		return;
+	}
+	resize_from_system = 0;
+	//if (is_a_resize) {
+		Fl_Group::resize(X, Y, W, H);
+		if (shown()) {
+			redraw();
+		}
+	//} else {
+	//	x(X); y(Y);
+	//}
 }
 
 // removes x,y,w,h rectangle from region r and returns result as a new Fl_Region
@@ -1603,7 +1684,7 @@ void Fl_Window::make_current()
     // and escapes even clipping!!!
     // it gets activated when needed (e.g., draw text)
     CGContextSetShouldAntialias(fl_gc, false);
-    CGFloat hgt = [[[fl_window rootViewController] view] frame].size.height;
+    //CGFloat hgt = [[[fl_window rootViewController] view] frame].size.height;
     //CGContextTranslateCTM(fl_gc, 0.5, hgt - 0.5f);
     CGContextTranslateCTM(fl_gc, 0.5, 0.5f);
     //CGContextScaleCTM(fl_gc, 1.0f, -1.0f); // now 0,0 is top-left point of the window
@@ -2022,6 +2103,7 @@ static CGRect convertToCGRect (const RectType& r)
 
 - (NSUInteger) supportedInterfaceOrientations
 {
+    //printf("supportedInterfaceOrientations\n");
 	FLView *view = (FLView *)[self view];
 	Fl_Window *w = [view getFl_Window];
     return getSupportedOrientations(w);
@@ -2038,7 +2120,19 @@ static CGRect convertToCGRect (const RectType& r)
 {
     (void) toInterfaceOrientation;
     (void) duration;
-
+    
+    if ( SYSTEM_VERSION_LESS_THAN(@"8.0") ) {
+        if ( toInterfaceOrientation == UIInterfaceOrientationLandscapeLeft || toInterfaceOrientation == UIInterfaceOrientationLandscapeRight ) {
+            device_h = real_device_w; device_w = real_device_h;
+        } else {
+            device_h = real_device_h; device_w = real_device_w;
+        }
+        printf("w=%d, h=%d\n", device_w, device_h);
+        FLView *view = (FLView *)[self view];
+        Fl_Window *w = [view getFl_Window];
+        w->resize(0, 0, device_w, device_h);
+    }
+    
     [UIView setAnimationsEnabled: NO]; // disable this because it goes the wrong way and looks like crap.
 }
 
@@ -2053,18 +2147,30 @@ static CGRect convertToCGRect (const RectType& r)
     jassert (juceView != nil && juceView->owner != nullptr);
     juceView->owner->updateTransformAndScreenBounds();
 	*/
-
+    
+    if ( SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"8.0") ) {
+    if ( fromInterfaceOrientation == UIInterfaceOrientationLandscapeLeft || fromInterfaceOrientation == UIInterfaceOrientationLandscapeRight ) {
+        device_h = real_device_h; device_w = real_device_w;
+    } else {
+        device_h = real_device_w; device_w = real_device_h;
+    }
+    printf("w=%d, h=%d\n", device_w, device_h);
+    FLView *view = (FLView *)[self view];
+    Fl_Window *w = [view getFl_Window];
+    w->resize(0, 0, device_w, device_h);
+    }
+    
     [UIView setAnimationsEnabled: YES];
 }
 
 - (BOOL)prefersStatusBarHidden
 {
-    printf("prefersStatusBarHidden\n");
+    //printf("prefersStatusBarHidden\n");
     FLView *view = (FLView *)[self view];
 	Fl_Window *w = [view getFl_Window];
     if ( w->fullscreen_active() ) return YES;
     else {
-        printf("no\n");
+        //printf("no\n");
         return NO;
     }
 }
@@ -2078,12 +2184,17 @@ static CGRect convertToCGRect (const RectType& r)
 	
 	flwindow = win;
 
-    hiddenTextView = [[UITextView alloc] initWithFrame: CGRectZero];
+    //hiddenTextView = [[UITextView alloc] initWithFrame: CGRectZero];
+    CGRect r;
+    r.origin.x = 10; r.origin.y = 240; r.size.width = 120; r.size.height = 25;
+    hiddenTextView = [[UITextView alloc] initWithFrame: r];
     [self addSubview: hiddenTextView];
     hiddenTextView.delegate = self;
 
     hiddenTextView.autocapitalizationType = UITextAutocapitalizationTypeNone;
     hiddenTextView.autocorrectionType = UITextAutocorrectionTypeNo;
+
+    //hiddenTextView.keyboardType = UIKeyboardTypeDefault;
 
     return self;
 }
@@ -2121,6 +2232,7 @@ static CGRect convertToCGRect (const RectType& r)
 
     //if (owner != nullptr)
     //    owner->handleTouches (event, true, false, false);
+    iosMouseHandler(touches, event, self, 0);
 }
 
 - (void) touchesMoved: (NSSet*) touches withEvent: (UIEvent*) event
@@ -2129,6 +2241,7 @@ static CGRect convertToCGRect (const RectType& r)
 
     //if (owner != nullptr)
     //    owner->handleTouches (event, false, false, false);
+    iosMouseHandler(touches, event, self, 1);
 }
 
 - (void) touchesEnded: (NSSet*) touches withEvent: (UIEvent*) event
@@ -2137,6 +2250,7 @@ static CGRect convertToCGRect (const RectType& r)
 
     //if (owner != nullptr)
     //    owner->handleTouches (event, false, true, false);
+    iosMouseHandler(touches, event, self, 2);
 }
 
 - (void) touchesCancelled: (NSSet*) touches withEvent: (UIEvent*) event
@@ -2166,8 +2280,10 @@ static CGRect convertToCGRect (const RectType& r)
 
 - (BOOL) canBecomeFirstResponder
 {
+    if ( Fl::modal_ && (Fl::modal_ != flwindow) ) return NO;
+    return !(flwindow->tooltip_window() || flwindow->menu_window());
     //return owner != nullptr && owner->canBecomeKeyWindow();
-	return true;
+	//return TRUE;
 }
 
 - (BOOL) textView: (UITextView*) textView shouldChangeTextInRange: (NSRange) range replacementText: (NSString*) text
@@ -2175,7 +2291,24 @@ static CGRect convertToCGRect (const RectType& r)
     (void) textView;
     //return owner->textViewReplaceCharacters (Range<int> ((int) range.location, (int) (range.location + range.length)), nsStringToJuce (text));
 	// FIXIT:
-	return NO;
+
+    const char *s = [text UTF8String];
+    const char *s1 = [[textView text] UTF8String];
+    int a = (int)text.length;//[text characterAtIndex:0];
+    printf("text:%s %s %d\n", s, s1, a);
+    printf("range:%d %d\n", (int)range.location, (int)range.location);
+    Fl::e_keysym = s[0];
+    Fl::e_original_keysym = s[0];
+    Fl::e_length = 1;
+    Fl::e_text = (char *)s;
+    Fl::handle(FL_KEYBOARD, flwindow);
+
+	return YES;
+}
+
+- (void) textViewDidChange:(UITextView *)textView
+{
+    
 }
 
 @end
