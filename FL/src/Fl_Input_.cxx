@@ -310,15 +310,6 @@ void Fl_Input_::drawtext(int X, int Y, int W, int H)
 	float xpos = (float)(X - xscroll_ + 1);
 	int ypos = -yscroll_;
 
-	/*
-	printf("caret=%d\n", caret_);
-	if ( caret_ == 2 ) {
-		fl_color(color());
-		fl_rectf((int)(xpos+curx+0.5), Y+ypos, 1, height);
-		printf("hide\n");
-	}
-	*/
-
 	for (; ypos < H;) {
 
 		// re-expand line unless it is the last one calculated above:
@@ -347,6 +338,7 @@ void Fl_Input_::drawtext(int X, int Y, int W, int H)
 			fl_push_clip((int)xx-1-height/8, Y+ypos, (int)(r-xx+2+height/4), height);
 			draw_box(box(), X-Fl::box_dx(box()), Y-Fl::box_dy(box()),
 			         W+Fl::box_dw(box()), H+Fl::box_dh(box()), color());
+			//printf("draw box\n");
 			// it now draws entire line over it
 			// this should not draw letters to left of erased area, but
 			// that is nyi.
@@ -414,10 +406,7 @@ CONTINUE2:
 				        (int)(xpos+curx+3.5f), Y+ypos+height-1);
 						*/
 			} else {
-				//*
-				if ( caret_ == 2 ) fl_color(color());
-				fl_rectf((int)(xpos+curx+0.5), Y+ypos, 1, height);
-				//*/
+				if ( caret_ < 2 ) fl_rectf((int)(xpos+curx+0.5), Y+ypos, 2, height);
 				/*
 				if ( caret_ == 1 ) {
 					fl_rectf((int)(xpos+curx+0.5), Y+ypos, 1, height);
@@ -448,9 +437,9 @@ CONTINUE:
 	}
 
 	fl_pop_clip();
-	if (Fl::focus() == this) {
-		fl_set_spot(textfont(), textsize(),
-		            (int)xpos+curx, Y+ypos-fl_descent(), W, H, window());
+	if (Fl::focus() == this && caret_ == 0 ) {
+		//printf("caret=%d\n", caret_);
+		fl_set_spot(textfont(), textsize(), (int)xpos+curx, Y+ypos-fl_descent(), W, H, window());
 	}
 }
 
@@ -1053,10 +1042,11 @@ void Fl_Input_::caret()
 	else caret_ = 1;
 	//printf("caret=%d\n", caret_);
 
+	//printf("%d %d\n", mark_, position_);
 	if (mark_ == position_) {
-		minimal_update(size()+1);
-	} else //if (Fl::selection_owner() != this)
-		minimal_update(mark_, position_);
+		minimal_update(mark_-1);
+	} //else //if (Fl::selection_owner() != this)
+		//minimal_update(mark_-1, position_-1);
 }
 static void tick(void *v)
 {
