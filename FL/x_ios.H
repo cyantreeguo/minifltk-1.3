@@ -35,26 +35,34 @@ typedef FLWindow *Window;
 typedef class FLWindow_opaque *Window; // pointer to the FLWindow objective-c class
 #endif // __OBJC__
 
-/*
-#if !(defined(FL_LIBRARY) || defined(FL_INTERNALS)) // this part is used when compiling an application program
-#  include <Fl_Widget.H>
-
-typedef struct flIOSRegion* Fl_Region;
-typedef struct CGContext* CGContextRef;
-typedef struct OpaquePMPrintSettings*   PMPrintSettings;
-typedef struct OpaquePMPageFormat*      PMPageFormat;
-typedef struct OpaquePMPrintSession*    PMPrintSession;
-typedef struct CGImage* CGImageRef;
-typedef CGContextRef Fl_Offscreen;
-
-#else // this part must be compiled when building the FLTK libraries
-*/
 
 // Standard MacOS C/C++ includes...
 #import <UIKit/UIKit.h>
 #import <Foundation/Foundation.h>
 
 #undef check // because of Fl::check()
+
+// ======================================================
+/*
+ *  System Versioning Preprocessor Macros
+ */
+
+#define SYSTEM_VERSION_EQUAL_TO(v)                  ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] == NSOrderedSame)
+#define SYSTEM_VERSION_GREATER_THAN(v)              ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] == NSOrderedDescending)
+#define SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(v)  ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedAscending)
+#define SYSTEM_VERSION_LESS_THAN(v)                 ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] == NSOrderedAscending)
+#define SYSTEM_VERSION_LESS_THAN_OR_EQUAL_TO(v)     ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedDescending)
+
+/*
+//  Usage
+if (SYSTEM_VERSION_LESS_THAN(@"4.0")) {
+    ...
+}
+if (SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"3.1.1")) {
+    ...
+}
+*/
+// ======================================================
 
 typedef CGContextRef Fl_Offscreen;
 
