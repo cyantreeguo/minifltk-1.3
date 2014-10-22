@@ -120,7 +120,7 @@ class FL_EXPORT Fl_Widget
 	Fl_Widget(const Fl_Widget &);
 	/** unimplemented assignment operator */
 	Fl_Widget& operator=(const Fl_Widget &);
-
+	
 protected:
 
 	/** Creates a widget at the given position and size.

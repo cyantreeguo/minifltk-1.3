@@ -1,12 +1,12 @@
 //
-// "$Id: Fl_Button.H 8864 2011-07-19 04:49:30Z greg.ercolano $"
+// "$Id: Fl_Button.H 10386 2014-10-19 20:17:17Z AlbrechtS $"
 //
 // Button header file for the Fast Light Tool Kit (FLTK).
 //
-// Copyright 1998-2010 by Bill Spitzak and others.
+// Copyright 1998-2014 by Bill Spitzak and others.
 //
 // This library is free software. Distribution and use rights are outlined in
-// the file "COPYING" which should have been included with this file.  If this
+// the file "COPYING" which should have been included with this file. If this
 // file is missing or damaged, see the license at:
 //
 //     http://www.fltk.org/COPYING.php
@@ -27,7 +27,7 @@
 #endif
 
 // values for type()
-#define FL_NORMAL_BUTTON	0   /**< value() will be set to 1 during the press of the button and 
+#define FL_NORMAL_BUTTON	0   /**< value() will be set to 1 during the press of the button and
 reverts back to 0 when the button is released */
 #define FL_TOGGLE_BUTTON	1   ///< value() toggles between 0 and 1 at every click of the button
 #define FL_RADIO_BUTTON		(FL_RESERVED_TYPE+2) /**< is set to 1 at button press, and all other
@@ -163,6 +163,10 @@ public:
 	/**
 	  Sets the down box type. The default value of 0 causes FLTK to figure out
 	  the correct matching down version of box().
+
+	  Some derived classes (e.g. Fl_Round_Button and Fl_Light_Button use
+	  down_box() for special purposes. See docs of these classes.
+
 	  \param[in] b down box type
 	 */
 	void down_box(Fl_Boxtype b) {

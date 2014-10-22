@@ -94,6 +94,7 @@
 class FL_EXPORT Fl_Input_ : public Fl_Widget
 {
 	unsigned char caret_;
+	int caret_x_, caret_y_, caret_w_, caret_h_;
 
 	/** \internal Storage for the text field. */
 	const char* value_;

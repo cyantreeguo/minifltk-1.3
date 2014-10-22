@@ -16,8 +16,8 @@
 //     http://www.fltk.org/str.php
 //
 
-/* \file
-   Fl_Image, Fl_RGB_Image classes . */
+/** \file
+   Fl_Image, Fl_RGB_Image classes. */
 
 #ifndef Fl_Image_H
 #  define Fl_Image_H
@@ -31,14 +31,22 @@ class Fl_Pixmap;
 struct Fl_Menu_Item;
 struct Fl_Label;
 
+/** \enum Fl_RGB_Scaling
+    The scaling algorithm to use for RGB images.
+*/
+enum Fl_RGB_Scaling {
+	FL_RGB_SCALING_NEAREST = 0, ///< default RGB image scaling algorithm
+	FL_RGB_SCALING_BILINEAR ///< more accurate, but slower RGB image scaling algorithm
+};
+
 /**
   Fl_Image is the base class used for caching and
   drawing all kinds of images in FLTK. This class keeps track of
   common image data such as the pixels, colormap, width, height,
   and depth. Virtual methods are used to provide type-specific
-  image handling.</P>
+  image handling.
 
-  <P>Since the Fl_Image class does not support image
+  Since the Fl_Image class does not support image
   drawing by itself, calling the draw() method results in
   a box with an X in it being drawn instead.
 */
@@ -46,8 +54,9 @@ class FL_EXPORT Fl_Image
 {
 	int w_, h_, d_, ld_, count_;
 	const char * const *data_;
+	static Fl_RGB_Scaling RGB_scaling_;
 
-	// Forbid use of copy contructor and assign operator
+	// Forbid use of copy constructor and assign operator
 	Fl_Image & operator=(const Fl_Image &);
 	Fl_Image(const Fl_Image &);
 
@@ -190,14 +199,12 @@ public:
 		draw(X, Y, w(), h(), 0, 0);       // platform dependent
 	}
 	virtual void uncache();
-};
 
-/// \enum Fl_RGB_Scaling
-/// The scaling algorithm to use.
-///
-enum Fl_RGB_Scaling {
-	FL_SCALING_NEAREST = 0,
-	FL_SCALING_BILINEAR
+// set RGB image scaling method
+	static void RGB_scaling(Fl_RGB_Scaling);
+
+	// get RGB image scaling method
+	static Fl_RGB_Scaling RGB_scaling();
 };
 
 /**
@@ -205,9 +212,9 @@ enum Fl_RGB_Scaling {
   of full-color images with 1 to 4 channels of color information.
   Images with an even number of channels are assumed to contain
   alpha information, which is used to blend the image with the
-  contents of the screen.</P>
+  contents of the screen.
 
-  <P>Fl_RGB_Image is defined in
+  Fl_RGB_Image is defined in
   &lt;FL/Fl_Image.H&gt;, however for compatibility reasons
   &lt;FL/Fl_RGB_Image.H&gt; should be included.
 */
@@ -217,7 +224,6 @@ class FL_EXPORT Fl_RGB_Image : public Fl_Image
 	friend class Fl_GDI_Graphics_Driver;
 	friend class Fl_Xlib_Graphics_Driver;
 	static size_t max_size_;
-	static Fl_RGB_Scaling scaling_;
 public:
 
 	const uchar *array;
@@ -300,14 +306,6 @@ public:
 	static size_t max_size() {
 		return max_size_;
 	}
-
-	/** Sets the scaling method used for copy(int, int).
-        Applies to all RGB images, defaults to FL_SCALING_NEAREST.
-	  */
-	static void scaling(Fl_RGB_Scaling);
-
-	/** Returns the currently used scaling method. */
-	static Fl_RGB_Scaling scaling();
 };
 
 #endif // !Fl_Image_H

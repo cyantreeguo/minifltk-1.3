@@ -16,9 +16,6 @@
 //     http://www.fltk.org/str.php
 //
 
-/* \file
-   Fl_Round_Button widget . */
-
 #ifndef Fl_Round_Button_H
 #define Fl_Round_Button_H
 
