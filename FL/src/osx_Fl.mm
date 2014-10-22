@@ -3855,25 +3855,39 @@ unsigned char* Fl_X::bitmap_from_window_rect(Fl_Window *win, int x, int y, int w
  */
 {
 	NSBitmapImageRep *bitmap = rect_to_NSBitmapImageRep(win, x, y, w, h);
-	if (bitmap == nil) return NULL;
-	*bytesPerPixel = [bitmap bitsPerPixel] / 8;
-	int bpp = (int)[bitmap bytesPerPlane];
-	int bpr = (int)[bitmap bytesPerRow];
-	int hh = bpp / bpr; // sometimes hh = h-1 for unclear reason
-	int ww = bpr / (*bytesPerPixel); // sometimes ww = w-1
-	unsigned char *data = new unsigned char[w * h *  *bytesPerPixel];
-	if (w == ww) {
-		memcpy(data, [bitmap bitmapData], w * hh *  *bytesPerPixel);
-	} else {
-		unsigned char *p = [bitmap bitmapData];
-		unsigned char *q = data;
-		for (int i = 0; i < hh; i++) {
-			memcpy(q, p, *bytesPerPixel * ww);
-			p += bpr;
-			q += w * *bytesPerPixel;
-		}
-	}
-	return data;
+  if (bitmap == nil) return NULL;
+  *bytesPerPixel = [bitmap bitsPerPixel]/8;
+  int bpp = (int)[bitmap bytesPerPlane];
+  int bpr = (int)[bitmap bytesPerRow];
+  int hh = bpp/bpr; // sometimes hh = h-1 for unclear reason, and hh = 2*h with retina
+  int ww = bpr/(*bytesPerPixel); // sometimes ww = w-1, and ww = 2*w with retina
+  unsigned char *data;
+  if (ww > w) { // with a retina display
+    Fl_RGB_Image *rgb = new Fl_RGB_Image([bitmap bitmapData], ww, hh, 4);
+    Fl_RGB_Scaling save_scaling = Fl_Image::RGB_scaling();
+    Fl_Image::RGB_scaling(FL_RGB_SCALING_BILINEAR);
+    Fl_RGB_Image *rgb2 = (Fl_RGB_Image*)rgb->copy(w, h);
+    Fl_Image::RGB_scaling(save_scaling);
+    delete rgb;
+    rgb2->alloc_array = 0;
+    data = (uchar*)rgb2->array;
+    delete rgb2;
+  }
+  else {
+    data = new unsigned char[w * h *  *bytesPerPixel];
+    if (w == ww) {
+      memcpy(data, [bitmap bitmapData], w * hh *  *bytesPerPixel);
+    } else {
+      unsigned char *p = [bitmap bitmapData];
+      unsigned char *q = data;
+      for(int i = 0;i < hh; i++) {
+        memcpy(q, p, *bytesPerPixel * ww);
+        p += bpr;
+        q += w * *bytesPerPixel;
+      }
+    }
+  }
+  return data;
 }
 
 static void imgProviderReleaseData(void *info, const void *data, size_t size)
@@ -3940,56 +3954,72 @@ int Fl_Window::decorated_h()
 void Fl_Paged_Device::print_window(Fl_Window *win, int x_offset, int y_offset)
 {
 	if (!win->shown() || win->parent() || !win->border() || !win->visible()) {
-		this->print_widget(win, x_offset, y_offset);
-		return;
-	}
-	int bx, by, bt, bpp;
-	get_window_frame_sizes(bx, by, bt);
-	Fl_Display_Device::display_device()->set_current(); // send win to front and make it current
-	const char *title = win->label();
-	win->label(""); // temporarily set a void window title
-	win->show();
-	fl_gc = NULL;
-	Fl::check();
-	// capture the window title bar with no title
-	unsigned char *bitmap = Fl_X::bitmap_from_window_rect(win, 0, -bt, win->w(), bt, &bpp);
-	win->label(title); // put back the window title
-					   // and print it
-	this->set_current(); // back to the Fl_Paged_Device
-	Fl_RGB_Image *rgb = new Fl_RGB_Image(bitmap, win->w(), bt, bpp);
-	rgb->draw(x_offset, y_offset);
-	delete rgb;
-	delete[]bitmap;
-	if (title) { // print the window title
-		const int skip = 68; // approx width of the zone of the 3 window control buttons
+    this->print_widget(win, x_offset, y_offset);
+    return;
+  }
+  int bx, by, bt, bpp;
+  get_window_frame_sizes(bx, by, bt);
+  Fl_Display_Device::display_device()->set_current(); // send win to front and make it current
+  const char *title = win->label();
+  win->label(""); // temporarily set a void window title
+  win->show();
+  fl_gc = NULL;
+  Fl::check();
+  BOOL to_quartz = dynamic_cast<Fl_Printer*>(this) != NULL;
+  // capture the window title bar with no title
+  CGImageRef img = NULL;
+  unsigned char *bitmap = NULL;
+  if (to_quartz)
+    img = Fl_X::CGImage_from_window_rect(win, 0, -bt, win->w(), bt);
+  else
+    bitmap = Fl_X::bitmap_from_window_rect(win, 0, -bt, win->w(), bt, &bpp);
+  win->label(title); // put back the window title
+  // and print it
+  this->set_current(); // back to the Fl_Paged_Device
+  if (img && to_quartz) {
+    CGRect rect = { { x_offset, y_offset }, { win->w(), bt } };
+    Fl_X::q_begin_image(rect, 0, 0, win->w(), bt);
+    CGContextDrawImage(fl_gc, rect, img);
+    Fl_X::q_end_image();
+    CFRelease(img);
+  }
+  else if(!to_quartz) {
+    Fl_RGB_Image *rgb = new Fl_RGB_Image(bitmap, win->w(), bt, bpp);
+    rgb->draw(x_offset, y_offset);
+    delete rgb;
+    delete[] bitmap;
+  }
+  if (title) { // print the window title
+    const int skip = 68; // approx width of the zone of the 3 window control buttons
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_4
-		if (fl_mac_os_version >= 100400 && dynamic_cast<Fl_Printer *>(this)) { // use Cocoa string drawing with exact title bar font
-			NSGraphicsContext *current = [NSGraphicsContext currentContext];
-			[NSGraphicsContext setCurrentContext: [NSGraphicsContext graphicsContextWithGraphicsPort: fl_gc flipped: YES]]; //10.4
-			NSDictionary *attr = [NSDictionary dictionaryWithObject: [NSFont titleBarFontOfSize: 0]
-															 forKey: NSFontAttributeName];
-			NSString *title_s = [fl_xid(win) title];
-			NSSize size = [title_s sizeWithAttributes: attr];
-			int x = x_offset + win->w() / 2 - size.width / 2;
-			if (x < x_offset + skip) x = x_offset + skip;
-			NSRect r = { { (CGFloat)x, (CGFloat)(y_offset + bt / 2 + 4) }, { (CGFloat)(win->w() - skip), (CGFloat)bt } };
-			[[NSGraphicsContext currentContext] setShouldAntialias: YES];
-			[title_s drawWithRect: r options: (NSStringDrawingOptions)0 attributes: attr]; // 10.4
-			[[NSGraphicsContext currentContext] setShouldAntialias: NO];
-			[NSGraphicsContext setCurrentContext: current];
-		} else
+    if (fl_mac_os_version >= 100400 && to_quartz) { // use Cocoa string drawing with exact title bar font
+      NSGraphicsContext *current = [NSGraphicsContext currentContext];
+      [NSGraphicsContext setCurrentContext:[NSGraphicsContext graphicsContextWithGraphicsPort:fl_gc flipped:YES]];//10.4
+      NSDictionary *attr = [NSDictionary dictionaryWithObject:[NSFont titleBarFontOfSize:0] 
+						       forKey:NSFontAttributeName];
+      NSString *title_s = [fl_xid(win) title];
+      NSSize size = [title_s sizeWithAttributes:attr];
+      int x = x_offset + win->w()/2 - size.width/2;
+      if (x < x_offset+skip) x = x_offset+skip;
+      NSRect r = {{x, y_offset+bt/2+4}, {win->w() - skip, bt}};
+      [[NSGraphicsContext currentContext] setShouldAntialias:YES];
+      [title_s drawWithRect:r options:(NSStringDrawingOptions)0 attributes:attr]; // 10.4
+      [[NSGraphicsContext currentContext] setShouldAntialias:NO];
+      [NSGraphicsContext setCurrentContext:current];
+    }
+    else
 #endif
-		{
-			fl_font(FL_HELVETICA, 14); // the exact font is LucidaGrande 13 pts
-			fl_color(FL_BLACK);
-			int x = x_offset + win->w() / 2 - fl_width(title) / 2;
-			if (x < x_offset + skip) x = x_offset + skip;
-			fl_push_clip(x_offset, y_offset, win->w(), bt);
-			fl_draw(title, x, y_offset + bt / 2 + 4);
-			fl_pop_clip();
-		}
-	}
-	this->print_widget(win, x_offset, y_offset + bt); // print the window inner part
+    {
+      fl_font(FL_HELVETICA, 14); // the exact font is LucidaGrande 13 pts
+      fl_color(FL_BLACK);
+      int x = x_offset + win->w()/2 - fl_width(title)/2;
+      if (x < x_offset+skip) x = x_offset+skip;
+      fl_push_clip(x_offset, y_offset, win->w(), bt);
+      fl_draw(title, x, y_offset+bt/2+4);
+      fl_pop_clip();
+    }
+  }
+  this->print_widget(win, x_offset, y_offset + bt); // print the window inner part
 }
 
 /* Returns the address of a Carbon function after dynamically loading the Carbon library if needed.

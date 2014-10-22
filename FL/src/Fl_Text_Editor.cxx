@@ -596,6 +596,7 @@ int Fl_Text_Editor::handle(int event)
 
 	switch (event) {
 	case FL_FOCUS:
+		fl_set_spot(textfont(), textsize(), x(), y(), w(), h(), window());
 		show_cursor(mCursorOn); // redraws the cursor
 		if (buffer()->selected()) redraw(); // Redraw selections...
 		Fl::focus(this);
@@ -612,6 +613,7 @@ int Fl_Text_Editor::handle(int event)
 #endif
 		if (buffer()->selected()) redraw(); // Redraw selections...
 	case FL_HIDE:
+		fl_reset_spot();
 		if (when() & FL_WHEN_RELEASE) maybe_do_callback();
 		return 1;
 

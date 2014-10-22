@@ -27,6 +27,8 @@
 #include <stdlib.h>
 #include <ctype.h>
 
+#define CARET_FLUSH_TIME 0.5
+
 #define MAXBUF 1024
 #if defined(USE_X11) && !USE_XFT
 const int secret_char = '*'; // asterisk to hide secret input
@@ -406,13 +408,18 @@ CONTINUE2:
 				        (int)(xpos+curx+3.5f), Y+ypos+height-1);
 						*/
 			} else {
-				if ( caret_ < 2 ) fl_rectf((int)(xpos+curx+0.5), Y+ypos, 2, height);
-				/*
-				if ( caret_ == 1 ) {
-					fl_rectf((int)(xpos+curx+0.5), Y+ypos, 1, height);
-					//printf("show\n");
+				if ( caret_ < 2 ) {
+					fl_rectf((int)(xpos+curx+0.5), Y+ypos, 2, height);
+				} else {
+					if ( caret_h_ != 0 && caret_x_ != (int)(xpos+curx+0.5) ) {
+						fl_rectf((int)(xpos+curx+0.5), Y+ypos, 2, height);
+						caret_ = 1;
+					}
+					caret_x_ = (int)(xpos+curx+0.5);
+					caret_y_ = Y+ypos;
+					caret_w_ = 2;
+					caret_h_ = height;
 				}
-				*/
 			}
 #ifdef __APPLE__
 			Fl::insertion_point_location(xpos+curx, Y+ypos+height, height);
@@ -455,9 +462,11 @@ static int isword(char c)
 /**
   Finds the end of a word.
 
-  This call calculates the end of a word based on the given
-  index \p i. Calling this function repeatedly will move
-  forwards to the end of the text.
+  Returns the index after the last byte of a space-separated word. This
+  first skips spaces, and then non-spaces, so if you call it repeatedly
+  you will move forwards to the end of the text.
+
+  Note that this is inconsistent with line_end().
 
   \param [in] i starting index for the search
   \return end of the word
@@ -465,7 +474,6 @@ static int isword(char c)
 int Fl_Input_::word_end(int i) const
 {
 	if (input_type() == FL_SECRET_INPUT) return size();
-	//while (i < size() && !isword(index(i))) i++;
 	while (i < size() && !isword(index(i))) i++;
 	while (i < size() && isword(index(i))) i++;
 	return i;
@@ -474,18 +482,19 @@ int Fl_Input_::word_end(int i) const
 /**
   Finds the start of a word.
 
-  This call calculates the start of a word based on the given
-  index \p i. Calling this function repeatedly will move
-  backwards to the beginning of the text.
+  Returns the index of the first byte of a space-separated word.
+  If the index is already at the beginning of the word, it will find the
+  beginning of the previous word, so if you call it repeatedly you will
+  move backwards to the beginning of the text.
+
+  Note that this is inconsistent with line_start().
 
   \param [in] i starting index for the search
-  \return start of the word
+  \return start of the word, or previous word
 */
 int Fl_Input_::word_start(int i) const
 {
 	if (input_type() == FL_SECRET_INPUT) return 0;
-//   if (i >= size() || !isword(index(i)))
-//     while (i > 0 && !isword(index(i-1))) i--;
 	while (i > 0 && !isword(index(i-1))) i--;
 	while (i > 0 && isword(index(i-1))) i--;
 	return i;
@@ -549,6 +558,22 @@ int Fl_Input_::line_start(int i) const
 	} else return j;
 }
 
+static int strict_word_start(const char *s, int i, int itype)
+{
+	if (itype == FL_SECRET_INPUT) return 0;
+	while (i > 0 && !isspace(s[i-1]))
+		i--;
+	return i;
+}
+
+static int strict_word_end(const char *s, int len, int i, int itype)
+{
+	if (itype == FL_SECRET_INPUT) return len;
+	while (i < len && !isspace(s[i]))
+		i++;
+	return i;
+}
+
 /**
   Handles mouse clicks and mouse moves.
   \todo Add comment and parameters
@@ -607,16 +632,16 @@ void Fl_Input_::handle_mouse(int X, int Y, int /*W*/, int /*H*/, int drag)
 				newpos = line_end(newpos);
 				newmark = line_start(newmark);
 			} else {
-				newpos = word_end(newpos);
-				newmark = word_start(newmark);
+				newpos = strict_word_end(value(), size(), newpos, input_type());
+				newmark = strict_word_start(value(), newmark, input_type());
 			}
 		} else {
 			if (Fl::event_clicks() > 1) {
 				newpos = line_start(newpos);
 				newmark = line_end(newmark);
 			} else {
-				newpos = word_start(newpos);
-				newmark = word_end(newmark);
+				newpos = strict_word_start(value(), newpos, input_type());
+				newmark = strict_word_end(value(), size(), newmark, input_type());
 			}
 		}
 		// if the multiple click does not increase the selection, revert
@@ -1042,16 +1067,20 @@ void Fl_Input_::caret()
 	else caret_ = 1;
 	//printf("caret=%d\n", caret_);
 
-	//printf("%d %d\n", mark_, position_);
 	if (mark_ == position_) {
-		minimal_update(mark_-1);
+		if ( caret_h_ == 0 ) {
+			if ( mark_ > 2 ) minimal_update(mark_-2);
+			else minimal_update(0);
+		} else {
+			damage(FL_DAMAGE_ALL, caret_x_, caret_y_, caret_w_, caret_h_);
+		}
 	} //else //if (Fl::selection_owner() != this)
-		//minimal_update(mark_-1, position_-1);
+	//minimal_update(mark_-1, position_-1);
 }
 static void tick(void *v)
 {
 	((Fl_Input_*)v)->caret();
-	Fl::add_timeout(0.5, tick, v);
+	Fl::add_timeout(CARET_FLUSH_TIME, tick, v);
 }
 
 /**
@@ -1073,20 +1102,25 @@ int Fl_Input_::handletext(int event, int X, int Y, int W, int H)
 		return 1;
 
 	case FL_FOCUS:
+#if __FLTK_IPHONEOS__
+		if ( ! (type() & FL_INPUT_READONLY) ) fl_set_spot(textfont(), textsize(), x(), y(), w(), h(), window());
+#else
 		fl_set_spot(textfont(), textsize(), x(), y(), w(), h(), window());
+#endif
 		if (mark_ == position_) {
 			minimal_update(size()+1);
 		} else //if (Fl::selection_owner() != this)
 			minimal_update(mark_, position_);
 		if ( caret_ == 0 ) {
 			caret_ = 1;
-			Fl::add_timeout(0.5, tick, this);
+			Fl::add_timeout(CARET_FLUSH_TIME, tick, this);
 		}
 		return 1;
 
 	case FL_UNFOCUS:
 		if ( caret_ > 0 ) Fl::remove_timeout(tick, this);
 		caret_ = 0;
+
 		if (active_r() && window()) window()->cursor(FL_CURSOR_DEFAULT);
 		if (mark_ == position_) {
 			if (!(damage()&FL_DAMAGE_EXPOSE)) {
@@ -1200,6 +1234,7 @@ Fl_Input_::Fl_Input_(int X, int Y, int W, int H, const char* l)
 	: Fl_Widget(X, Y, W, H, l)
 {
 	caret_ = 0;
+	caret_x_ = caret_y_ = caret_w_ = caret_h_ = 0;
 
 	box(FL_DOWN_BOX);
 	color(FL_BACKGROUND2_COLOR, FL_SELECTION_COLOR);

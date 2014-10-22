@@ -201,7 +201,16 @@ void Fl_Button::key_release_timeout(void *d)
 }
 
 /**
-  The constructor creates the button using the given position, size and label.
+  The constructor creates the button using the given position, size, and label.
+
+  The default box type is box(FL_UP_BOX).
+
+  You can control how the button is drawn when ON by setting down_box().
+  The default is FL_NO_BOX (0) which will select an appropriate box type
+  using the normal (OFF) box type by using fl_down(box()).
+
+  Derived classes may handle this differently.
+
   \param[in] X, Y, W, H position and size of the widget
   \param[in] L widget label, default is no label
  */
