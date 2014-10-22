@@ -2106,6 +2106,9 @@ Fl_X* Fl_X::make(Fl_Window* w)
 	         );
 	if (lab) free(lab);
 
+	x->next = Fl_X::first;
+	Fl_X::first = x;
+
 	x->set_icons();
 
 	if (w->fullscreen_active()) {
@@ -2119,9 +2122,6 @@ Fl_X* Fl_X::make(Fl_Window* w)
 		x->make_fullscreen(rect.left, rect.top,
 		                   rect.right - rect.left, rect.bottom - rect.top);
 	}
-
-	x->next = Fl_X::first;
-	Fl_X::first = x;
 
 	// Setup clipboard monitor target if there are registered handlers and
 	// no window is targeted.
