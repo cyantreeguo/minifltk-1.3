@@ -25,26 +25,6 @@
 #import <Foundation/Foundation.h>
 
 // ======================================================
-/*
- *  System Versioning Preprocessor Macros
- */
-
-#define SYSTEM_VERSION_EQUAL_TO(v)                  ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] == NSOrderedSame)
-#define SYSTEM_VERSION_GREATER_THAN(v)              ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] == NSOrderedDescending)
-#define SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(v)  ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedAscending)
-#define SYSTEM_VERSION_LESS_THAN(v)                 ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] == NSOrderedAscending)
-#define SYSTEM_VERSION_LESS_THAN_OR_EQUAL_TO(v)     ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedDescending)
-
-/*
-//  Usage
-if (SYSTEM_VERSION_LESS_THAN(@"4.0")) {
-    ...
-}
-if (SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"3.1.1")) {
-    ...
-}
-*/
-// ======================================================
 
 static unsigned make_current_counts = 0; // if > 0, then Fl_Window::make_current() can be called only once
 static Fl_X *fl_x_to_redraw = NULL;
@@ -180,6 +160,9 @@ static UIWindow *launch_window=nil;
 @interface FLTKUIKitDelegate : NSObject<UIApplicationDelegate> {	
 }
 + (NSString *)getAppDelegateClassName;
+
+- (void) keyboardWillShow:(NSNotification *)notification;
+- (void) keyboardWillHide:(NSNotification *)notification;
 @end
 
 @implementation FLTKUIKitDelegate
@@ -223,7 +206,9 @@ static UIWindow *launch_window=nil;
     SetEventPump(1);
     exit_status = IOS_main(forward_argc, forward_argv);
     SetEventPump(0);
-
+    
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    
     /* If we showed a splash image, clean it up */
     if (launch_window) {
         [launch_window release];
@@ -249,10 +234,61 @@ static UIWindow *launch_window=nil;
 
     /* Set working directory to resource path */
     [[NSFileManager defaultManager] changeCurrentDirectoryPath: [[NSBundle mainBundle] resourcePath]];
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillShow:) name:UIKeyboardWillShowNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillHide:) name:UIKeyboardWillHideNotification object:nil];
+    if ( SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"5.0") ) {
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillShow:) name:UIKeyboardWillChangeFrameNotification object:nil];
+    }
 
     [self performSelector:@selector(postFinishLaunch) withObject:nil afterDelay:0.0];
 
     return YES;
+}
+
+- (void) keyboardWillShow:(NSNotification *)notification
+{
+    printf("keyboard show\n");
+    
+    /*
+     Reduce the size of the text view so that it's not obscured by the keyboard.
+     Animate the resize so that it's in sync with the appearance of the keyboard.
+     */
+    
+    NSDictionary *userInfo = [notification userInfo];
+    
+    // Get the origin of the keyboard when it's displayed.
+    NSValue* aValue = [userInfo objectForKey:UIKeyboardFrameEndUserInfoKey];
+    
+    // Get the top of the keyboard as the y coordinate of its origin in self's view's coordinate system. The bottom of the text view's frame should align with the top of the keyboard's final position.
+    CGRect keyboardRect = [aValue CGRectValue];
+    
+    // Get the duration of the animation.
+    NSValue *animationDurationValue = [userInfo objectForKey:UIKeyboardAnimationDurationUserInfoKey];
+    NSTimeInterval animationDuration;
+    [animationDurationValue getValue:&animationDuration];
+    
+    // Animate the resize of the text view's frame in sync with the keyboard's appearance.
+    //[self moveInputBarWithKeyboardHeight:keyboardRect.size.height withDuration:animationDuration];
+    
+    printf("height=%d\n", (int)keyboardRect.size.height);
+}
+
+- (void) keyboardWillHide:(NSNotification *)notification
+{
+    printf("keyboard hide\n");
+    
+    NSDictionary* userInfo = [notification userInfo];
+    
+    /*
+     Restore the size of the text view (fill self's view).
+     Animate the resize so that it's in sync with the disappearance of the keyboard.
+     */
+    NSValue *animationDurationValue = [userInfo objectForKey:UIKeyboardAnimationDurationUserInfoKey];
+    NSTimeInterval animationDuration;
+    [animationDurationValue getValue:&animationDuration];
+    
+    //[self moveInputBarWithKeyboardHeight:0.0 withDuration:animationDuration];
 }
 
 - (void)applicationWillTerminate:(UIApplication *)application
@@ -301,12 +337,32 @@ static UIWindow *launch_window=nil;
 
 - (void) applicationDidEnterBackground:(UIApplication*)application
 {
-	// FIXIT: send event
+    /*
+     FIXIT:
+	fl_lock_function();
+	Fl_X *x;
+	for (x = Fl_X::first; x; x = x->next) {
+		Fl_Window *window = x->w;
+		if (!window->parent()) Fl::handle(FL_HIDE, window);
+	}
+	fl_unlock_function();
+     */
 }
 
 - (void) applicationWillEnterForeground:(UIApplication*)application
 {
-	// FIXIT: send event
+    /*
+     FIXIT:
+	fl_lock_function();
+	Fl_X *x;
+	for (x = Fl_X::first; x; x = x->next) {
+		Fl_Window *w = x->w;
+		if (!w->parent()) {
+			Fl::handle(FL_SHOW, w);
+		}
+	}
+	fl_unlock_function();
+     */
 }
 
 - (void) applicationDidBecomeActive:(UIApplication*)application
@@ -392,8 +448,12 @@ static void iosMouseHandler(NSSet *touches, UIEvent *event, UIView *view, int ty
 - (BOOL) resignFirstResponder;
 - (BOOL) canBecomeFirstResponder;
 
++ (void)prepareEtext: (NSString *)aString;
++ (void)concatEtext: (NSString *)aString;
 - (BOOL) textView: (UITextView*) textView shouldChangeTextInRange: (NSRange) range replacementText: (NSString*) text;
-- (void) textViewDidChange:(UITextView *)textView;
+
+//- (void) keyboardWillShow:(NSNotification *)notification;
+//- (void) keyboardWillHide:(NSNotification *)notification;
 @end
 
 //==============================================================================
@@ -415,558 +475,6 @@ static void iosMouseHandler(NSSet *touches, UIEvent *event, UIView *view, int ty
 - (Fl_Window *)getFl_Window;
 - (void) becomeKeyWindow;
 @end
-//==============================================================================
-/*
-@implementation FLView
-- (id)initWithFrame:(CGRect)rect
-{
-    self = [super initWithFrame : rect];
-    
-    if (self != nil) {
-        //textView = [[UITextView alloc] initWithFrame : rect];
-        //textView.text = @"你好Hello world!";
-        //[self addSubview : textView];
-    }
-    
-    return self;
-}
-
-- (id)init
-{
-	static NSInteger counter = 0;
-	self = [super init];
-	if (self) {
-		in_key_event = NO;
-		identifier = ++counter;
-	}
-    
-    edit = [[UITextField alloc] initWithFrame:CGRectMake(20, 40, 120, 120)];
-    [self addSubview:edit];
-    
-    [edit becomeFirstResponder];
-    
-	return self;
-}
-
-- (void)dealloc
-{
-    [edit release];
-    [super dealloc];
-}
-
-- (void)drawRect: (CGRect)rect
-{
-	fl_lock_function();
-	through_drawRect = YES;
-	FLWindow *cw = (FLWindow *)[self window];
-	Fl_Window *w = [cw getFl_Window];
-	if (fl_x_to_redraw) fl_x_to_redraw->flush();
-	else handleUpdateEvent(w);
-	through_drawRect = NO;
-	fl_unlock_function();
-}
-
-- (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event
-{
-    printf("click\n");
-    iosMouseHandler(touches, event, self, 0);
-  */  /*
-    UITouch *touch = [touches anyObject];
-    CGPoint location = [touch locationInView:self];
-    NSUInteger taps = [touch tapCount];
-    
-    printf("%s tap at %f %f, tap count: %d\n", (taps==1)?"Single":(taps==2)?"Double":"Triple++", location.x, location.y, taps);
-     */
-/*}
-
-- (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event
-{
-    iosMouseHandler(touches, event, self, 1);
-}
-
-- (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event
-{
-    iosMouseHandler(touches, event, self, 2);
-}
-*/
-/*
-- (BOOL)acceptsFirstResponder
-{
-	return YES;
-}
-- (BOOL)performKeyEquivalent: (NSEvent *)theEvent
-{
-	//NSLog(@"performKeyEquivalent:");
-	fl_lock_function();
-	cocoaKeyboardHandler(theEvent);
-	BOOL handled;
-	NSUInteger mods = [theEvent modifierFlags];
-	if ((mods & NSControlKeyMask) || (mods & NSCommandKeyMask)) {
-		NSString *s = [theEvent characters];
-		if ((mods & NSShiftKeyMask) && (mods & NSCommandKeyMask)) {
-			s = [s uppercaseString]; // US keyboards return lowercase letter in s if cmd-shift-key is hit
-		}
-		[FLView prepareEtext: s];
-		Fl::compose_state = 0;
-		handled = Fl::handle(FL_KEYBOARD, [(FLWindow *)[theEvent window] getFl_Window]);
-	} else {
-		in_key_event = YES;
-		need_handle = NO;
-		handled = [[self performSelector: inputContextSEL] handleEvent: theEvent];
-		if (need_handle) handled = Fl::handle(FL_KEYBOARD, [(FLWindow *)[theEvent window] getFl_Window]);
-		in_key_event = NO;
-	}
-	fl_unlock_function();
-	return handled;
-}
-- (BOOL)acceptsFirstMouse: (NSEvent *)theEvent
-{
-	Fl_Window *w = [(FLWindow *)[theEvent window] getFl_Window];
-	Fl_Window *first = Fl::first_window();
-	return (first == w || !first->modal());
-}
-- (void)resetCursorRects
-{
-	Fl_Window *w = [(FLWindow *)[self window] getFl_Window];
-	Fl_X *i = Fl_X::i(w);
-	if (!i) return;  // fix for STR #3128
-	// We have to have at least one cursor rect for invalidateCursorRectsForView
-	// to work, hence the "else" clause.
-	if (i->cursor) [self addCursorRect: [self visibleRect] cursor: (NSCursor *)i->cursor];
-	else [self addCursorRect: [self visibleRect] cursor: [NSCursor arrowCursor]];
-}
-- (void)mouseUp: (NSEvent *)theEvent
-{
-	cocoaMouseHandler(theEvent);
-}
-- (void)rightMouseUp: (NSEvent *)theEvent
-{
-	cocoaMouseHandler(theEvent);
-}
-- (void)otherMouseUp: (NSEvent *)theEvent
-{
-	cocoaMouseHandler(theEvent);
-}
-- (void)mouseDown: (NSEvent *)theEvent
-{
-	cocoaMouseHandler(theEvent);
-}
-- (void)rightMouseDown: (NSEvent *)theEvent
-{
-	cocoaMouseHandler(theEvent);
-}
-- (void)otherMouseDown: (NSEvent *)theEvent
-{
-	cocoaMouseHandler(theEvent);
-}
-- (void)mouseMoved: (NSEvent *)theEvent
-{
-	cocoaMouseHandler(theEvent);
-}
-- (void)mouseDragged: (NSEvent *)theEvent
-{
-	cocoaMouseHandler(theEvent);
-}
-- (void)rightMouseDragged: (NSEvent *)theEvent
-{
-	cocoaMouseHandler(theEvent);
-}
-- (void)otherMouseDragged: (NSEvent *)theEvent
-{
-	cocoaMouseHandler(theEvent);
-}
-- (void)scrollWheel: (NSEvent *)theEvent
-{
-	cocoaMouseWheelHandler(theEvent);
-}
-- (void)keyDown: (NSEvent *)theEvent
-{
-	//NSLog(@"keyDown:%@",[theEvent characters]);
-	fl_lock_function();
-	Fl_Window *window = [(FLWindow *)[theEvent window] getFl_Window];
-	Fl::first_window(window);
-	cocoaKeyboardHandler(theEvent);
-	in_key_event = YES;
-	need_handle = NO;
-	[[self performSelector: inputContextSEL] handleEvent: theEvent];
-	if (need_handle) Fl::handle(FL_KEYBOARD, window);
-	in_key_event = NO;
-	fl_unlock_function();
-}
-- (void)keyUp: (NSEvent *)theEvent
-{
-	//NSLog(@"keyUp:%@",[theEvent characters]);
-	fl_lock_function();
-	Fl_Window *window = (Fl_Window *)[(FLWindow *)[theEvent window] getFl_Window];
-	Fl::first_window(window);
-	cocoaKeyboardHandler(theEvent);
-	NSString *s = [theEvent characters];
-	if ([s length] >= 1) [FLView prepareEtext: [s substringToIndex: 1]];
-	Fl::handle(FL_KEYUP, window);
-	fl_unlock_function();
-}
-- (void)flagsChanged: (NSEvent *)theEvent
-{
-	//NSLog(@"flagsChanged: ");
-	fl_lock_function();
-	static UInt32 prevMods = 0;
-	NSUInteger mods = [theEvent modifierFlags];
-	Fl_Window *window = (Fl_Window *)[(FLWindow *)[theEvent window] getFl_Window];
-	UInt32 tMods = prevMods ^ mods;
-	int sendEvent = 0;
-	if (tMods) {
-		unsigned short keycode = [theEvent keyCode];
-		Fl::e_keysym = Fl::e_original_keysym = macKeyLookUp[keycode & 0x7f];
-		if (Fl::e_keysym) sendEvent = (prevMods < mods) ? FL_KEYBOARD : FL_KEYUP;
-		Fl::e_length = 0;
-		Fl::e_text = (char *)"";
-		prevMods = mods;
-	}
-	mods_to_e_state(mods);
-	while (window->parent()) window = window->window();
-	if (sendEvent) Fl::handle(sendEvent, window);
-	fl_unlock_function();
-}
-- (NSDragOperation)draggingEntered: (id<NSDraggingInfo>)sender
-{
-	fl_lock_function();
-	Fl_Window *target = [(FLWindow *)[self window] getFl_Window];
-	update_e_xy_and_e_xy_root([self window]);
-	fl_dnd_target_window = target;
-	int ret = Fl::handle(FL_DND_ENTER, target);
-	breakMacEventLoop();
-	fl_unlock_function();
-	Fl::flush();
-	return ret ? NSDragOperationCopy : NSDragOperationNone;
-}
-- (NSDragOperation)draggingUpdated: (id<NSDraggingInfo>)sender
-{
-	fl_lock_function();
-	Fl_Window *target = [(FLWindow *)[self window] getFl_Window];
-	update_e_xy_and_e_xy_root([self window]);
-	fl_dnd_target_window = target;
-	int ret = Fl::handle(FL_DND_DRAG, target);
-	breakMacEventLoop();
-	fl_unlock_function();
-	// if the DND started in the same application, Fl::dnd() will not return until
-	// the the DND operation is finished. The call below causes the drop indicator
-	// to be draw correctly (a full event handling would be better...)
-	Fl::flush();
-	return ret ? NSDragOperationCopy : NSDragOperationNone;
-}
-- (BOOL)performDragOperation: (id<NSDraggingInfo>)sender
-{
-	static char *DragData = NULL;
-	fl_lock_function();
-	Fl_Window *target = [(FLWindow *)[self window] getFl_Window];
-	if (!Fl::handle(FL_DND_RELEASE, target)) {
-		breakMacEventLoop();
-		fl_unlock_function();
-		return NO;
-	}
-	NSPasteboard *pboard;
-	// NSDragOperation sourceDragMask;
-	// sourceDragMask = [sender draggingSourceOperationMask];
-	pboard = [sender draggingPasteboard];
-	update_e_xy_and_e_xy_root([self window]);
-	if (DragData) {free(DragData); DragData = NULL; }
-	if ([[pboard types] containsObject: NSFilenamesPboardType]) {
-		CFArrayRef files = (CFArrayRef)[pboard propertyListForType: NSFilenamesPboardType];
-		CFStringRef all = CFStringCreateByCombiningStrings(NULL, files, CFSTR("\n"));
-		int l = CFStringGetMaximumSizeForEncoding(CFStringGetLength(all), kCFStringEncodingUTF8);
-		DragData = (char *)malloc(l + 1);
-		CFStringGetCString(all, DragData, l + 1, kCFStringEncodingUTF8);
-		CFRelease(all);
-	} else if ([[pboard types] containsObject: utf8_format]) {
-		NSData *data = [pboard dataForType: utf8_format];
-		DragData = (char *)malloc([data length] + 1);
-		[data getBytes: DragData];
-		DragData[[data length]] = 0;
-		convert_crlf(DragData, strlen(DragData));
-	} else {
-		breakMacEventLoop();
-		fl_unlock_function();
-		return NO;
-	}
-	Fl::e_text = DragData;
-	Fl::e_length = strlen(DragData);
-	int old_event = Fl::e_number;
-	Fl::belowmouse()->handle(Fl::e_number = FL_PASTE);
-	Fl::e_number = old_event;
-	if (DragData) {free(DragData); DragData = NULL; }
-	Fl::e_text = NULL;
-	Fl::e_length = 0;
-	fl_dnd_target_window = NULL;
-	breakMacEventLoop();
-	fl_unlock_function();
-	return YES;
-}
-- (void)draggingExited: (id<NSDraggingInfo>)sender
-{
-	fl_lock_function();
-	if (fl_dnd_target_window) {
-		Fl::handle(FL_DND_LEAVE, fl_dnd_target_window);
-		fl_dnd_target_window = 0;
-	}
-	fl_unlock_function();
-}
-- (NSDragOperation)draggingSourceOperationMaskForLocal: (BOOL)isLocal
-{
-	return NSDragOperationGeneric;
-}
-
-- (FLTextInputContext *)FLinputContext { // used only if OS < 10.6 to replace [NSView inputContext]
-	static FLTextInputContext *context = NULL;
-	if (!context) {
-		context = [[FLTextInputContext alloc] init];
-	}
-	context->edit = (FLTextView *)[[self window] fieldEditor: YES forObject: nil];
-	return context;
-}
-
-+ (void)prepareEtext: (NSString *)aString
-{
-	// fills Fl::e_text with UTF-8 encoded aString using an adequate memory allocation
-	static char *received_utf8 = NULL;
-	static int lreceived = 0;
-	char *p = (char *)[aString UTF8String];
-	int l = strlen(p);
-	if (l > 0) {
-		if (lreceived == 0) {
-			received_utf8 = (char *)malloc(l + 1);
-			lreceived = l;
-		} else if (l > lreceived) {
-			received_utf8 = (char *)realloc(received_utf8, l + 1);
-			lreceived = l;
-		}
-		strcpy(received_utf8, p);
-		Fl::e_text = received_utf8;
-	}
-	Fl::e_length = l;
-}
-
-+ (void)concatEtext: (NSString *)aString
-{
-	// extends Fl::e_text with aString
-	NSString *newstring = [[NSString stringWithUTF8String: Fl::e_text] stringByAppendingString: aString];
-	[FLView prepareEtext: newstring];
-}
-
-- (void)doCommandBySelector: (SEL)aSelector
-{
-	NSString *s = [[NSApp currentEvent] characters];
-	//NSLog(@"doCommandBySelector:%s text='%@'",sel_getName(aSelector), s);
-	s = [s substringFromIndex: [s length] - 1];
-	[FLView prepareEtext: s]; // use the last character of the event; necessary for deadkey + Tab
-	Fl_Window *target = [(FLWindow *)[self window] getFl_Window];
-	Fl::handle(FL_KEYBOARD, target);
-}
-
-- (void)insertText: (id)aString
-{
-	[self insertText: aString replacementRange: NSMakeRange(NSNotFound, 0)];
-}
-
-- (void)insertText: (id)aString replacementRange: (NSRange)replacementRange
-{
-	NSString *received;
-	if ([aString isKindOfClass: [NSAttributedString class]]) {
-		received = [(NSAttributedString *)aString string];
-	} else {
-		received = (NSString *)aString;
-	}
-	//NSLog(@"insertText='%@' l=%d Fl::compose_state=%d range=%d,%d", received,strlen([received UTF8String]),Fl::compose_state,replacementRange.location,replacementRange.length);
-	fl_lock_function();
-	Fl_Window *target = [(FLWindow *)[self window] getFl_Window];
-	while (replacementRange.length--) { // delete replacementRange.length characters before insertion point
-		int saved_keysym = Fl::e_keysym;
-		Fl::e_keysym = FL_BackSpace;
-		Fl::handle(FL_KEYBOARD, target);
-		Fl::e_keysym = saved_keysym;
-	}
-	if (in_key_event && Fl_X::next_marked_length && Fl::e_length) {
-		// if setMarkedText + insertText is sent during handleEvent, text cannot be concatenated in single FL_KEYBOARD event
-		Fl::handle(FL_KEYBOARD, target);
-		Fl::e_length = 0;
-	}
-	if (in_key_event && Fl::e_length) [FLView concatEtext: received];
-	else [FLView prepareEtext: received];
-	Fl_X::next_marked_length = 0;
-	// We can get called outside of key events (e.g., from the character palette, from CJK text input).
-	BOOL palette = !(in_key_event || Fl::compose_state);
-	if (palette) Fl::e_keysym = 0;
-	// YES if key has text attached
-	BOOL has_text_key = Fl::e_keysym <= '~' || Fl::e_keysym == FL_Iso_Key ||
-		(Fl::e_keysym >= FL_KP && Fl::e_keysym <= FL_KP_Last && Fl::e_keysym != FL_KP_Enter);
-	// insertText sent during handleEvent of a key without text cannot be processed in a single FL_KEYBOARD event.
-	// Occurs with deadkey followed by non-text key
-	if (!in_key_event || !has_text_key) {
-		Fl::handle(FL_KEYBOARD, target);
-		Fl::e_length = 0;
-	} else need_handle = YES;
-	selectedRange = NSMakeRange(100, 0); // 100 is an arbitrary value
-										 // for some reason, with the palette, the window does not redraw until the next mouse move or button push
-										 // sending a 'redraw()' or 'awake()' does not solve the issue!
-	if (palette) Fl::flush();
-	if (fl_mac_os_version < 100600) [(FLTextView *)[[self window] fieldEditor: YES forObject: nil] setActive: NO];
-	fl_unlock_function();
-}
-
-- (void)setMarkedText: (id)aString selectedRange: (NSRange)newSelection
-{
-	[self setMarkedText: aString selectedRange: newSelection replacementRange: NSMakeRange(NSNotFound, 0)];
-}
-
-- (void)setMarkedText: (id)aString selectedRange: (NSRange)newSelection replacementRange: (NSRange)replacementRange
-{
-	NSString *received;
-	if ([aString isKindOfClass: [NSAttributedString class]]) {
-		received = [(NSAttributedString *)aString string];
-	} else {
-		received = (NSString *)aString;
-	}
-	fl_lock_function();
-	//NSLog(@"setMarkedText:%@ l=%d newSelection=%d,%d Fl::compose_state=%d replacement=%d,%d", 
-	//  received, strlen([received UTF8String]), newSelection.location, newSelection.length, Fl::compose_state,
-	//  replacementRange.location, replacementRange.length);
-	Fl_Window *target = [(FLWindow *)[self window] getFl_Window];
-	while (replacementRange.length--) { // delete replacementRange.length characters before insertion point
-		Fl::e_keysym = FL_BackSpace;
-		Fl::compose_state = 0;
-		Fl_X::next_marked_length = 0;
-		Fl::handle(FL_KEYBOARD, target);
-		Fl::e_keysym = 'a'; // pretend a letter key was hit
-	}
-	if (in_key_event && Fl_X::next_marked_length && Fl::e_length) {
-		// if setMarkedText + setMarkedText is sent during handleEvent, text cannot be concatenated in single FL_KEYBOARD event
-		Fl::handle(FL_KEYBOARD, target);
-		Fl::e_length = 0;
-	}
-	if (in_key_event && Fl::e_length) [FLView concatEtext: received];
-	else [FLView prepareEtext: received];
-	Fl_X::next_marked_length = strlen([received UTF8String]);
-	if (!in_key_event) Fl::handle(FL_KEYBOARD, target);
-	else need_handle = YES;
-	selectedRange = NSMakeRange(100, newSelection.length);
-	fl_unlock_function();
-}
-
-- (void)unmarkText
-{
-	fl_lock_function();
-	Fl::reset_marked_text();
-	fl_unlock_function();
-	//NSLog(@"unmarkText");
-}
-
-- (NSRange)selectedRange
-{
-	Fl_Widget *w = Fl::focus();
-	if (w && w->use_accents_menu()) return selectedRange;
-	return NSMakeRange(NSNotFound, 0);
-}
-
-- (NSRange)markedRange
-{
-	//NSLog(@"markedRange=%d %d", Fl::compose_state > 0?0:NSNotFound, Fl::compose_state);
-	return NSMakeRange(Fl::compose_state > 0 ? 0 : NSNotFound, Fl::compose_state);
-}
-
-- (BOOL)hasMarkedText
-{
-	//NSLog(@"hasMarkedText %s", Fl::compose_state > 0?"YES":"NO");
-	return (Fl::compose_state > 0);
-}
-
-- (NSAttributedString *)attributedSubstringFromRange: (NSRange)aRange
-{
-	return [self attributedSubstringForProposedRange: aRange actualRange: NULL];
-}
-- (NSAttributedString *)attributedSubstringForProposedRange: (NSRange)aRange actualRange: (NSRangePointer)actualRange
-{
-	//NSLog(@"attributedSubstringFromRange: %d %d",aRange.location,aRange.length);
-	return nil;
-}
-
-- (NSArray *)validAttributesForMarkedText
-{
-	return nil;
-}
-
-- (NSRect)firstRectForCharacterRange: (NSRange)aRange
-{
-	return [self firstRectForCharacterRange: aRange actualRange: NULL];
-}
-- (NSRect)firstRectForCharacterRange: (NSRange)aRange actualRange: (NSRangePointer)actualRange
-{
-	//NSLog(@"firstRectForCharacterRange %d %d actualRange=%p",aRange.location, aRange.length,actualRange);
-	NSRect glyphRect;
-	fl_lock_function();
-	Fl_Widget *focus = Fl::focus();
-	Fl_Window *wfocus = [(FLWindow *)[self window] getFl_Window];
-	if (!focus) focus = wfocus;
-	glyphRect.size.width = 0;
-
-	int x, y, height;
-	if (Fl_X::insertion_point_location(&x, &y, &height)) {
-		glyphRect.origin.x = (CGFloat)x;
-		glyphRect.origin.y = (CGFloat)y;
-	} else {
-		if (focus->as_window()) {
-			glyphRect.origin.x = 0;
-			glyphRect.origin.y = focus->h();
-		} else {
-			glyphRect.origin.x = focus->x();
-			glyphRect.origin.y = focus->y() + focus->h();
-		}
-		height = 12;
-	}
-	glyphRect.size.height = height;
-	Fl_Window *win = focus->as_window();
-	if (!win) win = focus->window();
-	while (win != NULL && win != wfocus) {
-		glyphRect.origin.x += win->x();
-		glyphRect.origin.y += win->y();
-		win = win->window();
-	}
-	// Convert the rect to screen coordinates
-	glyphRect.origin.y = wfocus->h() - glyphRect.origin.y;
-	glyphRect.origin = [(FLWindow*)[self window] convertBaseToScreen:glyphRect.origin];
-	if (actualRange) *actualRange = aRange;
-	fl_unlock_function();
-	return glyphRect;
-}
-
-- (NSUInteger)characterIndexForPoint: (NSPoint)aPoint
-{
-	return 0;
-}
-
-- (NSInteger)windowLevel
-{
-	return [[self window] level];
-}
-
-- (NSInteger)conversationIdentifier
-{
-	return identifier;
-}
-*/
-//@end
-
-/*
-// updates Fl::e_x, Fl::e_y, Fl::e_x_root, and Fl::e_y_root
-static void update_e_xy_and_e_xy_root(UIWindow *nsw)
-{
-    NSPoint pt;
-    pt = [nsw mouseLocationOutsideOfEventStream];
-    Fl::e_x = int(pt.x);
-    Fl::e_y = int([[nsw contentView] frame].size.height - pt.y);
-    pt = [NSEvent mouseLocation];
-    Fl::e_x_root = int(pt.x);
-    Fl::e_y_root = int(main_screen_height - pt.y);
-}
-*/
 
 static void iosMouseHandler(NSSet *touches, UIEvent *event, UIView *view, int type)
 {
@@ -987,6 +495,8 @@ static void iosMouseHandler(NSSet *touches, UIEvent *event, UIView *view, int ty
     
     UITouch *touch = [touches anyObject];
     CGPoint pos = [touch locationInView:view];
+    //pos.x = pos.x * view.contentScaleFactor;
+    //pos.y = pos.y * view.contentScaleFactor;
     NSUInteger taps = [touch tapCount];
     //pos.y = window->h() - pos.y;
     NSInteger btn = 1;//[theEvent buttonNumber]  + 1;
@@ -1065,6 +575,56 @@ static void iosMouseHandler(NSSet *touches, UIEvent *event, UIView *view, int ty
     return;
 }
 
+static void cocoaMouseWheelHandler(NSSet *touches, UIEvent *event, UIView *view, int type)
+{
+    // Handle the new "MightyMouse" mouse wheel events. Please, someone explain
+    // to me why Apple changed the API on this even though the current API
+    // supports two wheels just fine. Matthias,
+    fl_lock_function();
+    
+    Fl_Window *window = (Fl_Window *)[(FLWindow *)[view window] getFl_Window];
+    if ( !window->shown() ) {
+        fl_unlock_function();
+        return;
+    }
+    Fl::first_window(window);
+    
+    
+    UITouch *touch = [touches anyObject];
+    CGPoint oldpos = [touch previousLocationInView:view];
+    CGPoint pos = [touch locationInView:view];
+    NSUInteger taps = [touch tapCount];
+    
+    // Under OSX, single mousewheel increments are 0.1,
+    // so make sure they show up as at least 1..
+    //
+    float dx = pos.x - oldpos.x;
+    //float dx = [theEvent deltaX];
+    //if ( fabs(dx) < 1.0 ) dx = (dx > 0) ? 1.0 : -1.0;
+    float dy = pos.y - oldpos.y;
+    //float dy = [theEvent deltaY];
+    //if ( fabs(dy) < 1.0 ) dy = (dy > 0) ? 1.0 : -1.0;
+    /*
+    //if ([theEvent deltaX] != 0) {
+    if (dx != 0) {
+        Fl::e_dx = (int)-dx;
+        Fl::e_dy = 0;
+        if ( Fl::e_dx) Fl::handle( FL_MOUSEWHEEL, window );
+    //} else if ([theEvent deltaY] != 0) {
+    } else*/ if (dy != 0) {
+        Fl::e_dx = 0;
+        Fl::e_dy = (int)-dy;
+        if ( Fl::e_dy) Fl::handle( FL_MOUSEWHEEL, window );
+    } else {
+        fl_unlock_function();
+        return;
+    }
+    
+    fl_unlock_function();
+    
+    //  return noErr;
+}
+
 //******************* spot **********************************
 
 // public variables
@@ -1075,31 +635,30 @@ Window fl_window;
 Fl_Window *Fl_Window::current_;
 Fl_Fontdesc *fl_fonts = Fl_X::calc_fl_fonts();
 
+static Fl_Window *spot_win_=0;
+
 void fl_reset_spot()
 {
-    printf("reset_spot\n");
     if ( Fl_X::first == NULL ) return;
     FLView *view = (FLView*)[[Fl_X::first->xid rootViewController] view];
     [view->hiddenTextView resignFirstResponder];
+    printf("reset_spot\n");
 }
 
 void fl_set_spot(int font, int size, int X, int Y, int W, int H, Fl_Window *win)
 {
-    printf("set_spot\n");
     FLView *view = (FLView*)[[Fl_X::first->xid rootViewController] view];
     [view->hiddenTextView becomeFirstResponder];
+    view->hiddenTextView.text = @"";
+    view->hiddenTextView.text = @"1";
+    
+    spot_win_ = win;
+    printf("set_spot\n");
 }
 
 void fl_set_status(int x, int y, int w, int h)
 {
-    printf("set_status\n");
-    
-}
-
-static void FLTK_IdleTimerDisabledChanged(void *userdata, const char *name, const char *oldValue, const char *hint)
-{
-    BOOL disable = (hint && *hint != '0');
-    [UIApplication sharedApplication].idleTimerDisabled = disable;
+    //printf("set_status\n");
 }
 
 void fl_open_display()
@@ -1117,25 +676,6 @@ CGRect fl_cgrectmake_cocoa(int x, int y, int w, int h)
 {
 	return CGRectMake(x, y, w > 0 ? w - 0.9 : 0, h > 0 ? h - 0.9 : 0);
 }
-
-/*
-double fl_ios_flush_and_wait1(double time_to_wait) //ok
-{
-    Fl::flush();
-    
-    const CFTimeInterval sec = 0.000002;
-    int result;
-    do {
-        result = CFRunLoopRunInMode(kCFRunLoopDefaultMode, sec, TRUE);
-    } while (result == kCFRunLoopRunHandledSource);
-    
-    do {
-        result = CFRunLoopRunInMode((CFStringRef)UITrackingRunLoopMode, sec, TRUE);
-    } while (result == kCFRunLoopRunHandledSource);
-    
-	return 0.0;
-}
-*/
 
 double fl_ios_flush_and_wait(double time_to_wait)  //ok
 {
@@ -1167,32 +707,10 @@ int fl_ready() // ok
 
 void Fl::enable_im()
 {
-    /*
-    fl_open_display();
-    
-    im_enabled = 1;
-    
-    if (fl_mac_os_version >= 100500)
-        [NSApp updateWindows];
-    else
-        im_update();
-     */
-    printf("fl::enable_im\n");
 }
 
 void Fl::disable_im()
 {
-    /*
-    fl_open_display();
-    
-    im_enabled = 0;
-    
-    if (fl_mac_os_version >= 100500)
-        [NSApp updateWindows];
-    else
-        im_update();
-     */
-    printf("fl::disable_im\n");
 }
 
 /*
@@ -1364,7 +882,7 @@ void Fl_X::make(Fl_Window *w)
 		}
 		*/
 	} else {            // create a desktop window
-        printf("make\n");
+        //printf("make\n");
 		Fl_Group::current(0);
 		fl_open_display();
 
@@ -1398,20 +916,34 @@ void Fl_X::make(Fl_Window *w)
             if (SYSTEM_VERSION_LESS_THAN(@"7.0")) {
                 int y_ios6 = w->y();
                 if (y_ios6 <= work_y) y_ios6 = 0;
-                else y_ios6 -= work_y;
+                //else y_ios6 -= work_y;
                 w->y(y_ios6);
             }
         }
-        printf("make(), x=%d, y=%d, w=%d, h=%d\n", w->x(), w->y(), w->w(), w->h());
-		crect.origin.x = w->x();
+        //printf("make(), x=%d, y=%d, w=%d, h=%d\n", w->x(), w->y(), w->w(), w->h());
+		
+        crect.origin.x = w->x();
         crect.origin.y = w->y();
-        printf("y = %f, height=%d\n", crect.origin.y, w->h());
 		crect.size.width = w->w();
 		crect.size.height = w->h();
 		FLWindow *cw = [[FLWindow alloc] initWithFlWindow: w contentRect: crect];
         //if (w->fullscreen_active()) cw.windowLevel = UIWindowLevelAlert;
+        cw.autoresizesSubviews = NO;
         cw.opaque = YES;
         cw.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:0];
+        
+        crect.size.width = w->w();
+        crect.size.height = w->h();
+        crect.origin.x = 0.0;
+        crect.origin.y = 0.0;
+		FLView *myview = [[FLView alloc] initWithFlWindow: w contentRect: crect];
+        myview.multipleTouchEnabled = YES;
+        myview.opaque = YES;
+        myview.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:0];
+		
+		FLViewController* controller;
+		controller = [[FLViewController alloc] init];
+        controller.view = myview;
 
 		x->xid = cw;
 		x->w = w; w->i = x;
@@ -1419,25 +951,7 @@ void Fl_X::make(Fl_Window *w)
 		x->next = Fl_X::first;
 		Fl_X::first = x;
         
-        crect.size.width = w->w();
-        crect.size.height = w->h();
-        crect.origin.x = 0.0;
-        crect.origin.y = 0.0;
-		FLView *myview = [[FLView alloc] initWithFlWindow: w contentRect: crect];
-		
-		FLViewController* controller;
-		controller = [[FLViewController alloc] init];
-        controller.view = myview;
-        
-        /*
-        controller.edgesForExtendedLayout = UIRectEdgeNone;
-        controller.extendedLayoutIncludesOpaqueBars = NO;
-        controller.modalPresentationCapturesStatusBarAppearance = NO;
-         */
-        
         cw.rootViewController = controller;
-		
-        myview.backgroundColor = [UIColor whiteColor];
 		[cw addSubview: myview];
 		//[myview release];
         
@@ -1575,7 +1089,7 @@ void Fl_Window::show()
 void Fl_Window::resize(int X, int Y, int W, int H)
 {
     CGRect r = [[UIScreen mainScreen] bounds];
-    printf("resize: %d %d, %d %d\n", (int)r.size.width, (int)r.size.height, device_w, device_h);
+    //printf("resize: %d %d, %d %d\n", (int)r.size.width, (int)r.size.height, device_w, device_h);
     
 	if ((!parent()) && shown()) {
         //size_range(W, H, W, H);
@@ -1894,6 +1408,7 @@ void Fl_X::destroy()
     // subwindows share their xid with their parent window, so should not close it
     if (!subwindow && w && !w->parent() && xid) {
         [xid resignKeyWindow];
+        [xid release];
     }
 }
 
@@ -2183,19 +1698,25 @@ static CGRect convertToCGRect (const RectType& r)
     [super initWithFrame: rect];
 	
 	flwindow = win;
+    in_key_event = NO;
 
-    //hiddenTextView = [[UITextView alloc] initWithFrame: CGRectZero];
+    hiddenTextView = [[UITextView alloc] initWithFrame: CGRectZero];
+    /*
     CGRect r;
-    r.origin.x = 10; r.origin.y = 240; r.size.width = 120; r.size.height = 25;
+    r.origin.x = 10; r.origin.y = 140; r.size.width = 120; r.size.height = 25;
     hiddenTextView = [[UITextView alloc] initWithFrame: r];
+    //*/
     [self addSubview: hiddenTextView];
     hiddenTextView.delegate = self;
 
     hiddenTextView.autocapitalizationType = UITextAutocapitalizationTypeNone;
     hiddenTextView.autocorrectionType = UITextAutocorrectionTypeNo;
-
-    //hiddenTextView.keyboardType = UIKeyboardTypeDefault;
-
+    hiddenTextView.keyboardType = UIKeyboardTypeDefault;
+    hiddenTextView.text = @"1"; // for backspace keyboard
+    
+    //[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillShow:) name:UIKeyboardWillShowNotification object:nil];
+    //[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillShow) name:UIKeyboardWillShowNotification object:nil];
+    
     return self;
 }
 
@@ -2206,6 +1727,8 @@ static CGRect convertToCGRect (const RectType& r)
 
 - (void) dealloc
 {
+    //[[NSNotificationCenter defaultCenter] removeObserver:self];
+    
     [hiddenTextView removeFromSuperview];
     [hiddenTextView release];
 
@@ -2242,6 +1765,8 @@ static CGRect convertToCGRect (const RectType& r)
     //if (owner != nullptr)
     //    owner->handleTouches (event, false, false, false);
     iosMouseHandler(touches, event, self, 1);
+    //cocoaMouseWheelHandler(touches, event, self, 1);
+    printf("move\n");
 }
 
 - (void) touchesEnded: (NSSet*) touches withEvent: (UIEvent*) event
@@ -2282,34 +1807,146 @@ static CGRect convertToCGRect (const RectType& r)
 {
     if ( Fl::modal_ && (Fl::modal_ != flwindow) ) return NO;
     return !(flwindow->tooltip_window() || flwindow->menu_window());
-    //return owner != nullptr && owner->canBecomeKeyWindow();
-	//return TRUE;
+}
+
++ (void)prepareEtext: (NSString *)aString
+{
+    // fills Fl::e_text with UTF-8 encoded aString using an adequate memory allocation
+    static char *received_utf8 = NULL;
+    static int lreceived = 0;
+    char *p = (char *)[aString UTF8String];
+    int l = (int)strlen(p);
+    if (l > 0) {
+        if (lreceived == 0) {
+            received_utf8 = (char *)malloc(l + 1);
+            lreceived = l;
+        } else if (l > lreceived) {
+            received_utf8 = (char *)realloc(received_utf8, l + 1);
+            lreceived = l;
+        }
+        strcpy(received_utf8, p);
+        Fl::e_text = received_utf8;
+    }
+    Fl::e_length = l;
+}
+
++ (void)concatEtext: (NSString *)aString
+{
+    // extends Fl::e_text with aString
+    NSString *newstring = [[NSString stringWithUTF8String: Fl::e_text] stringByAppendingString: aString];
+    [FLView prepareEtext: newstring];
 }
 
 - (BOOL) textView: (UITextView*) textView shouldChangeTextInRange: (NSRange) range replacementText: (NSString*) text
 {
     (void) textView;
-    //return owner->textViewReplaceCharacters (Range<int> ((int) range.location, (int) (range.location + range.length)), nsStringToJuce (text));
-	// FIXIT:
-
-    const char *s = [text UTF8String];
-    const char *s1 = [[textView text] UTF8String];
-    int a = (int)text.length;//[text characterAtIndex:0];
-    printf("text:%s %s %d\n", s, s1, a);
-    printf("range:%d %d\n", (int)range.location, (int)range.location);
-    Fl::e_keysym = s[0];
-    Fl::e_original_keysym = s[0];
-    Fl::e_length = 1;
-    Fl::e_text = (char *)s;
-    Fl::handle(FL_KEYBOARD, flwindow);
-
-	return YES;
-}
-
-- (void) textViewDidChange:(UITextView *)textView
-{
     
+    /*
+    const char *s1 = [text UTF8String];
+    if ( range.length > 0 ) {
+        if ( strlen(s1) == 0 ) printf("delete\n");
+        else printf("input:%s\n", s1);
+    } else {
+        if ( strlen(s1) > 0 ) {
+            printf("input:%s\n", s1);
+        }
+    }
+    //*/
+    
+    // =============================
+    NSString *received;
+    if ([text isKindOfClass: [NSAttributedString class]]) {
+        received = [(NSAttributedString *)text string];
+    } else {
+        received = (NSString *)text;
+    }
+    const char *s = [text UTF8String];
+    fl_lock_function();
+    Fl_Window *target = flwindow;// [(FLWindow *)[self window] getFl_Window];
+    if ( range.length > 0 ) {
+        if ( strlen(s) == 0 ) {
+            int saved_keysym = Fl::e_keysym;
+            Fl::e_keysym = FL_BackSpace;
+            Fl::handle(FL_KEYBOARD, target);
+            Fl::e_keysym = saved_keysym;
+        } else {
+            if ( 0 == strcmp(s, "\n") || 0 == strcmp(s, "\r") || 0 == strcmp(s, "\r\n") ) {
+                Fl::e_keysym = FL_Enter;
+                Fl::handle(FL_KEYBOARD, target);
+                Fl::e_length = 0;
+                if ( spot_win_ != 0 ) {
+                    if ( spot_win_->visible_focus() ) {
+                        fl_set_spot(0, 0, 0, 0, 0, 0, spot_win_);
+                        spot_win_ = 0;
+                    }
+                }
+                fl_unlock_function();
+                return NO;
+            }
+        }
+    } else {
+        if ( strlen(s) == 0 ) {
+            fl_unlock_function();
+            return NO;
+        } else {
+            if ( 0 == strcmp(s, "\n") || 0 == strcmp(s, "\r") || 0 == strcmp(s, "\r\n") ) {
+                Fl::e_keysym = FL_Enter;
+                Fl::handle(FL_KEYBOARD, target);
+                Fl::e_length = 0;
+                if ( spot_win_ != 0 ) {
+                    if ( spot_win_->visible_focus() ) {
+                        fl_set_spot(0, 0, 0, 0, 0, 0, spot_win_);
+                        spot_win_ = 0;
+                    }
+                }
+                fl_unlock_function();
+                return NO;
+            }
+        }
+    }
+
+    if (in_key_event && Fl_X::next_marked_length && Fl::e_length) {
+        // if setMarkedText + insertText is sent during handleEvent, text cannot be concatenated in single FL_KEYBOARD event
+        Fl::handle(FL_KEYBOARD, target);
+        Fl::e_length = 0;
+    }
+    if (in_key_event && Fl::e_length) [FLView concatEtext: received];
+    else [FLView prepareEtext: received];
+    Fl_X::next_marked_length = 0;
+    // We can get called outside of key events (e.g., from the character palette, from CJK text input).
+    BOOL palette = !(in_key_event || Fl::compose_state);
+    if (palette) Fl::e_keysym = 0;
+    //printf("e_keysym=%x\n", Fl::e_keysym);
+    // YES if key has text attached
+    BOOL has_text_key = Fl::e_keysym <= '~' || Fl::e_keysym == FL_Iso_Key || (Fl::e_keysym >= FL_KP && Fl::e_keysym <= FL_KP_Last && Fl::e_keysym != FL_KP_Enter);
+    // insertText sent during handleEvent of a key without text cannot be processed in a single FL_KEYBOARD event.
+    // Occurs with deadkey followed by non-text key
+    if (!in_key_event || !has_text_key) {
+        Fl::handle(FL_KEYBOARD, target);
+        Fl::e_length = 0;
+    } else need_handle = YES;
+    selectedRange = NSMakeRange(100, 0); // 100 is an arbitrary value
+    // for some reason, with the palette, the window does not redraw until the next mouse move or button push
+    // sending a 'redraw()' or 'awake()' does not solve the issue!
+    if (palette) Fl::flush();
+    //if (fl_mac_os_version < 100600) [(FLTextView *)[[self window] fieldEditor: YES forObject: nil] setActive: NO];
+    fl_unlock_function();
+
+    //if (range.length == 0 ) return YES;
+    return NO;
 }
+
+/*
+- (void) keyboardWillShow:(NSNotification *)notification
+{
+    printf("keyboard show\n");
+}
+
+- (void) keyboardWillHide:(NSNotification *)notification
+{
+    printf("keyboard hide\n");
+}
+*/
 
 @end
 
