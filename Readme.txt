@@ -1,4 +1,11 @@
-﻿2014-10-09 cyantree
+﻿2014-10-13 cyantree
+ios下隐藏状态栏：
+首先设置key：Status bar is initially hidden    为YES
+然后设置key：View controller-based status bar appearance  为NO
+即可实现全局隐藏状态栏了
+
+===================
+2014-10-09 cyantree
 在ios上编译时，注意2点：1.将新建工程里的plist中的storyboard删除 2.选中"Hide during application launch"，否则无法全屏
 
 ===================
