@@ -24,6 +24,7 @@
 
 #include "Fl.H"
 #include "extra_gl/gl.h"
+#include "extra_gl/gl_draw.H"
 #include "x.H"
 #include "fl_draw.H"
 #include "Fl_Device.H"

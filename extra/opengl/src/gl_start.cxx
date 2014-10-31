@@ -35,6 +35,7 @@
 #include "Fl_Window.H"
 #include "x.H"
 #include "fl_draw.H"
+#include "gl.h"
 #include "Fl_Gl_Choice.H"
 
 static GLContext context;
