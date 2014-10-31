@@ -551,7 +551,7 @@ public:
  *
  This class is implemented only on the Xlib platform.
  */
-class Fl_Xlib_Graphics_Driver : public Fl_Graphics_Driver
+class FL_EXPORT Fl_Xlib_Graphics_Driver : public Fl_Graphics_Driver
 {
 public:
 	static const char *class_id;

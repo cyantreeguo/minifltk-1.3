@@ -172,6 +172,7 @@ void Fl_Window::label(const char *name)
 	label(name, iconlabel());	// platform dependent
 }
 
+/** Sets the window titlebar label to a copy of a character string */
 void Fl_Window::copy_label(const char *a)
 {
 	Fl_Widget::copy_label(a);
@@ -398,6 +399,9 @@ void Fl_Window::icon(const void * ic)
 	icon_->legacy_icon = ic;
 }
 
+/** Deletes all icons previously attached to the window.
+ \see Fl_Window::icons(const Fl_RGB_Image *icons[], int count)
+ */
 void Fl_Window::free_icons()
 {
 	int i;

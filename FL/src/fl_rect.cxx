@@ -224,10 +224,10 @@ void Fl_Graphics_Driver::rectf(int x, int y, int w, int h)
 	rect.bottom = y + h;
 	FillRect(fl_gc, &rect, fl_brush());
 #elif __FLTK_MACOSX__
-	CGRect  rect = CGRectMake(x, y, w - 0.9 , h - 0.9);
+	CGRect  rect = CGRectMake(x - 0.5, y - 0.5, w , h);
 	CGContextFillRect(fl_gc, rect);
 #elif __FLTK_IPHONEOS__
-	CGRect  rect = CGRectMake(x, y, w - 0.9 , h - 0.9);
+	CGRect  rect = CGRectMake(x - 0.5, y - 0.5, w , h);
 	CGContextFillRect(fl_gc, rect);
 #elif __FLTK_LINUX__
 	if (!clip_to_short(x, y, w, h))

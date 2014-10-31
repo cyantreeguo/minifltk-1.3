@@ -1264,7 +1264,7 @@ inline void fl_set_timer_countup(Fl_Widget* o,char d)
 {
 	((Fl_Timer*)o)->direction(d);
 }
-void fl_gettime(long* sec, long* usec);
+void FL_EXPORT fl_gettime(long* sec, long* usec);
 
 // Fl_XYPlot nyi
 

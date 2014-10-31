@@ -3926,7 +3926,7 @@ WindowRef Fl_X::window_ref()
 // so a CGRect matches exactly what is denoted x,y,w,h for clipping purposes
 CGRect fl_cgrectmake_cocoa(int x, int y, int w, int h)
 {
-	return CGRectMake(x, y, w > 0 ? w - 0.9 : 0, h > 0 ? h - 0.9 : 0);
+	return CGRectMake(x - 0.5, y - 0.5, w, h);
 }
 
 Window fl_xid(const Fl_Window *w)
@@ -3953,7 +3953,8 @@ int Fl_Window::decorated_h()
 
 void Fl_Paged_Device::print_window(Fl_Window *win, int x_offset, int y_offset)
 {
-	if (!win->shown() || win->parent() || !win->border() || !win->visible()) {
+	NSButton *close, *miniaturize, *zoom;
+  if (!win->shown() || win->parent() || !win->border() || !win->visible()) {
     this->print_widget(win, x_offset, y_offset);
     return;
   }
@@ -3963,6 +3964,17 @@ void Fl_Paged_Device::print_window(Fl_Window *win, int x_offset, int y_offset)
   const char *title = win->label();
   win->label(""); // temporarily set a void window title
   win->show();
+  if (fl_mac_os_version >= 101000) {
+    // if linked for OS 10.10, capture of title bar does not capture the title bar buttons
+    // so we draw them in FLTK
+    NSWindow *xid = fl_xid(win);
+    close = [xid standardWindowButton:NSWindowCloseButton]; // 10.2
+    miniaturize = [xid standardWindowButton:NSWindowMiniaturizeButton];
+    zoom = [xid standardWindowButton:NSWindowZoomButton];
+    [close setHidden:YES]; // 10.3
+    [miniaturize setHidden:YES];
+    [zoom setHidden:YES];
+  }
   fl_gc = NULL;
   Fl::check();
   BOOL to_quartz = dynamic_cast<Fl_Printer*>(this) != NULL;
@@ -3974,9 +3986,8 @@ void Fl_Paged_Device::print_window(Fl_Window *win, int x_offset, int y_offset)
   else
     bitmap = Fl_X::bitmap_from_window_rect(win, 0, -bt, win->w(), bt, &bpp);
   win->label(title); // put back the window title
-  // and print it
   this->set_current(); // back to the Fl_Paged_Device
-  if (img && to_quartz) {
+  if (img && to_quartz) { // print the title bar
     CGRect rect = { { x_offset, y_offset }, { win->w(), bt } };
     Fl_X::q_begin_image(rect, 0, 0, win->w(), bt);
     CGContextDrawImage(fl_gc, rect, img);
@@ -3989,10 +4000,34 @@ void Fl_Paged_Device::print_window(Fl_Window *win, int x_offset, int y_offset)
     delete rgb;
     delete[] bitmap;
   }
+  if (fl_mac_os_version >= 101000) { // print the title bar buttons
+    Fl_Color inactive = fl_rgb_color((uchar)0xCE, (uchar)0xCE, (uchar)0xCE); // inactive button color
+    Fl_Color redish, yellowish, greenish;
+    if ([[NSUserDefaults standardUserDefaults] integerForKey:@"AppleAquaColorVariant"] == 6) { // graphite appearance
+      redish = yellowish = greenish = fl_rgb_color((uchar)0x8C, (uchar)0x8C, (uchar)0x8C);
+    }
+    else {
+      redish = fl_rgb_color((uchar)0xFF, (uchar)0x63, (uchar)0x5A);
+      yellowish = fl_rgb_color((uchar)0xFF, (uchar)0xC6, (uchar)0x42);
+      greenish = fl_rgb_color((uchar)0x29, (uchar)0xD6, (uchar)0x52);
+    }
+    
+    if (![close isEnabled]) fl_color(inactive); else fl_color(redish);
+    fl_pie(x_offset+8, y_offset+5, 12, 12, 0, 360);
+    if (![miniaturize isEnabled]) fl_color(inactive); else fl_color(yellowish);
+    fl_pie(x_offset+28, y_offset+5, 12, 12, 0, 360);
+    if (![zoom isEnabled]) fl_color(inactive); else fl_color(greenish);
+    fl_pie(x_offset+48, y_offset+5, 12, 12, 0, 360);
+    
+    [close setHidden:NO]; // 10.3
+    [miniaturize setHidden:NO];
+    [zoom setHidden:NO];
+  }
   if (title) { // print the window title
-    const int skip = 68; // approx width of the zone of the 3 window control buttons
+    const int skip = 65; // approx width of the zone of the 3 window control buttons
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_4
     if (fl_mac_os_version >= 100400 && to_quartz) { // use Cocoa string drawing with exact title bar font
+      // the exact font is LucidaGrande 13 pts (and HelveticaNeueDeskInterface-Regular with 10.10)
       NSGraphicsContext *current = [NSGraphicsContext currentContext];
       [NSGraphicsContext setCurrentContext:[NSGraphicsContext graphicsContextWithGraphicsPort:fl_gc flipped:YES]];//10.4
       NSDictionary *attr = [NSDictionary dictionaryWithObject:[NSFont titleBarFontOfSize:0] 
@@ -4010,7 +4045,7 @@ void Fl_Paged_Device::print_window(Fl_Window *win, int x_offset, int y_offset)
     else
 #endif
     {
-      fl_font(FL_HELVETICA, 14); // the exact font is LucidaGrande 13 pts
+      fl_font(FL_HELVETICA, 14);
       fl_color(FL_BLACK);
       int x = x_offset + win->w()/2 - fl_width(title)/2;
       if (x < x_offset+skip) x = x_offset+skip;

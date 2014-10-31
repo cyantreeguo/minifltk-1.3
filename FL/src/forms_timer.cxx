@@ -23,6 +23,7 @@
 #include "Fl.H"
 #include "Fl_Timer.H"
 #include "fl_draw.H"
+#include "forms.H"
 
 #if __FLTK_WIN32__
 #    include <sys/types.h>

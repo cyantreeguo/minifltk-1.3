@@ -183,17 +183,23 @@ void Fl_Window::cursor(const Fl_RGB_Image *image, int hotx, int hoty)
 	cursor(FL_CURSOR_DEFAULT);
 }
 
-/* For back compatibility only. */
+/**
+ For back compatibility only.
+ Same as Fl_Window::cursor(Fl_Cursor)
+*/
 void Fl_Window::cursor(Fl_Cursor c, Fl_Color, Fl_Color)
 {
 	cursor(c);
 };
 
+/**
+ For back compatibility only.
+ same as Fl_Window::default_cursor(Fl_Cursor)
+*/
 void Fl_Window::default_cursor(Fl_Cursor c, Fl_Color, Fl_Color)
 {
 	default_cursor(c);
 };
-
 
 //
 // End of "$Id: fl_cursor.cxx 10196 2014-06-16 11:17:57Z ossman $".

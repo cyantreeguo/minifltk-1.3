@@ -54,7 +54,7 @@
  Applications to which the clipboard content is pasted can use the flavor that suits them best.
  \li X11: the graphical data is copied to the clipboard as an image in BMP format.
 */
-class Fl_Copy_Surface : public Fl_Surface_Device
+class FL_EXPORT Fl_Copy_Surface : public Fl_Surface_Device
 {
 private:
 	int width;
@@ -103,7 +103,7 @@ public:
 #if __FLTK_MACOSX__
 
 /* Mac class to reimplement Fl_Paged_Device::printable_rect() */
-class Fl_Quartz_Surface_ : public Fl_System_Printer
+class FL_EXPORT Fl_Quartz_Surface_ : public Fl_System_Printer
 {
 protected:
 	int width;
@@ -122,7 +122,7 @@ public:
 #elif __FLTK_WIN32__
 
 /* Win class to implement translate()/untranslate() */
-class Fl_GDI_Surface_ : public Fl_Paged_Device
+class FL_EXPORT Fl_GDI_Surface_ : public Fl_Paged_Device
 {
 	int width;
 	int height;
@@ -144,7 +144,7 @@ public:
 #elif __FLTK_LINUX__
 
 /* Xlib class to implement translate()/untranslate() */
-class Fl_Xlib_Surface_ : public Fl_Paged_Device
+class FL_EXPORT Fl_Xlib_Surface_ : public Fl_Paged_Device
 {
 public:
 	static const char *class_id;

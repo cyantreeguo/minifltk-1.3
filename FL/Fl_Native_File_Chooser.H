@@ -292,7 +292,7 @@ private:
 };
 
 #if __FLTK_LINUX__
-class Fl_FLTK_File_Chooser
+class FL_EXPORT Fl_FLTK_File_Chooser
 {
 	friend class Fl_Native_File_Chooser;
 protected:
@@ -336,7 +336,7 @@ protected:
 };
 
 
-class Fl_GTK_File_Chooser : public Fl_FLTK_File_Chooser
+class FL_EXPORT Fl_GTK_File_Chooser : public Fl_FLTK_File_Chooser
 {
 	friend class Fl_Native_File_Chooser;
 private:

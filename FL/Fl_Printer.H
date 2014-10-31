@@ -93,6 +93,9 @@ public:
 	void untranslate(void);
 	int end_page (void);
 	void end_job (void);
+#ifdef __APPLE__
+	void print_window_part(Fl_Window *win, int x, int y, int w, int h, int delta_x, int delta_y);
+#endif
 	/** \brief The destructor */
 	~Fl_System_Printer(void);
 }; // class Fl_System_Printer

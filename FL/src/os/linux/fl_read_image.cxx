@@ -107,7 +107,7 @@ image = 0;
 				// screen dimensions
 				Fl::screen_xywh(sx, sy, sw, sh, fl_screen);
 			}
-			if (!win || (dx >= sx && dy >= sy && dx + w <= sw && dy + h <= sh)) {
+			if (!win || (dx >= sx && dy >= sy && dx + w <= sx+sw && dy + h <= sy+sh)) {
 				// the image is fully contained, we can use the traditional method
 				// however, if the window is obscured etc. the function will still fail. Make sure we
 				// catch the error and continue, otherwise an exception will be thrown.
