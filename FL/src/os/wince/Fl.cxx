@@ -712,7 +712,7 @@ void Fl::paste(Fl_Widget &receiver, int clipboard, const char *type)
 					fl_delete_offscreen(off);
 				}
 				GlobalUnlock(h);
-			} 
+			}
 			/*else if ((h = GetClipboardData(CF_ENHMETAFILE))) { // if there's an enhanced metafile in clipboard
 				ENHMETAHEADER header;
 				GetEnhMetaFileHeader((HENHMETAFILE)h, sizeof(header), &header); // get structure containing metafile dimensions
@@ -1073,7 +1073,7 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 			return 0;
 
 		case WM_SYNCPAINT :
-		//case WM_NCPAINT :
+			//case WM_NCPAINT :
 		case WM_ERASEBKGND :
 			// Andreas Weitl - WM_SYNCPAINT needs to be passed to DefWindowProc
 			// so that Windows can generate the proper paint messages...
@@ -1185,7 +1185,7 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 			break;
 
 		case WM_KILLFOCUS:
-		//printf("kill focus\n");
+			//printf("kill focus\n");
 			Fl::handle(FL_UNFOCUS, window);
 			Fl::flush(); // it never returns to main loop when deactivated...
 			break;
@@ -1195,26 +1195,26 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 				Fl::handle(wParam ? FL_SHOW : FL_HIDE, window);
 			}
 			break;
-/*
-		case WM_ACTIVATEAPP:
-			// From eric@vfx.sel.sony.com, we should process WM_ACTIVATEAPP
-			// messages to restore the correct state of the shift/ctrl/alt/lock
-			// keys...  Added control, shift, alt, and meta keys, and changed
-			// to use GetAsyncKeyState and do it when wParam is 1
-			// (that means we have focus...)
-			if (wParam) {
-				ulong state = 0;
-				if (GetAsyncKeyState(VK_CAPITAL)) state |= FL_CAPS_LOCK;
-				if (GetAsyncKeyState(VK_NUMLOCK)) state |= FL_NUM_LOCK;
-				if (GetAsyncKeyState(VK_SCROLL)) state |= FL_SCROLL_LOCK;
-				if (GetAsyncKeyState(VK_CONTROL)&~1) state |= FL_CTRL;
-				if (GetAsyncKeyState(VK_SHIFT)&~1) state |= FL_SHIFT;
-				if (GetAsyncKeyState(VK_MENU)) state |= FL_ALT;
-				if ((GetAsyncKeyState(VK_LWIN)|GetAsyncKeyState(VK_RWIN))&~1) state |= FL_META;
-				Fl::e_state = state;
-				return 0;
-			}
-*/
+			/*
+					case WM_ACTIVATEAPP:
+						// From eric@vfx.sel.sony.com, we should process WM_ACTIVATEAPP
+						// messages to restore the correct state of the shift/ctrl/alt/lock
+						// keys...  Added control, shift, alt, and meta keys, and changed
+						// to use GetAsyncKeyState and do it when wParam is 1
+						// (that means we have focus...)
+						if (wParam) {
+							ulong state = 0;
+							if (GetAsyncKeyState(VK_CAPITAL)) state |= FL_CAPS_LOCK;
+							if (GetAsyncKeyState(VK_NUMLOCK)) state |= FL_NUM_LOCK;
+							if (GetAsyncKeyState(VK_SCROLL)) state |= FL_SCROLL_LOCK;
+							if (GetAsyncKeyState(VK_CONTROL)&~1) state |= FL_CTRL;
+							if (GetAsyncKeyState(VK_SHIFT)&~1) state |= FL_SHIFT;
+							if (GetAsyncKeyState(VK_MENU)) state |= FL_ALT;
+							if ((GetAsyncKeyState(VK_LWIN)|GetAsyncKeyState(VK_RWIN))&~1) state |= FL_META;
+							Fl::e_state = state;
+							return 0;
+						}
+			*/
 			break;
 
 		case WM_INPUTLANGCHANGE:
@@ -1238,7 +1238,7 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 			Fl::e_keysym = Fl::e_original_keysym = ms2fltk(wParam,lParam&(1<<24));
 			// See if TranslateMessage turned it into a WM_*CHAR message:
 			if (PeekMessageW(&fl_msg, hWnd, WM_CHAR, WM_SYSDEADCHAR, PM_REMOVE)) {
-			//printf("WM_SYSKEYUP:%x\n", fl_msg.message);
+				//printf("WM_SYSKEYUP:%x\n", fl_msg.message);
 				uMsg = fl_msg.message;
 				wParam = fl_msg.wParam;
 				lParam = fl_msg.lParam;
@@ -1377,11 +1377,11 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 			if (Fl::e_dx) Fl::handle(FL_MOUSEWHEEL, window);
 			return 0;
 		}
-/*
-		case WM_GETMINMAXINFO:
-			Fl_X::i(window)->set_minmax((LPMINMAXINFO)lParam);
-			break;
-*/
+		/*
+				case WM_GETMINMAXINFO:
+					Fl_X::i(window)->set_minmax((LPMINMAXINFO)lParam);
+					break;
+		*/
 		case WM_SIZE:
 			if (!window->parent()) {
 				if (wParam == SIZE_MINIMIZED || wParam == SIZE_MAXHIDE) {
@@ -1432,32 +1432,32 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 		case WM_DESTROYCLIPBOARD:
 			fl_i_own_selection[1] = 0;
 			return 1;
-/*
-		case WM_DISPLAYCHANGE: // occurs when screen configuration (number, position) changes
-			Fl::call_screen_init();
-			Fl::handle(FL_SCREEN_CONFIGURATION_CHANGED, NULL);
-			return 0;
+			/*
+					case WM_DISPLAYCHANGE: // occurs when screen configuration (number, position) changes
+						Fl::call_screen_init();
+						Fl::handle(FL_SCREEN_CONFIGURATION_CHANGED, NULL);
+						return 0;
 
-		case WM_CHANGECBCHAIN:
-			if ((hWnd == clipboard_wnd) && (next_clipboard_wnd == (HWND)wParam))
-				next_clipboard_wnd = (HWND)lParam;
-			else
-				SendMessage(next_clipboard_wnd, WM_CHANGECBCHAIN, wParam, lParam);
-			return 0;
+					case WM_CHANGECBCHAIN:
+						if ((hWnd == clipboard_wnd) && (next_clipboard_wnd == (HWND)wParam))
+							next_clipboard_wnd = (HWND)lParam;
+						else
+							SendMessage(next_clipboard_wnd, WM_CHANGECBCHAIN, wParam, lParam);
+						return 0;
 
-		case WM_DRAWCLIPBOARD:
-			// When the clipboard moves between two FLTK windows,
-			// fl_i_own_selection will temporarily be false as we are
-			// processing this message. Hence the need to use fl_find().
-			if (!initial_clipboard && !fl_find(GetClipboardOwner()))
-				fl_trigger_clipboard_notify(1);
-			initial_clipboard = false;
+					case WM_DRAWCLIPBOARD:
+						// When the clipboard moves between two FLTK windows,
+						// fl_i_own_selection will temporarily be false as we are
+						// processing this message. Hence the need to use fl_find().
+						if (!initial_clipboard && !fl_find(GetClipboardOwner()))
+							fl_trigger_clipboard_notify(1);
+						initial_clipboard = false;
 
-			if (next_clipboard_wnd)
-				SendMessage(next_clipboard_wnd, WM_DRAWCLIPBOARD, wParam, lParam);
+						if (next_clipboard_wnd)
+							SendMessage(next_clipboard_wnd, WM_DRAWCLIPBOARD, wParam, lParam);
 
-			return 0;
-*/			
+						return 0;
+			*/
 		default:
 			if (Fl::handle(0,0)) return 0;
 			break;
@@ -1976,7 +1976,7 @@ Fl_X* Fl_X::make(Fl_Window* w)
 	// Register all windows for potential drag'n'drop operations
 	fl_OleInitialize();
 	//RegisterDragDrop(x->xid, flIDropTarget);
-	
+
 	if (!fl_aimm) {
 		CoCreateInstance(CLSID_CActiveIMM, NULL, CLSCTX_INPROC_SERVER,
 		                 IID_IActiveIMMApp, (void**) &fl_aimm);
@@ -2169,14 +2169,12 @@ void Fl_Window::label(const char *name,const char *iname)
 
 ////////////////////////////////////////////////////////////////
 typedef long            FXPT2DOT30, FAR *LPFXPT2DOT30;
-typedef struct tagCIEXYZ
-{
+typedef struct tagCIEXYZ {
 	FXPT2DOT30 ciexyzX;
 	FXPT2DOT30 ciexyzY;
 	FXPT2DOT30 ciexyzZ;
 } CIEXYZ;
-typedef struct tagICEXYZTRIPLE
-{
+typedef struct tagICEXYZTRIPLE {
 	CIEXYZ  ciexyzRed;
 	CIEXYZ  ciexyzGreen;
 	CIEXYZ  ciexyzBlue;
@@ -2790,10 +2788,13 @@ void Fl_Paged_Device::print_window(Fl_Window *win, int x_offset, int y_offset)
 	// capture the 4 window sides from screen
 	RECT r;
 	GetWindowRect(fl_window, &r);
+	Window save_win = fl_window;
+	fl_window = NULL; // force use of read_win_rectangle() by fl_read_image()
 	uchar *top_image = fl_read_image(NULL, r.left, r.top, ww, bt + by);
 	uchar *left_image = fl_read_image(NULL, r.left, r.top, bx, wh);
 	uchar *right_image = fl_read_image(NULL, r.right - bx, r.top, bx, wh);
 	uchar *bottom_image = fl_read_image(NULL, r.left, r.bottom-by, ww, by);
+	fl_window = save_win;
 	ReleaseDC(NULL, fl_gc);
 	fl_gc = save_gc;
 	this->set_current();
