@@ -3521,655 +3521,664 @@ void Fl_Text_Display::wrapped_line_counter(Fl_Text_Buffer *buf, int startPos,
 					const char *s = buf->address(b);
 					width = measure_proportional_character(s, 0, p+styleBufOffset);
 				}
-				if (p >= maxPos) {
-					*retPos = maxPos;
-					*retLines = maxPos < newLineStart ? nLines : nLines + 1;
-					*retLineStart = maxPos < newLineStart ? lineStart : newLineStart;
-					*retLineEnd = maxPos;
-					return;
-				}
-				nLines++;
-				if (nLines >= maxLines) {
-					*retPos = foundBreak ? buf->next_char(b) : max(p, buf->next_char(lineStart));
-					*retLines = nLines;
-					*retLineStart = lineStart;
-					*retLineEnd = foundBreak ? b : p;
-					return;
-				}
-				lineStart = newLineStart;
 			}
+			if (p >= maxPos) {
+				*retPos = maxPos;
+				*retLines = maxPos < newLineStart ? nLines : nLines + 1;
+				*retLineStart = maxPos < newLineStart ? lineStart : newLineStart;
+				*retLineEnd = maxPos;
+				return;
+			}
+			nLines++;
+			if (nLines >= maxLines) {
+				*retPos = foundBreak ? buf->next_char(b) : max(p, buf->next_char(lineStart));
+				*retLines = nLines;
+				*retLineStart = lineStart;
+				*retLineEnd = foundBreak ? b : p;
+				return;
+			}
+			lineStart = newLineStart;
 		}
-
-		/* reached end of buffer before reaching pos or line target */
-		*retPos = buf->length();
-		*retLines = nLines;
-		if (countLastLineMissingNewLine && colNum > 0)
-			*retLines = buf->next_char(*retLines);
-		*retLineStart = lineStart;
-		*retLineEnd = buf->length();
 	}
 
+	/* reached end of buffer before reaching pos or line target */
+	*retPos = buf->length();
+	*retLines = nLines;
+	if (countLastLineMissingNewLine && colNum > 0)
+		*retLines = buf->next_char(*retLines);
+	*retLineStart = lineStart;
+	*retLineEnd = buf->length();
+}
 
+/**
+ \brief Wrapping calculations.
 
-	/**
-	 \brief Wrapping calculations.
+ Measure the width in pixels of the first character of string "s" at a
+ particular column "colNum" and buffer position "pos".  This is for measuring
+ characters in proportional or mixed-width highlighting fonts.
 
-	 Measure the width in pixels of the first character of string "s" at a
-	 particular column "colNum" and buffer position "pos".  This is for measuring
-	 characters in proportional or mixed-width highlighting fonts.
+ A note about proportional and mixed-width fonts: the mixed width and
+ proportional font code in nedit does not get much use in general editing,
+ because nedit doesn't allow per-language-mode fonts, and editing programs
+ in a proportional font is usually a bad idea, so very few users would
+ choose a proportional font as a default.  There are still probably mixed-
+ width syntax highlighting cases where things don't redraw properly for
+ insertion/deletion, though static display and wrapping and resizing
+ should now be solid because they are now used for online help display.
 
-	 A note about proportional and mixed-width fonts: the mixed width and
-	 proportional font code in nedit does not get much use in general editing,
-	 because nedit doesn't allow per-language-mode fonts, and editing programs
-	 in a proportional font is usually a bad idea, so very few users would
-	 choose a proportional font as a default.  There are still probably mixed-
-	 width syntax highlighting cases where things don't redraw properly for
-	 insertion/deletion, though static display and wrapping and resizing
-	 should now be solid because they are now used for online help display.
+ \param s text string
+ \param xPix x pixel position needed for calculating tab widths
+ \param pos offset within string
+ \return width of character in pixels
+ */
+double Fl_Text_Display::measure_proportional_character(const char *s, int xPix, int pos) const
+{
+	IS_UTF8_ALIGNED(s)
 
-	 \param s text string
-	 \param xPix x pixel position needed for calculating tab widths
-	 \param pos offset within string
-	 \return width of character in pixels
-	 */
-	double Fl_Text_Display::measure_proportional_character(const char *s, int xPix, int pos) const {
-		IS_UTF8_ALIGNED(s)
-
-		if (*s=='\t') {
-			int tab = (int)col_to_x(mBuffer->tab_distance());
-			return (((xPix/tab)+1)*tab) - xPix;
-		}
-
-		int charLen = fl_utf8len1(*s), style = 0;
-		if (mStyleBuffer) {
-			style = mStyleBuffer->byte_at(pos);
-		}
-		return string_width(s, charLen, style);
+	if (*s=='\t') {
+		int tab = (int)col_to_x(mBuffer->tab_distance());
+		return (((xPix/tab)+1)*tab) - xPix;
 	}
 
+	int charLen = fl_utf8len1(*s), style = 0;
+	if (mStyleBuffer) {
+		style = mStyleBuffer->byte_at(pos);
+	}
+	return string_width(s, charLen, style);
+}
 
 
-	/**
-	 \brief Finds both the end of the current line and the start of the next line.
 
-	 Why?
-	 In continuous wrap mode, if you need to know both, figuring out one from the
-	 other can be expensive or error prone.  The problem comes when there's a
-	 trailing space or tab just before the end of the buffer.  To translate an
-	 end of line value to or from the next lines start value, you need to know
-	 whether the trailing space or tab is being used as a line break or just a
-	 normal character, and to find that out would otherwise require counting all
-	 the way back to the beginning of the line.
+/**
+ \brief Finds both the end of the current line and the start of the next line.
 
-	 \param startPos
-	 \param startPosIsLineStart
-	 \param[out] lineEnd
-	 \param[out] nextLineStart
-	 */
-	void Fl_Text_Display::find_line_end(int startPos, bool startPosIsLineStart,
-	                                    int *lineEnd, int *nextLineStart) const {
-		IS_UTF8_ALIGNED2(buffer(), startPos)
+ Why?
+ In continuous wrap mode, if you need to know both, figuring out one from the
+ other can be expensive or error prone.  The problem comes when there's a
+ trailing space or tab just before the end of the buffer.  To translate an
+ end of line value to or from the next lines start value, you need to know
+ whether the trailing space or tab is being used as a line break or just a
+ normal character, and to find that out would otherwise require counting all
+ the way back to the beginning of the line.
 
-		int retLines, retLineStart;
+ \param startPos
+ \param startPosIsLineStart
+ \param[out] lineEnd
+ \param[out] nextLineStart
+ */
+void Fl_Text_Display::find_line_end(int startPos, bool startPosIsLineStart,
+                                    int *lineEnd, int *nextLineStart) const
+{
+	IS_UTF8_ALIGNED2(buffer(), startPos)
 
-		/* if we're not wrapping use more efficient BufEndOfLine */
-		if (!mContinuousWrap) {
-			int le = buffer()->line_end(startPos);
-			int ls = buffer()->next_char(le);
-			*lineEnd = le;
-			*nextLineStart = min(buffer()->length(), ls);
-			return;
-		}
+	int retLines, retLineStart;
 
-		/* use the wrapped line counter routine to count forward one line */
-		wrapped_line_counter(buffer(), startPos, buffer()->length(),
-		                     1, startPosIsLineStart, 0, nextLineStart, &retLines,
-		                     &retLineStart, lineEnd);
+	/* if we're not wrapping use more efficient BufEndOfLine */
+	if (!mContinuousWrap) {
+		int le = buffer()->line_end(startPos);
+		int ls = buffer()->next_char(le);
+		*lineEnd = le;
+		*nextLineStart = min(buffer()->length(), ls);
+		return;
 	}
 
+	/* use the wrapped line counter routine to count forward one line */
+	wrapped_line_counter(buffer(), startPos, buffer()->length(),
+	                     1, startPosIsLineStart, 0, nextLineStart, &retLines,
+	                     &retLineStart, lineEnd);
+}
 
 
-	/**
-	 \brief Check if the line break is caused by a \\n or by line wrapping.
 
-	 Line breaks in continuous wrap mode usually happen at newlines or
-	 whitespace.  This line-terminating character is not included in line
-	 width measurements and has a special status as a non-visible character.
-	 However, lines with no whitespace are wrapped without the benefit of a
-	 line terminating character, and this distinction causes endless trouble
-	 with all of the text display code which was originally written without
-	 continuous wrap mode and always expects to wrap at a newline character.
+/**
+ \brief Check if the line break is caused by a \\n or by line wrapping.
 
-	 Given the position of the end of the line, as returned by TextDEndOfLine
-	 or BufEndOfLine, this returns true if there is a line terminating
-	 character, and false if there's not.  On the last character in the
-	 buffer, this function can't tell for certain whether a trailing space was
-	 used as a wrap point, and just guesses that it wasn't.  So if an exact
-	 accounting is necessary, don't use this function.
+ Line breaks in continuous wrap mode usually happen at newlines or
+ whitespace.  This line-terminating character is not included in line
+ width measurements and has a special status as a non-visible character.
+ However, lines with no whitespace are wrapped without the benefit of a
+ line terminating character, and this distinction causes endless trouble
+ with all of the text display code which was originally written without
+ continuous wrap mode and always expects to wrap at a newline character.
 
-	 \param lineEndPos index of character where the line wraps
-	 \return 1 if a \\n character causes the line wrap
-	 */
-	int Fl_Text_Display::wrap_uses_character(int lineEndPos) const {
-		IS_UTF8_ALIGNED2(buffer(), lineEndPos)
+ Given the position of the end of the line, as returned by TextDEndOfLine
+ or BufEndOfLine, this returns true if there is a line terminating
+ character, and false if there's not.  On the last character in the
+ buffer, this function can't tell for certain whether a trailing space was
+ used as a wrap point, and just guesses that it wasn't.  So if an exact
+ accounting is necessary, don't use this function.
 
-		unsigned int c;
+ \param lineEndPos index of character where the line wraps
+ \return 1 if a \\n character causes the line wrap
+ */
+int Fl_Text_Display::wrap_uses_character(int lineEndPos) const
+{
+	IS_UTF8_ALIGNED2(buffer(), lineEndPos)
 
-		if (!mContinuousWrap || lineEndPos == buffer()->length())
-			return 1;
+	unsigned int c;
 
-		c = buffer()->char_at(lineEndPos);
-		return c == '\n' || ((c == '\t' || c == ' ') &&
-		                     lineEndPos + 1 < buffer()->length());
+	if (!mContinuousWrap || lineEndPos == buffer()->length())
+		return 1;
+
+	c = buffer()->char_at(lineEndPos);
+	return c == '\n' || ((c == '\t' || c == ' ') &&
+	                     lineEndPos + 1 < buffer()->length());
+}
+
+
+
+/**
+ \brief I don't know what this does!
+
+ Extend the range of a redraw request (from *start to *end) with additional
+ redraw requests resulting from changes to the attached style buffer (which
+ contains auxiliary information for coloring or styling text).
+
+ \param startpos ??
+ \param endpos ??
+
+ \todo Unicode?
+ */
+void Fl_Text_Display::extend_range_for_styles( int *startpos, int *endpos )
+{
+	IS_UTF8_ALIGNED2(buffer(), (*startpos))
+	IS_UTF8_ALIGNED2(buffer(), (*endpos))
+
+	Fl_Text_Selection * sel = mStyleBuffer->primary_selection();
+	int extended = 0;
+
+	/* The peculiar protocol used here is that modifications to the style
+	 buffer are marked by selecting them with the buffer's primary Fl_Text_Selection.
+	 The style buffer is usually modified in response to a modify callback on
+	 the text buffer BEFORE Fl_Text_Display.c's modify callback, so that it can keep
+	 the style buffer in step with the text buffer.  The style-update
+	 callback can't just call for a redraw, because Fl_Text_Display hasn't processed
+	 the original text changes yet.  Anyhow, to minimize redrawing and to
+	 avoid the complexity of scheduling redraws later, this simple protocol
+	 tells the text display's buffer modify callback to extend its redraw
+	 range to show the text color/and font changes as well. */
+	if ( sel->selected() ) {
+		if ( sel->start() < *startpos ) {
+			*startpos = sel->start();
+			// somewhere while deleting, alignment is lost. We do this just to be sure.
+			*startpos = buffer()->utf8_align(*startpos);
+			IS_UTF8_ALIGNED2(buffer(), (*startpos))
+			extended = 1;
+		}
+		if ( sel->end() > *endpos ) {
+			*endpos = sel->end();
+			*endpos = buffer()->utf8_align(*endpos);
+			IS_UTF8_ALIGNED2(buffer(), (*endpos))
+			extended = 1;
+		}
 	}
 
+	/* If the Fl_Text_Selection was extended due to a style change, and some of the
+	 fonts don't match in spacing, extend redraw area to end of line to
+	 redraw characters exposed by possible font size changes */
+	if ( extended )
+		*endpos = mBuffer->line_end( *endpos ) + 1;
+
+	IS_UTF8_ALIGNED2(buffer(), (*endpos))
+}
 
 
-	/**
-	 \brief I don't know what this does!
 
-	 Extend the range of a redraw request (from *start to *end) with additional
-	 redraw requests resulting from changes to the attached style buffer (which
-	 contains auxiliary information for coloring or styling text).
+/**
+ \brief Draw the widget.
 
-	 \param startpos ??
-	 \param endpos ??
-
-	 \todo Unicode?
-	 */
-	void Fl_Text_Display::extend_range_for_styles( int *startpos, int *endpos ) {
-		IS_UTF8_ALIGNED2(buffer(), (*startpos))
-		IS_UTF8_ALIGNED2(buffer(), (*endpos))
-
-		Fl_Text_Selection * sel = mStyleBuffer->primary_selection();
-		int extended = 0;
-
-		/* The peculiar protocol used here is that modifications to the style
-		 buffer are marked by selecting them with the buffer's primary Fl_Text_Selection.
-		 The style buffer is usually modified in response to a modify callback on
-		 the text buffer BEFORE Fl_Text_Display.c's modify callback, so that it can keep
-		 the style buffer in step with the text buffer.  The style-update
-		 callback can't just call for a redraw, because Fl_Text_Display hasn't processed
-		 the original text changes yet.  Anyhow, to minimize redrawing and to
-		 avoid the complexity of scheduling redraws later, this simple protocol
-		 tells the text display's buffer modify callback to extend its redraw
-		 range to show the text color/and font changes as well. */
-		if ( sel->selected() ) {
-			if ( sel->start() < *startpos ) {
-				*startpos = sel->start();
-				// somewhere while deleting, alignment is lost. We do this just to be sure.
-				*startpos = buffer()->utf8_align(*startpos);
-				IS_UTF8_ALIGNED2(buffer(), (*startpos))
-				extended = 1;
-			}
-			if ( sel->end() > *endpos ) {
-				*endpos = sel->end();
-				*endpos = buffer()->utf8_align(*endpos);
-				IS_UTF8_ALIGNED2(buffer(), (*endpos))
-				extended = 1;
-			}
-		}
-
-		/* If the Fl_Text_Selection was extended due to a style change, and some of the
-		 fonts don't match in spacing, extend redraw area to end of line to
-		 redraw characters exposed by possible font size changes */
-		if ( extended )
-			*endpos = mBuffer->line_end( *endpos ) + 1;
-
-		IS_UTF8_ALIGNED2(buffer(), (*endpos))
+ This function tries to limit drawing to smaller areas if possible.
+ */
+void Fl_Text_Display::draw(void)
+{
+	// don't even try if there is no associated text buffer!
+	if (!buffer()) {
+		draw_box();
+		return;
 	}
 
+	fl_push_clip(x(),y(),w(),h());	// prevent drawing outside widget area
 
-
-	/**
-	 \brief Draw the widget.
-
-	 This function tries to limit drawing to smaller areas if possible.
-	 */
-	void Fl_Text_Display::draw(void) {
-		// don't even try if there is no associated text buffer!
-		if (!buffer()) {
-			draw_box();
-			return;
+	// draw the non-text, non-scrollbar areas.
+	if (damage() & FL_DAMAGE_ALL) {
+		//    printf("drawing all (box = %d)\n", box());
+		if (Fl_Surface_Device::surface() != Fl_Display_Device::display_device()) {
+			// if to printer, draw the background
+			fl_rectf(text_area.x, text_area.y, text_area.w, text_area.h, color() );
 		}
+		// draw the box()
+		int W = w(), H = h();
+		draw_box(box(), x(), y(), W, H, color());
 
-		fl_push_clip(x(),y(),w(),h());	// prevent drawing outside widget area
+		if (mHScrollBar->visible())
+			W -= scrollbar_width();
+		if (mVScrollBar->visible())
+			H -= scrollbar_width();
 
-		// draw the non-text, non-scrollbar areas.
-		if (damage() & FL_DAMAGE_ALL) {
-			//    printf("drawing all (box = %d)\n", box());
-			if (Fl_Surface_Device::surface() != Fl_Display_Device::display_device()) {
-				// if to printer, draw the background
-				fl_rectf(text_area.x, text_area.y, text_area.w, text_area.h, color() );
-			}
-			// draw the box()
-			int W = w(), H = h();
-			draw_box(box(), x(), y(), W, H, color());
+		// left margin
+		fl_rectf(text_area.x-LEFT_MARGIN, text_area.y-TOP_MARGIN,
+		         LEFT_MARGIN, text_area.h+TOP_MARGIN+BOTTOM_MARGIN,
+		         color());
 
-			if (mHScrollBar->visible())
-				W -= scrollbar_width();
-			if (mVScrollBar->visible())
-				H -= scrollbar_width();
+		// right margin
+		fl_rectf(text_area.x+text_area.w, text_area.y-TOP_MARGIN,
+		         RIGHT_MARGIN, text_area.h+TOP_MARGIN+BOTTOM_MARGIN,
+		         color());
 
-			// left margin
-			fl_rectf(text_area.x-LEFT_MARGIN, text_area.y-TOP_MARGIN,
-			         LEFT_MARGIN, text_area.h+TOP_MARGIN+BOTTOM_MARGIN,
-			         color());
+		// top margin
+		fl_rectf(text_area.x, text_area.y-TOP_MARGIN,
+		         text_area.w, TOP_MARGIN, color());
 
-			// right margin
-			fl_rectf(text_area.x+text_area.w, text_area.y-TOP_MARGIN,
-			         RIGHT_MARGIN, text_area.h+TOP_MARGIN+BOTTOM_MARGIN,
-			         color());
+		// bottom margin
+		fl_rectf(text_area.x, text_area.y+text_area.h,
+		         text_area.w, BOTTOM_MARGIN, color());
 
-			// top margin
-			fl_rectf(text_area.x, text_area.y-TOP_MARGIN,
-			         text_area.w, TOP_MARGIN, color());
-
-			// bottom margin
-			fl_rectf(text_area.x, text_area.y+text_area.h,
-			         text_area.w, BOTTOM_MARGIN, color());
-
-			// draw that little box in the corner of the scrollbars
-			if (mVScrollBar->visible() && mHScrollBar->visible())
-				fl_rectf(mVScrollBar->x(), mHScrollBar->y(),
-				         mVScrollBar->w(), mHScrollBar->h(),
-				         FL_GRAY);
-			//draw_line_numbers(true);		// commented out STR# 2621 / LZA
-		} else if (damage() & (FL_DAMAGE_SCROLL | FL_DAMAGE_EXPOSE)) {
-			//    printf("blanking previous cursor extrusions at Y: %d\n", mCursorOldY);
-			// CET - FIXME - save old cursor position instead and just draw side needed?
-			fl_push_clip(text_area.x-LEFT_MARGIN,
-			             text_area.y,
-			             text_area.w+LEFT_MARGIN+RIGHT_MARGIN,
-			             text_area.h);
-			fl_rectf(text_area.x-LEFT_MARGIN, mCursorOldY,
-			         LEFT_MARGIN, mMaxsize, color());
-			fl_rectf(text_area.x+text_area.w, mCursorOldY,
-			         RIGHT_MARGIN, mMaxsize, color());
-			fl_pop_clip();
-		}
-
-		// draw the scrollbars
-		if (damage() & (FL_DAMAGE_ALL | FL_DAMAGE_CHILD)) {
-			mVScrollBar->damage(FL_DAMAGE_ALL);
-			mHScrollBar->damage(FL_DAMAGE_ALL);
-		}
-		update_child(*mVScrollBar);
-		update_child(*mHScrollBar);
-
-		// draw all of the text
-		if (damage() & (FL_DAMAGE_ALL | FL_DAMAGE_EXPOSE)) {
-			//printf("drawing all text\n");
-			int X, Y, W, H;
-			if (fl_clip_box(text_area.x, text_area.y, text_area.w, text_area.h,
-			                X, Y, W, H)) {
-				// Draw text using the intersected clipping box...
-				// (this sets the clipping internally)
-				draw_text(X, Y, W, H);
-			} else {
-				// Draw the whole area...
-				draw_text(text_area.x, text_area.y, text_area.w, text_area.h);
-			}
-		} else if (damage() & FL_DAMAGE_SCROLL) {
-			// draw some lines of text
-			fl_push_clip(text_area.x, text_area.y,
-			             text_area.w, text_area.h);
-			//printf("drawing text from %d to %d\n", damage_range1_start, damage_range1_end);
-			draw_range(damage_range1_start, damage_range1_end);
-			if (damage_range2_end != -1) {
-				//printf("drawing text from %d to %d\n", damage_range2_start, damage_range2_end);
-				draw_range(damage_range2_start, damage_range2_end);
-			}
-			damage_range1_start = damage_range1_end = -1;
-			damage_range2_start = damage_range2_end = -1;
-			fl_pop_clip();
-		}
-
-		// draw the text cursor
-		int start, end;
-		int has_selection = buffer()->selection_position(&start, &end);
-		if (damage() & (FL_DAMAGE_ALL | FL_DAMAGE_SCROLL | FL_DAMAGE_EXPOSE)
-		    && (
-#ifdef __APPLE__
-		            Fl::compose_state ||
-#endif
-		            !has_selection || mCursorPos < start || mCursorPos > end) &&
-		    mCursorOn && Fl::focus() == (Fl_Widget*)this ) {
-			fl_push_clip(text_area.x-LEFT_MARGIN,
-			             text_area.y,
-			             text_area.w+LEFT_MARGIN+RIGHT_MARGIN,
-			             text_area.h);
-
-			int X, Y;
-			if (position_to_xy(mCursorPos, &X, &Y)) {
-				draw_cursor(X, Y);
-				mCursorOldY = Y;
-			}
-			//    else puts("position_to_xy() failed - unable to draw cursor!");
-			//printf("drew cursor at pos: %d (%d,%d)\n", mCursorPos, X, Y);
-			fl_pop_clip();
-		}
-
-		// Important to do this at end of this method, otherwise line numbers
-		// will not scroll with the text edit area
-		draw_line_numbers(true);
-
+		// draw that little box in the corner of the scrollbars
+		if (mVScrollBar->visible() && mHScrollBar->visible())
+			fl_rectf(mVScrollBar->x(), mHScrollBar->y(),
+			         mVScrollBar->w(), mHScrollBar->h(),
+			         FL_GRAY);
+		//draw_line_numbers(true);		// commented out STR# 2621 / LZA
+	} else if (damage() & (FL_DAMAGE_SCROLL | FL_DAMAGE_EXPOSE)) {
+		//    printf("blanking previous cursor extrusions at Y: %d\n", mCursorOldY);
+		// CET - FIXME - save old cursor position instead and just draw side needed?
+		fl_push_clip(text_area.x-LEFT_MARGIN,
+		             text_area.y,
+		             text_area.w+LEFT_MARGIN+RIGHT_MARGIN,
+		             text_area.h);
+		fl_rectf(text_area.x-LEFT_MARGIN, mCursorOldY,
+		         LEFT_MARGIN, mMaxsize, color());
+		fl_rectf(text_area.x+text_area.w, mCursorOldY,
+		         RIGHT_MARGIN, mMaxsize, color());
 		fl_pop_clip();
 	}
+
+	// draw the scrollbars
+	if (damage() & (FL_DAMAGE_ALL | FL_DAMAGE_CHILD)) {
+		mVScrollBar->damage(FL_DAMAGE_ALL);
+		mHScrollBar->damage(FL_DAMAGE_ALL);
+	}
+	update_child(*mVScrollBar);
+	update_child(*mHScrollBar);
+
+	// draw all of the text
+	if (damage() & (FL_DAMAGE_ALL | FL_DAMAGE_EXPOSE)) {
+		//printf("drawing all text\n");
+		int X, Y, W, H;
+		if (fl_clip_box(text_area.x, text_area.y, text_area.w, text_area.h,
+		                X, Y, W, H)) {
+			// Draw text using the intersected clipping box...
+			// (this sets the clipping internally)
+			draw_text(X, Y, W, H);
+		} else {
+			// Draw the whole area...
+			draw_text(text_area.x, text_area.y, text_area.w, text_area.h);
+		}
+	} else if (damage() & FL_DAMAGE_SCROLL) {
+		// draw some lines of text
+		fl_push_clip(text_area.x, text_area.y,
+		             text_area.w, text_area.h);
+		//printf("drawing text from %d to %d\n", damage_range1_start, damage_range1_end);
+		draw_range(damage_range1_start, damage_range1_end);
+		if (damage_range2_end != -1) {
+			//printf("drawing text from %d to %d\n", damage_range2_start, damage_range2_end);
+			draw_range(damage_range2_start, damage_range2_end);
+		}
+		damage_range1_start = damage_range1_end = -1;
+		damage_range2_start = damage_range2_end = -1;
+		fl_pop_clip();
+	}
+
+	// draw the text cursor
+	int start, end;
+	int has_selection = buffer()->selection_position(&start, &end);
+	if (damage() & (FL_DAMAGE_ALL | FL_DAMAGE_SCROLL | FL_DAMAGE_EXPOSE)
+	    && (
+#ifdef __APPLE__
+	            Fl::compose_state ||
+#endif
+	            !has_selection || mCursorPos < start || mCursorPos > end) &&
+	    mCursorOn && Fl::focus() == (Fl_Widget*)this ) {
+		fl_push_clip(text_area.x-LEFT_MARGIN,
+		             text_area.y,
+		             text_area.w+LEFT_MARGIN+RIGHT_MARGIN,
+		             text_area.h);
+
+		int X, Y;
+		if (position_to_xy(mCursorPos, &X, &Y)) {
+			draw_cursor(X, Y);
+			mCursorOldY = Y;
+		}
+		//    else puts("position_to_xy() failed - unable to draw cursor!");
+		//printf("drew cursor at pos: %d (%d,%d)\n", mCursorPos, X, Y);
+		fl_pop_clip();
+	}
+
+	// Important to do this at end of this method, otherwise line numbers
+	// will not scroll with the text edit area
+	draw_line_numbers(true);
+
+	fl_pop_clip();
+}
 
 
 
 // this processes drag events due to mouse for Fl_Text_Display and
 // also drags due to cursor movement with shift held down for
 // Fl_Text_Editor
-	void fl_text_drag_me(int pos, Fl_Text_Display* d) {
-		if (d->dragType == Fl_Text_Display::DRAG_CHAR) {
-			if (pos >= d->dragPos) {
-				d->buffer()->select(d->dragPos, pos);
-			} else {
-				d->buffer()->select(pos, d->dragPos);
-			}
-			d->insert_position(pos);
-		} else if (d->dragType == Fl_Text_Display::DRAG_WORD) {
-			if (pos >= d->dragPos) {
-				d->insert_position(d->word_end(pos));
-				d->buffer()->select(d->word_start(d->dragPos), d->word_end(pos));
-			} else {
-				d->insert_position(d->word_start(pos));
-				d->buffer()->select(d->word_start(pos), d->word_end(d->dragPos));
-			}
-		} else if (d->dragType == Fl_Text_Display::DRAG_LINE) {
-			if (pos >= d->dragPos) {
-				d->insert_position(d->buffer()->line_end(pos)+1);
-				d->buffer()->select(d->buffer()->line_start(d->dragPos),
-				                    d->buffer()->line_end(pos)+1);
-			} else {
-				d->insert_position(d->buffer()->line_start(pos));
-				d->buffer()->select(d->buffer()->line_start(pos),
-				                    d->buffer()->line_end(d->dragPos)+1);
-			}
+void fl_text_drag_me(int pos, Fl_Text_Display* d)
+{
+	if (d->dragType == Fl_Text_Display::DRAG_CHAR) {
+		if (pos >= d->dragPos) {
+			d->buffer()->select(d->dragPos, pos);
+		} else {
+			d->buffer()->select(pos, d->dragPos);
+		}
+		d->insert_position(pos);
+	} else if (d->dragType == Fl_Text_Display::DRAG_WORD) {
+		if (pos >= d->dragPos) {
+			d->insert_position(d->word_end(pos));
+			d->buffer()->select(d->word_start(d->dragPos), d->word_end(pos));
+		} else {
+			d->insert_position(d->word_start(pos));
+			d->buffer()->select(d->word_start(pos), d->word_end(d->dragPos));
+		}
+	} else if (d->dragType == Fl_Text_Display::DRAG_LINE) {
+		if (pos >= d->dragPos) {
+			d->insert_position(d->buffer()->line_end(pos)+1);
+			d->buffer()->select(d->buffer()->line_start(d->dragPos),
+			                    d->buffer()->line_end(pos)+1);
+		} else {
+			d->insert_position(d->buffer()->line_start(pos));
+			d->buffer()->select(d->buffer()->line_start(pos),
+			                    d->buffer()->line_end(d->dragPos)+1);
 		}
 	}
+}
 
 
 
-	/**
-	 \brief Timer callback for scroll events.
+/**
+ \brief Timer callback for scroll events.
 
-	 This timer event scrolls the text view proportionally to
-	 how far the mouse pointer has left the text area. This
-	 allows for smooth scrolling without "wiggeling" the mouse.
-	 */
-	void Fl_Text_Display::scroll_timer_cb(void *user_data) {
-		Fl_Text_Display *w = (Fl_Text_Display*)user_data;
-		int pos;
-		switch (scroll_direction) {
-		case 1: // mouse is to the right, scroll left
-			w->scroll(w->mTopLineNum, w->mHorizOffset + scroll_amount);
-			pos = w->xy_to_position(w->text_area.x + w->text_area.w, scroll_y, CURSOR_POS);
-			break;
-		case 2: // mouse is to the left, scroll right
-			w->scroll(w->mTopLineNum, w->mHorizOffset + scroll_amount);
-			pos = w->xy_to_position(w->text_area.x, scroll_y, CURSOR_POS);
-			break;
-		case 3: // mouse is above, scroll down
-			w->scroll(w->mTopLineNum + scroll_amount, w->mHorizOffset);
-			pos = w->xy_to_position(scroll_x, w->text_area.y, CURSOR_POS);
-			break;
-		case 4: // mouse is below, scroll up
-			w->scroll(w->mTopLineNum + scroll_amount, w->mHorizOffset);
-			pos = w->xy_to_position(scroll_x, w->text_area.y + w->text_area.h, CURSOR_POS);
-			break;
-		default:
-			return;
-		}
-		fl_text_drag_me(pos, w);
-		Fl::repeat_timeout(.1, scroll_timer_cb, user_data);
+ This timer event scrolls the text view proportionally to
+ how far the mouse pointer has left the text area. This
+ allows for smooth scrolling without "wiggeling" the mouse.
+ */
+void Fl_Text_Display::scroll_timer_cb(void *user_data)
+{
+	Fl_Text_Display *w = (Fl_Text_Display*)user_data;
+	int pos;
+	switch (scroll_direction) {
+	case 1: // mouse is to the right, scroll left
+		w->scroll(w->mTopLineNum, w->mHorizOffset + scroll_amount);
+		pos = w->xy_to_position(w->text_area.x + w->text_area.w, scroll_y, CURSOR_POS);
+		break;
+	case 2: // mouse is to the left, scroll right
+		w->scroll(w->mTopLineNum, w->mHorizOffset + scroll_amount);
+		pos = w->xy_to_position(w->text_area.x, scroll_y, CURSOR_POS);
+		break;
+	case 3: // mouse is above, scroll down
+		w->scroll(w->mTopLineNum + scroll_amount, w->mHorizOffset);
+		pos = w->xy_to_position(scroll_x, w->text_area.y, CURSOR_POS);
+		break;
+	case 4: // mouse is below, scroll up
+		w->scroll(w->mTopLineNum + scroll_amount, w->mHorizOffset);
+		pos = w->xy_to_position(scroll_x, w->text_area.y + w->text_area.h, CURSOR_POS);
+		break;
+	default:
+		return;
+	}
+	fl_text_drag_me(pos, w);
+	Fl::repeat_timeout(.1, scroll_timer_cb, user_data);
+}
+
+
+
+/**
+ \brief Event handling.
+ */
+int Fl_Text_Display::handle(int event)
+{
+	if (!buffer()) return 0;
+	// This isn't very elegant!
+	if (!Fl::event_inside(text_area.x, text_area.y, text_area.w, text_area.h) &&
+	    !dragging && event != FL_LEAVE && event != FL_ENTER &&
+	    event != FL_MOVE && event != FL_FOCUS && event != FL_UNFOCUS &&
+	    event != FL_KEYBOARD && event != FL_KEYUP) {
+		return Fl_Group::handle(event);
 	}
 
-
-
-	/**
-	 \brief Event handling.
-	 */
-	int Fl_Text_Display::handle(int event) {
-		if (!buffer()) return 0;
-		// This isn't very elegant!
-		if (!Fl::event_inside(text_area.x, text_area.y, text_area.w, text_area.h) &&
-		    !dragging && event != FL_LEAVE && event != FL_ENTER &&
-		    event != FL_MOVE && event != FL_FOCUS && event != FL_UNFOCUS &&
-		    event != FL_KEYBOARD && event != FL_KEYUP) {
-			return Fl_Group::handle(event);
+	switch (event) {
+	case FL_ENTER:
+	case FL_MOVE:
+		if (active_r()) {
+			if (Fl::event_inside(text_area.x, text_area.y, text_area.w,
+			                     text_area.h)) window()->cursor(FL_CURSOR_INSERT);
+			else window()->cursor(FL_CURSOR_DEFAULT);
+			return 1;
+		} else {
+			return 0;
 		}
 
-		switch (event) {
-		case FL_ENTER:
-		case FL_MOVE:
-			if (active_r()) {
-				if (Fl::event_inside(text_area.x, text_area.y, text_area.w,
-				                     text_area.h)) window()->cursor(FL_CURSOR_INSERT);
-				else window()->cursor(FL_CURSOR_DEFAULT);
-				return 1;
-			} else {
-				return 0;
-			}
+	case FL_LEAVE:
+	case FL_HIDE:
+		if (active_r() && window()) {
+			window()->cursor(FL_CURSOR_DEFAULT);
 
-		case FL_LEAVE:
-		case FL_HIDE:
-			if (active_r() && window()) {
-				window()->cursor(FL_CURSOR_DEFAULT);
+			return 1;
+		} else {
+			return 0;
+		}
 
-				return 1;
-			} else {
-				return 0;
-			}
+	case FL_PUSH: {
+		if (active_r() && window()) {
+			if (Fl::event_inside(text_area.x, text_area.y, text_area.w,
+			                     text_area.h)) window()->cursor(FL_CURSOR_INSERT);
+			else window()->cursor(FL_CURSOR_DEFAULT);
+		}
 
-		case FL_PUSH: {
-			if (active_r() && window()) {
-				if (Fl::event_inside(text_area.x, text_area.y, text_area.w,
-				                     text_area.h)) window()->cursor(FL_CURSOR_INSERT);
-				else window()->cursor(FL_CURSOR_DEFAULT);
-			}
-
-			if (Fl::focus() != this) {
-				Fl::focus(this);
-				handle(FL_FOCUS);
-			}
-			if (Fl_Group::handle(event)) return 1;
-			if (Fl::event_state()&FL_SHIFT) return handle(FL_DRAG);
-			dragging = 1;
-			int pos = xy_to_position(Fl::event_x(), Fl::event_y(), CURSOR_POS);
-			dragPos = pos;
-			if (buffer()->primary_selection()->includes(pos)) {
-				dragType = DRAG_START_DND;
-				return 1;
-			}
-			dragType = Fl::event_clicks();
-			if (dragType == DRAG_CHAR) {
-				buffer()->unselect();
+		if (Fl::focus() != this) {
+			Fl::focus(this);
+			handle(FL_FOCUS);
+		}
+		if (Fl_Group::handle(event)) return 1;
+		if (Fl::event_state()&FL_SHIFT) return handle(FL_DRAG);
+		dragging = 1;
+		int pos = xy_to_position(Fl::event_x(), Fl::event_y(), CURSOR_POS);
+		dragPos = pos;
+		if (buffer()->primary_selection()->includes(pos)) {
+			dragType = DRAG_START_DND;
+			return 1;
+		}
+		dragType = Fl::event_clicks();
+		if (dragType == DRAG_CHAR) {
+			buffer()->unselect();
 //	Fl::copy("", 0, 0); /* removed for STR 2668 */
-			} else if (dragType == DRAG_WORD) {
-				buffer()->select(word_start(pos), word_end(pos));
-				dragPos = word_start(pos);
+		} else if (dragType == DRAG_WORD) {
+			buffer()->select(word_start(pos), word_end(pos));
+			dragPos = word_start(pos);
+		}
+
+		if (buffer()->primary_selection()->selected())
+			insert_position(buffer()->primary_selection()->end());
+		else
+			insert_position(pos);
+		show_insert_position();
+		return 1;
+	}
+
+	case FL_DRAG: {
+		if (dragType==DRAG_NONE)
+			return 1;
+		if (dragType==DRAG_START_DND) {
+			if (!Fl::event_is_click() && Fl::dnd_text_ops()) {
+				const char* copy = buffer()->selection_text();
+				Fl::dnd();
+				free((void*)copy);
+			}
+			return 1;
+		}
+		int X = Fl::event_x(), Y = Fl::event_y(), pos = insert_position();
+		// if we leave the text_area, we start a timer event
+		// that will take care of scrolling and selecting
+		if (Y < text_area.y) {
+			scroll_x = X;
+			scroll_amount = (Y - text_area.y) / 5 - 1;
+			if (!scroll_direction) {
+				Fl::add_timeout(.01, scroll_timer_cb, this);
+			}
+			scroll_direction = 3;
+		} else if (Y >= text_area.y+text_area.h) {
+			scroll_x = X;
+			scroll_amount = (Y - text_area.y - text_area.h) / 5 + 1;
+			if (!scroll_direction) {
+				Fl::add_timeout(.01, scroll_timer_cb, this);
+			}
+			scroll_direction = 4;
+		} else if (X < text_area.x) {
+			scroll_y = Y;
+			scroll_amount = (X - text_area.x) / 2 - 1;
+			if (!scroll_direction) {
+				Fl::add_timeout(.01, scroll_timer_cb, this);
+			}
+			scroll_direction = 2;
+		} else if (X >= text_area.x+text_area.w) {
+			scroll_y = Y;
+			scroll_amount = (X - text_area.x - text_area.w) / 2 + 1;
+			if (!scroll_direction) {
+				Fl::add_timeout(.01, scroll_timer_cb, this);
+			}
+			scroll_direction = 1;
+		} else {
+			if (scroll_direction) {
+				Fl::remove_timeout(scroll_timer_cb, this);
+				scroll_direction = 0;
+			}
+			pos = xy_to_position(X, Y, CURSOR_POS);
+			pos = buffer()->next_char(pos);
+		}
+		fl_text_drag_me(pos, this);
+		return 1;
+	}
+
+	case FL_RELEASE: {
+		if (Fl::event_is_click() && (! Fl::event_clicks()) &&
+		    buffer()->primary_selection()->includes(dragPos) && !(Fl::event_state()&FL_SHIFT) ) {
+			buffer()->unselect(); // clicking in the selection: unselect and move cursor
+			insert_position(dragPos);
+			return 1;
+		} else if (Fl::event_clicks() == DRAG_LINE && Fl::event_button() == FL_LEFT_MOUSE) {
+			buffer()->select(buffer()->line_start(dragPos), buffer()->next_char(buffer()->line_end(dragPos)));
+			dragPos = line_start(dragPos);
+			dragType = DRAG_CHAR;
+		} else {
+			dragging = 0;
+			if (scroll_direction) {
+				Fl::remove_timeout(scroll_timer_cb, this);
+				scroll_direction = 0;
 			}
 
-			if (buffer()->primary_selection()->selected())
-				insert_position(buffer()->primary_selection()->end());
+			// convert from WORD or LINE selection to CHAR
+			/*if (insert_position() >= dragPos)
+			  dragPos = buffer()->primary_selection()->start();
 			else
-				insert_position(pos);
-			show_insert_position();
+			  dragPos = buffer()->primary_selection()->end();*/
+			dragType = DRAG_CHAR;
+		}
+
+		const char* copy = buffer()->selection_text();
+		if (*copy) Fl::copy(copy, (int) strlen(copy), 0);
+		free((void*)copy);
+		return 1;
+	}
+
+	case FL_MOUSEWHEEL:
+		if (Fl::event_dy()) return mVScrollBar->handle(event);
+		else return mHScrollBar->handle(event);
+
+	case FL_UNFOCUS:
+		if (active_r() && window()) window()->cursor(FL_CURSOR_DEFAULT);
+	case FL_FOCUS:
+		if (buffer()->selected()) {
+			int start, end;
+			if (buffer()->selection_position(&start, &end))
+				redisplay_range(start, end);
+		}
+		if (buffer()->secondary_selected()) {
+			int start, end;
+			if (buffer()->secondary_selection_position(&start, &end))
+				redisplay_range(start, end);
+		}
+		if (buffer()->highlight()) {
+			int start, end;
+			if (buffer()->highlight_position(&start, &end))
+				redisplay_range(start, end);
+		}
+		return 1;
+
+	case FL_KEYBOARD:
+		// Copy?
+		if ((Fl::event_state()&(FL_CTRL|FL_COMMAND)) && Fl::event_key()=='c') {
+			if (!buffer()->selected()) return 1;
+			const char *copy = buffer()->selection_text();
+			if (*copy) Fl::copy(copy, (int) strlen(copy), 1);
+			free((void*)copy);
 			return 1;
 		}
 
-		case FL_DRAG: {
-			if (dragType==DRAG_NONE)
-				return 1;
-			if (dragType==DRAG_START_DND) {
-				if (!Fl::event_is_click() && Fl::dnd_text_ops()) {
-					const char* copy = buffer()->selection_text();
-					Fl::dnd();
-					free((void*)copy);
-				}
-				return 1;
-			}
-			int X = Fl::event_x(), Y = Fl::event_y(), pos = insert_position();
-			// if we leave the text_area, we start a timer event
-			// that will take care of scrolling and selecting
-			if (Y < text_area.y) {
-				scroll_x = X;
-				scroll_amount = (Y - text_area.y) / 5 - 1;
-				if (!scroll_direction) {
-					Fl::add_timeout(.01, scroll_timer_cb, this);
-				}
-				scroll_direction = 3;
-			} else if (Y >= text_area.y+text_area.h) {
-				scroll_x = X;
-				scroll_amount = (Y - text_area.y - text_area.h) / 5 + 1;
-				if (!scroll_direction) {
-					Fl::add_timeout(.01, scroll_timer_cb, this);
-				}
-				scroll_direction = 4;
-			} else if (X < text_area.x) {
-				scroll_y = Y;
-				scroll_amount = (X - text_area.x) / 2 - 1;
-				if (!scroll_direction) {
-					Fl::add_timeout(.01, scroll_timer_cb, this);
-				}
-				scroll_direction = 2;
-			} else if (X >= text_area.x+text_area.w) {
-				scroll_y = Y;
-				scroll_amount = (X - text_area.x - text_area.w) / 2 + 1;
-				if (!scroll_direction) {
-					Fl::add_timeout(.01, scroll_timer_cb, this);
-				}
-				scroll_direction = 1;
-			} else {
-				if (scroll_direction) {
-					Fl::remove_timeout(scroll_timer_cb, this);
-					scroll_direction = 0;
-				}
-				pos = xy_to_position(X, Y, CURSOR_POS);
-				pos = buffer()->next_char(pos);
-			}
-			fl_text_drag_me(pos, this);
-			return 1;
-		}
-
-		case FL_RELEASE: {
-			if (Fl::event_is_click() && (! Fl::event_clicks()) &&
-			    buffer()->primary_selection()->includes(dragPos) && !(Fl::event_state()&FL_SHIFT) ) {
-				buffer()->unselect(); // clicking in the selection: unselect and move cursor
-				insert_position(dragPos);
-				return 1;
-			} else if (Fl::event_clicks() == DRAG_LINE && Fl::event_button() == FL_LEFT_MOUSE) {
-				buffer()->select(buffer()->line_start(dragPos), buffer()->next_char(buffer()->line_end(dragPos)));
-				dragPos = line_start(dragPos);
-				dragType = DRAG_CHAR;
-			} else {
-				dragging = 0;
-				if (scroll_direction) {
-					Fl::remove_timeout(scroll_timer_cb, this);
-					scroll_direction = 0;
-				}
-
-				// convert from WORD or LINE selection to CHAR
-				/*if (insert_position() >= dragPos)
-				  dragPos = buffer()->primary_selection()->start();
-				else
-				  dragPos = buffer()->primary_selection()->end();*/
-				dragType = DRAG_CHAR;
-			}
-
-			const char* copy = buffer()->selection_text();
+		// Select all ?
+		if ((Fl::event_state()&(FL_CTRL|FL_COMMAND)) && Fl::event_key()=='a') {
+			buffer()->select(0,buffer()->length());
+			const char *copy = buffer()->selection_text();
 			if (*copy) Fl::copy(copy, (int) strlen(copy), 0);
 			free((void*)copy);
 			return 1;
 		}
 
-		case FL_MOUSEWHEEL:
-			if (Fl::event_dy()) return mVScrollBar->handle(event);
-			else return mHScrollBar->handle(event);
+		if (mVScrollBar->handle(event)) return 1;
+		if (mHScrollBar->handle(event)) return 1;
 
-		case FL_UNFOCUS:
-			if (active_r() && window()) window()->cursor(FL_CURSOR_DEFAULT);
-		case FL_FOCUS:
-			if (buffer()->selected()) {
-				int start, end;
-				if (buffer()->selection_position(&start, &end))
-					redisplay_range(start, end);
-			}
-			if (buffer()->secondary_selected()) {
-				int start, end;
-				if (buffer()->secondary_selection_position(&start, &end))
-					redisplay_range(start, end);
-			}
-			if (buffer()->highlight()) {
-				int start, end;
-				if (buffer()->highlight_position(&start, &end))
-					redisplay_range(start, end);
-			}
+		break;
+
+	case FL_SHORTCUT:
+		if (!(shortcut() ? Fl::test_shortcut(shortcut()) : test_shortcut()))
+			return 0;
+		if (Fl::visible_focus() && handle(FL_FOCUS)) {
+			Fl::focus(this);
 			return 1;
-
-		case FL_KEYBOARD:
-			// Copy?
-			if ((Fl::event_state()&(FL_CTRL|FL_COMMAND)) && Fl::event_key()=='c') {
-				if (!buffer()->selected()) return 1;
-				const char *copy = buffer()->selection_text();
-				if (*copy) Fl::copy(copy, (int) strlen(copy), 1);
-				free((void*)copy);
-				return 1;
-			}
-
-			// Select all ?
-			if ((Fl::event_state()&(FL_CTRL|FL_COMMAND)) && Fl::event_key()=='a') {
-				buffer()->select(0,buffer()->length());
-				const char *copy = buffer()->selection_text();
-				if (*copy) Fl::copy(copy, (int) strlen(copy), 0);
-				free((void*)copy);
-				return 1;
-			}
-
-			if (mVScrollBar->handle(event)) return 1;
-			if (mHScrollBar->handle(event)) return 1;
-
-			break;
-
-		case FL_SHORTCUT:
-			if (!(shortcut() ? Fl::test_shortcut(shortcut()) : test_shortcut()))
-				return 0;
-			if (Fl::visible_focus() && handle(FL_FOCUS)) {
-				Fl::focus(this);
-				return 1;
-			}
-			break;
-
 		}
+		break;
 
-		return 0;
 	}
 
+	return 0;
+}
 
-	/*
-	 Convert an x pixel position into a column number.
-	 */
-	double Fl_Text_Display::x_to_col(double y) const {
-		if (!mColumnScale) {
-			mColumnScale = string_width("Mitg", 4, 'A') / 4.0;
-		}
-		return (y/mColumnScale)+0.5;
+
+/*
+ Convert an x pixel position into a column number.
+ */
+double Fl_Text_Display::x_to_col(double y) const
+{
+	if (!mColumnScale) {
+		mColumnScale = string_width("Mitg", 4, 'A') / 4.0;
 	}
+	return (y/mColumnScale)+0.5;
+}
 
 
-	/**
-	 Convert a column number into an x pixel position.
-	 */
-	double Fl_Text_Display::col_to_x(double col) const {
-		if (!mColumnScale) {
-			// recalculate column scale value
-			x_to_col(0);
-		}
-		return col*mColumnScale;
+/**
+ Convert a column number into an x pixel position.
+ */
+double Fl_Text_Display::col_to_x(double col) const
+{
+	if (!mColumnScale) {
+		// recalculate column scale value
+		x_to_col(0);
 	}
+	return col*mColumnScale;
+}
 
 
 
