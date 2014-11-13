@@ -21,6 +21,8 @@
 //     http://www.codeproject.com/dialog/selectfolder.asp
 //
 
+// cyantree: 尚未和最新的版本同步
+
 #ifndef FL_DOXYGEN		// PREVENT DOXYGEN'S USE OF THIS FILE
 
 #include <stdio.h>		// debugging

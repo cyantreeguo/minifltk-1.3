@@ -132,31 +132,33 @@ public:
 	}
 	/**
 	  The resizable widget defines the resizing box for the group. When the
-	  group is resized it calculates a new size and position for all of its
-	  children. Widgets that are horizontally or vertically inside the
-	  dimensions of the box are scaled to the new size. Widgets outside the
-	  box are moved.
+	    group is resized it calculates a new size and position for all of its
+	    children. Widgets that are horizontally or vertically inside the
+	    dimensions of the box are scaled to the new size. Widgets outside the
+	    box are moved.
 
-	  In these examples the gray area is the resizable:
+	    In these examples the gray area is the resizable:
 
-	  \image html resizebox1.png
+	    \image html resizebox1.png
 
-	  \image html resizebox2.png
+	    <br>
 
-	  \image latex resizebox1.png "before resize"  width=4cm
+	    \image html resizebox2.png
 
-	  \image latex resizebox2.png "after resize"   width=4cm
+	    \image latex resizebox1.png "before resize"  width=4cm
 
-	  The resizable may be set to the group itself, in which case all the
-	  contents are resized. This is the default value for Fl_Group,
-	  although NULL is the default for Fl_Window and Fl_Pack.
+	    \image latex resizebox2.png "after resize"   width=4.85cm
 
-	  If the resizable is NULL then all widgets remain a fixed size
-	  and distance from the top-left corner.
+	    The resizable may be set to the group itself, in which case all the
+	    contents are resized. This is the default value for Fl_Group,
+	    although NULL is the default for Fl_Window and Fl_Pack.
 
-	  It is possible to achieve any type of resize behavior by using an
-	  invisible Fl_Box as the resizable and/or by using a hierarchy
-	  of child Fl_Group's.
+	    If the resizable is NULL then all widgets remain a fixed size
+	    and distance from the top-left corner.
+
+	    It is possible to achieve any type of resize behavior by using an
+	    invisible Fl_Box as the resizable and/or by using a hierarchy
+	    of child Fl_Group's.
 	*/
 	void resizable(Fl_Widget* o) {
 		resizable_ = o;

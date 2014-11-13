@@ -28,11 +28,18 @@
 // Use Windows' chooser
 #ifdef __FLTK_WIN32__
 // #define _WIN32_WINNT	0x0501	// needed for OPENFILENAME's 'FlagsEx'
-#  include <stdio.h>
-#  include <stdlib.h>		// malloc
+//#if defined(FL_LIBRARY) || FLTK_ABI_VERSION < 10304
 #  include <windows.h>
-#  include <commdlg.h>		// OPENFILENAME, GetOpenFileName()
-#  include <shlobj.h>		// BROWSEINFO, SHBrowseForFolder()
+#  include <commdlg.h>		// OPENFILENAMEW, GetOpenFileName()
+#  include <shlobj.h>		// BROWSEINFOW, SHBrowseForFolder()
+typedef OPENFILENAMEW fl_OPENFILENAMEW;
+typedef BROWSEINFOW fl_BROWSEINFOW;
+/*
+#else
+typedef void fl_OPENFILENAMEW;
+typedef void fl_BROWSEINFOW;
+#endif
+*/
 #elif __FLTK_WINCE__
 #  include <stdio.h>
 #  include <stdlib.h>		// malloc
@@ -49,7 +56,6 @@
 // All else falls back to FLTK's own chooser
 #if __FLTK_LINUX__
 #  include "Fl_File_Chooser.H"
-#  include <unistd.h>		// _POSIX_NAME_MAX
 #else
 #  include "filename.H"	// FL_EXPORT
 #endif
@@ -163,8 +169,13 @@ public:
 private:
 	int  _btype;			// kind-of browser to show()
 	int  _options;		// general options
-	OPENFILENAMEW _ofn;		// GetOpenFileName() & GetSaveFileName() struct
-	BROWSEINFOW   _binf;		// SHBrowseForFolder() struct
+#if FLTK_ABI_VERSION >= 10304
+	fl_OPENFILENAMEW *_ofn_ptr;		// GetOpenFileName() & GetSaveFileName() struct
+	fl_BROWSEINFOW   *_binf_ptr;		// SHBrowseForFolder() struct
+#else
+	fl_OPENFILENAMEW _ofn;
+	fl_BROWSEINFOW   _binf;
+#endif
 	char  **_pathnames;		// array of pathnames
 	int     _tpathnames;		// total pathnames
 	char   *_directory;		// default pathname to use
@@ -182,13 +193,11 @@ private:
 	void set_single_pathname(const char *s);
 	void add_pathname(const char *s);
 
-	void FreePIDL(LPITEMIDLIST pidl);
 	void ClearOFN();
 	void ClearBINF();
 	void Win2Unix(char *s);
 	void Unix2Win(char *s);
 	int showfile();
-	static int CALLBACK Dir_CB(HWND win, UINT msg, LPARAM param, LPARAM data);
 	int showdir();
 
 	void parse_filter(const char *);
@@ -198,8 +207,13 @@ private:
 private:
 	int  _btype;			// kind-of browser to show()
 	int  _options;		// general options
-	OPENFILENAMEW _ofn;		// GetOpenFileName() & GetSaveFileName() struct
-	BROWSEINFO    _binf;		// SHBrowseForFolder() struct
+#if FLTK_ABI_VERSION >= 10304
+	fl_OPENFILENAMEW *_ofn_ptr;		// GetOpenFileName() & GetSaveFileName() struct
+	fl_BROWSEINFOW   *_binf_ptr;		// SHBrowseForFolder() struct
+#else
+	fl_OPENFILENAMEW _ofn;
+	fl_BROWSEINFOW   _binf;
+#endif
 	char  **_pathnames;		// array of pathnames
 	int     _tpathnames;		// total pathnames
 	char   *_directory;		// default pathname to use
@@ -217,13 +231,13 @@ private:
 	void set_single_pathname(const char *s);
 	void add_pathname(const char *s);
 
-	void FreePIDL(LPITEMIDLIST pidl);
+	//void FreePIDL(LPITEMIDLIST pidl);
 	void ClearOFN();
 	void ClearBINF();
 	void Win2Unix(char *s);
 	void Unix2Win(char *s);
 	int showfile();
-	static int CALLBACK Dir_CB(HWND win, UINT msg, LPARAM param, LPARAM data);
+	//static int CALLBACK Dir_CB(HWND win, UINT msg, LPARAM param, LPARAM data);
 	int showdir();
 
 	void parse_filter(const char *);

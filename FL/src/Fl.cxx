@@ -561,50 +561,50 @@ double Fl::wait(double time_to_wait)
 	run_checks();
 	return fl_mac_flush_and_wait(time_to_wait);
 #elif __FLTK_IPHONEOS__
-    if (first_timeout) {
-        elapse_timeouts();
-        Timeout *t;
-        while ((t = first_timeout)) {
-            if (t->time > 0) break;
-            // The first timeout in the array has expired.
-            missed_timeout_by = t->time;
-            // We must remove timeout from array before doing the callback:
-            void (*cb)(void*) = t->cb;
-            void *argp = t->arg;
-            first_timeout = t->next;
-            t->next = free_timeout;
-            free_timeout = t;
-            // Now it is safe for the callback to do add_timeout:
-            cb(argp);
-        }
-    } else {
-        reset_clock = 1; // we are not going to check the clock
-    }
-    run_checks();
-    //  if (idle && !fl_ready()) {
-    if (idle) {
-        if (!in_idle) {
-            in_idle = 1;
-            idle();
-            in_idle = 0;
-        }
-        // the idle function may turn off idle, we can then wait:
-        if (idle) time_to_wait = 0.0;
-    }
-    if (first_timeout && first_timeout->time < time_to_wait)
-        time_to_wait = first_timeout->time;
-    if (time_to_wait <= 0.0) {
-        // do flush second so that the results of events are visible:
-        int ret = fl_ios_flush_and_wait(0.0);
-        flush();
-        return ret;
-    } else {
-        // do flush first so that user sees the display:
-        flush();
-        if (idle && !in_idle) // 'idle' may have been set within flush()
-            time_to_wait = 0.0;
-        return fl_ios_flush_and_wait(time_to_wait);
-    }
+	if (first_timeout) {
+		elapse_timeouts();
+		Timeout *t;
+		while ((t = first_timeout)) {
+			if (t->time > 0) break;
+			// The first timeout in the array has expired.
+			missed_timeout_by = t->time;
+			// We must remove timeout from array before doing the callback:
+			void (*cb)(void*) = t->cb;
+			void *argp = t->arg;
+			first_timeout = t->next;
+			t->next = free_timeout;
+			free_timeout = t;
+			// Now it is safe for the callback to do add_timeout:
+			cb(argp);
+		}
+	} else {
+		reset_clock = 1; // we are not going to check the clock
+	}
+	run_checks();
+	//  if (idle && !fl_ready()) {
+	if (idle) {
+		if (!in_idle) {
+			in_idle = 1;
+			idle();
+			in_idle = 0;
+		}
+		// the idle function may turn off idle, we can then wait:
+		if (idle) time_to_wait = 0.0;
+	}
+	if (first_timeout && first_timeout->time < time_to_wait)
+		time_to_wait = first_timeout->time;
+	if (time_to_wait <= 0.0) {
+		// do flush second so that the results of events are visible:
+		int ret = fl_ios_flush_and_wait(0.0);
+		flush();
+		return ret;
+	} else {
+		// do flush first so that user sees the display:
+		flush();
+		if (idle && !in_idle) // 'idle' may have been set within flush()
+			time_to_wait = 0.0;
+		return fl_ios_flush_and_wait(time_to_wait);
+	}
 	//run_checks();
 	//return fl_mac_flush_and_wait(time_to_wait);
 #elif __FLTK_LINUX__
@@ -795,12 +795,12 @@ int Fl::ready()
 		reset_clock = 1;
 	}
 #elif __FLTK_IPHONEOS__
-    if (first_timeout) {
-        elapse_timeouts();
-        if (first_timeout->time <= 0) return 1;
-    } else {
-        reset_clock = 1;
-    }
+	if (first_timeout) {
+		elapse_timeouts();
+		if (first_timeout->time <= 0) return 1;
+	} else {
+		reset_clock = 1;
+	}
 #endif
 	return fl_ready();
 }
@@ -814,23 +814,10 @@ Fl_X* Fl_X::first;
 
 Fl_Window* fl_find(Window xid)
 {
+
 	Fl_X *window;
 	for (Fl_X **pp = &Fl_X::first; (window = *pp); pp = &window->next)
-#if __FLTK_WIN32__
-		if (window->xid == xid)
-#elif __FLTK_MACOSX__
-		if (window->xid == xid && !window->w->window())
-#elif __FLTK_IPHONEOS__
-		if (window->xid == xid && !window->w->window())
-#elif __FLTK_LINUX__
-		if (window->xid == xid)
-#elif __FLTK_WINCE__
-		if (window->xid == xid)
-#else
-#error unsupported platform
-#endif
-		{
-			// __APPLE__
+		if (window->xid == xid) {
 			if (window != Fl_X::first && !Fl::modal()) {
 				// make this window be first to speed up searches
 				// this is not done if modal is true to avoid messing up modal stack
@@ -1018,9 +1005,9 @@ static int send_handlers(int e)
 
 
 struct system_handler_link {
-  Fl_System_Handler handle;
-  void *data;
-  system_handler_link *next;
+	Fl_System_Handler handle;
+	void *data;
+	system_handler_link *next;
 };
 
 
@@ -1048,12 +1035,13 @@ static system_handler_link *sys_handlers = 0;
 
  \see Fl::remove_system_handler(Fl_System_Handler)
 */
-void Fl::add_system_handler(Fl_System_Handler ha, void *data) {
-  system_handler_link *l = new system_handler_link;
-  l->handle = ha;
-  l->data = data;
-  l->next = sys_handlers;
-  sys_handlers = l;
+void Fl::add_system_handler(Fl_System_Handler ha, void *data)
+{
+	system_handler_link *l = new system_handler_link;
+	l->handle = ha;
+	l->data = data;
+	l->next = sys_handlers;
+	sys_handlers = l;
 }
 
 
@@ -1064,28 +1052,30 @@ void Fl::add_system_handler(Fl_System_Handler ha, void *data) {
 
  \see Fl::add_system_handler(Fl_System_Handler)
 */
-void Fl::remove_system_handler(Fl_System_Handler ha) {
-  system_handler_link *l, *p;
+void Fl::remove_system_handler(Fl_System_Handler ha)
+{
+	system_handler_link *l, *p;
 
-  // Search for the handler in the list...
-  for (l = sys_handlers, p = 0; l && l->handle != ha; p = l, l = l->next);
+	// Search for the handler in the list...
+	for (l = sys_handlers, p = 0; l && l->handle != ha; p = l, l = l->next);
 
-  if (l) {
-    // Found it, so remove it from the list...
-    if (p) p->next = l->next;
-    else sys_handlers = l->next;
+	if (l) {
+		// Found it, so remove it from the list...
+		if (p) p->next = l->next;
+		else sys_handlers = l->next;
 
-    // And free the record...
-    delete l;
-  }
+		// And free the record...
+		delete l;
+	}
 }
 
-int fl_send_system_handlers(void *e) {
-  for (const system_handler_link *hl = sys_handlers; hl; hl = hl->next) {
-    if (hl->handle(e, hl->data))
-      return 1;
-  }
-  return 0;
+int fl_send_system_handlers(void *e)
+{
+	for (const system_handler_link *hl = sys_handlers; hl; hl = hl->next) {
+		if (hl->handle(e, hl->data))
+			return 1;
+	}
+	return 0;
 }
 
 ////////////////////////////////////////////////////////////////
@@ -1694,7 +1684,6 @@ void Fl_Window::hide()
 	for (; *pp != ip; pp = &(*pp)->next) if (!*pp) return;
 	*pp = ip->next;
 #ifdef __APPLE__
-	ip->unlink();
 	// MacOS X manages a single pointer per application. Make sure that hiding
 	// a toplevel window will not leave us with some random pointer shape, or
 	// worst case, an invisible pointer
@@ -1745,7 +1734,7 @@ void Fl_Window::hide()
 	}
 #elif defined(__APPLE_QUARTZ__)
 	Fl_X::q_release_context(ip);
-	if ( ip->xid == fl_window && !parent() )
+	if ( ip->xid == fl_window )
 		fl_window = 0;
 #endif
 
@@ -1781,8 +1770,10 @@ void Fl_Window::hide()
 	if (count) delete[] doit;
 #elif __FLTK_MACOSX__
 	ip->destroy();
+	delete ip->subRect;
 #elif __FLTK_IPHONEOS__
 	ip->destroy();
+	delete ip->subRect;
 #elif __FLTK_LINUX__
 # if USE_XFT
 	fl_destroy_xft_draw(ip->xid);

@@ -31,7 +31,7 @@
 @class FLWindow; // a subclass of the NSWindow Cocoa class
 typedef FLWindow *Window;
 #else
-typedef class FLWindow_opaque *Window; // pointer to the FLWindow objective-c class
+typedef class FLWindow *Window; // pointer to the FLWindow objective-c class
 #endif // __OBJC__
 
 /*
@@ -44,6 +44,7 @@ typedef struct OpaquePMPrintSettings*   PMPrintSettings;
 typedef struct OpaquePMPageFormat*      PMPageFormat;
 typedef struct OpaquePMPrintSession*    PMPrintSession;
 typedef struct CGImage* CGImageRef;
+typedef void *Fl_CFMutableDataRef; // used in Fl_Copy_Surface.H
 typedef CGContextRef Fl_Offscreen;
 
 #else // this part must be compiled when building the FLTK libraries
@@ -82,6 +83,7 @@ class NSCursor;
 #endif // __OBJC__
 
 typedef CGContextRef Fl_Offscreen;
+typedef CFMutableDataRef Fl_CFMutableDataRef;
 
 typedef struct flCocoaRegion {
 	int count;
@@ -133,9 +135,8 @@ public:
 	Fl_Offscreen other_xid;  // pointer for offscreen bitmaps (overlay window)
 	Fl_Window *w;            // FLTK window for
 	Fl_Region region;
-	Fl_Region subRegion;     // region for this specific subwindow
+	CGRect* subRect;         // make sure subwindow remains inside its parent window
 	Fl_X *next;              // linked tree to support subwindows
-	Fl_X *xidChildren, *xidNext; // more subwindow tree
 	int wait_for_expose;
 	NSCursor *cursor;
 	static Fl_X* first;
@@ -156,7 +157,6 @@ public:
 	void destroy(void);
 	void map(void);
 	void unmap(void);
-	int unlink(Fl_X* start = NULL);
 	void collapse(void);
 	WindowRef window_ref(void);
 	void set_key_window(void);
@@ -167,7 +167,6 @@ public:
 	int set_cursor(const Fl_RGB_Image*, int, int);
 	static CGImageRef CGImage_from_window_rect(Fl_Window *win, int x, int y, int w, int h);
 	static unsigned char *bitmap_from_window_rect(Fl_Window *win, int x, int y, int w, int h, int *bytesPerPixel);
-	static CFDataRef CGBitmapContextToTIFF(CGContextRef c);
 	static Fl_Region intersect_region_and_rect(Fl_Region current, int x,int y,int w, int h);
 	static CGContextRef watch_cursor_image(void);
 	static CGContextRef help_cursor_image(void);
@@ -180,9 +179,6 @@ public:
 	static int insertion_point_location(int *px, int *py, int *pheight); // computes window coordinates & height of insertion point
 	static const int CoreText_threshold;  // Mac OS version from which the Core Text API is used to display text
 	static Fl_Fontdesc* calc_fl_fonts(void); // computes the fl_fonts global variable
-private:
-	static void relink(Fl_Window*, Fl_Window*);
-	bool subwindow;
 };
 
 extern Window fl_window;

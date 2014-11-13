@@ -23,11 +23,14 @@
 #include "Fl_Printer.H"
 #include "Fl_Platform.h"
 
+#include "x.H"
+/*
 #if __FLTK_MACOSX__
 #include <ApplicationServices/ApplicationServices.h>
-#elif __FLTK_IPHONEOS__
+#if __FLTK_IPHONEOS__
 #include <UIKit/UIKit.h>
 #endif
+*/
 
 /** Supports copying of graphical data to the clipboard.
 
@@ -67,7 +70,7 @@ private:
 	HDC oldgc;
 	HDC gc;
 #elif __FLTK_MACOSX__
-	CFMutableDataRef pdfdata;
+	Fl_CFMutableDataRef pdfdata;
 	CGContextRef oldgc;
 	CGContextRef gc;
 	void prepare_copy_pdf_and_tiff(int w, int h);
@@ -75,7 +78,7 @@ private:
 	void init_PDF_context(int w, int h);
 	static size_t MyPutBytes(void* info, const void* buffer, size_t count);
 #elif __FLTK_IPHONEOS__
-	CFMutableDataRef pdfdata;
+	Fl_CFMutableDataRef pdfdata;
 	CGContextRef oldgc;
 	CGContextRef gc;
 	void prepare_copy_pdf_and_tiff(int w, int h);
@@ -98,6 +101,14 @@ public:
 	~Fl_Copy_Surface();
 	void set_current();
 	void draw(Fl_Widget* widget, int delta_x = 0, int delta_y = 0);
+	/** Returns the pixel width of the copy surface */
+	int w() {
+		return width;
+	}
+	/** Returns the pixel height of the copy surface */
+	int h() {
+		return height;
+	}
 };
 
 #if __FLTK_MACOSX__
