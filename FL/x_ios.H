@@ -148,6 +148,7 @@ public:
 	static int insertion_point_location(int *px, int *py, int *pheight); // computes window coordinates & height of insertion point
 	static const int CoreText_threshold;  // Mac OS version from which the Core Text API is used to display text
 	static Fl_Fontdesc* calc_fl_fonts(void); // computes the fl_fonts global variable
+	static void set_high_resolution(bool);
 	
 	static void set_default_icons(const Fl_RGB_Image*[], int) {};
 	void set_icons() {};
