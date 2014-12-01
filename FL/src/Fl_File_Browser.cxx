@@ -343,7 +343,7 @@ Fl_File_Browser::item_draw(void *p,	// I - List item data
 	else
 		fl_color(fl_inactive(c));
 
-	for (t = line->txt, ptr = fragment; *t != '\0'; t ++)
+	for (t = line->txt, ptr = fragment; *t != '\0'; t ++) {
 		if (*t == '\n') {
 			// Newline - nul terminate this fragment and draw it...
 			*ptr = '\0';
@@ -382,11 +382,10 @@ Fl_File_Browser::item_draw(void *p,	// I - List item data
 					width += columns[i];
 			} else
 				width = column * (int)(fl_height() * 0.6 * 8.0);
-
 			ptr = fragment;
 		} else
 			*ptr++ = *t;
-
+	}
 	if (ptr > fragment) {
 		// Nul terminate this fragment and draw it...
 		*ptr = '\0';
