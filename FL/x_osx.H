@@ -78,8 +78,10 @@ typedef CGContextRef Fl_Offscreen;
 
 #ifdef __OBJC__
 @class NSCursor;
+@class NSOpenGLPixelFormat;
 #else
 class NSCursor;
+class NSOpenGLPixelFormat;
 #endif // __OBJC__
 
 typedef CGContextRef Fl_Offscreen;
@@ -135,8 +137,14 @@ public:
 	Fl_Offscreen other_xid;  // pointer for offscreen bitmaps (overlay window)
 	Fl_Window *w;            // FLTK window for
 	Fl_Region region;
-	CGRect* subRect;         // make sure subwindow remains inside its parent window
-	Fl_X *next;              // linked tree to support subwindows
+#if FLTK_ABI_VERSION < 10304
+	Fl_Region subRegion;     // for ABI compatibility, recycled to replace subRect_
+#endif
+	Fl_X *next;              // chain of mapped windows
+#if FLTK_ABI_VERSION < 10304
+	Fl_X *xidChildren;       // useless with true subwindows, recycled to replace mapped_to_retina_
+	Fl_X *xidNext;           // useless with true subwindows
+#endif
 	int wait_for_expose;
 	NSCursor *cursor;
 	static Fl_X* first;
@@ -146,6 +154,28 @@ public:
 	static int fake_X_wm(const Fl_Window*,int&,int&,int&,int&,int&);
 	static void make(Fl_Window*);
 	void flush();
+	static void set_high_resolution(bool);
+#if FLTK_ABI_VERSION >= 10304
+	CGRect* subRect() {
+		return subRect_;        // getter
+	}
+	void subRect(CGRect *r) {
+		subRect_ = r;        // setter
+	}
+#else
+	CGRect* subRect() {
+		return (CGRect*)subRegion;        // getter
+	}
+	void subRect(CGRect *r) {
+		subRegion = (Fl_Region)r;        // setter
+	}
+#endif
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_7
+	bool mapped_to_retina();      // is window mapped to retina display?
+	void mapped_to_retina(bool);  // sets whether window is mapped to retina display
+	bool changed_resolution();      // did window just moved to display with another resolution?
+	void changed_resolution(bool);// sets whether window just moved to display with another resolution
+#endif
 	// Quartz additions:
 	CGContextRef gc;                 // graphics context (NULL when using QD)
 	static void q_fill_context();    // fill a Quartz context with current FLTK state
@@ -154,6 +184,8 @@ public:
 	static void q_begin_image(CGRect&, int x, int y, int w, int h);
 	static void q_end_image();
 	// Cocoa additions
+	static int resolution_scaling_factor(Fl_Window*);
+	static NSOpenGLPixelFormat *mode_to_NSOpenGLPixelFormat(int mode, const int*); // computes NSOpenGLPixelFormat from Gl window's mode
 	void destroy(void);
 	void map(void);
 	void unmap(void);
@@ -174,7 +206,14 @@ public:
 	static int insertion_point_location(int *px, int *py, int *pheight); // computes window coordinates & height of insertion point
 	static const int CoreText_threshold;  // Mac OS version from which the Core Text API is used to display text
 	static Fl_Fontdesc* calc_fl_fonts(void); // computes the fl_fonts global variable
-	static void set_high_resolution(bool);
+private:
+#if FLTK_ABI_VERSION >= 10304
+	CGRect* subRect_;           // makes sure subwindow remains inside its parent window
+	// stores 2 binary flags: whether window is mapped to retina display; whether resolution just changed
+	unsigned mapped_to_retina_;
+#else
+	bool subwindow;     // for ABI compatibility, useless with true subwindows
+#endif
 };
 
 extern Window fl_window;

@@ -26,11 +26,13 @@ extern void gl_texture_reset();
 
 #include "Fl.H"
 #include "x.H"
+#include "Fl_Gl_Choice.H"
 #ifdef __APPLE__
 #include <gl.h>
+extern void gl_context_update(NSOpenGLContext*);
+extern void gl_context_flushbuffer(NSOpenGLContext*);
 #endif
-#include "Fl_Gl_Choice.H"
-#include "extra_gl/Fl_Gl_Window.H"
+#include "../Fl_Gl_Window.H"
 #include <stdlib.h>
 #include "fl_utf8.h"
 
@@ -99,6 +101,20 @@ void Fl_Gl_Window::show()
 #endif /* __APPLE__ */
 }
 
+#if defined(__APPLE__) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_7
+
+int Fl_Gl_Window::pixel_w()
+{
+	return Fl_X::resolution_scaling_factor(this) * w();
+}
+
+int Fl_Gl_Window::pixel_h()
+{
+	return Fl_X::resolution_scaling_factor(this) * h();
+}
+
+#endif
+
 /**
   The invalidate() method turns off valid() and is
   equivalent to calling value(0).
@@ -145,7 +161,6 @@ int Fl_Gl_Window::mode(int m, const int *a)
 			show();
 		}
 #elif defined(__APPLE_QUARTZ__)
-		// warning: the Quartz version should probably use Core GL (CGL) instead of AGL
 		redraw();
 #else
 #  error unsupported platform
@@ -169,6 +184,14 @@ void Fl_Gl_Window::make_current()
 {
 //  puts("Fl_Gl_Window::make_current()");
 //  printf("make_current: context_=%p\n", context_);
+#if defined(__APPLE__) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_7
+	// detect if the window was moved between low and high resolution displays
+	if (Fl_X::i(this)->changed_resolution()) {
+		Fl_X::i(this)->changed_resolution(false);
+		invalidate();
+		gl_context_update(context_);
+	}
+#endif
 	if (!context_) {
 		mode_ &= ~NON_LOCAL_CONTEXT;
 		context_ = fl_create_gl_context(this, g);
@@ -176,26 +199,11 @@ void Fl_Gl_Window::make_current()
 		context_valid(0);
 #ifdef __APPLE__
 		// resets the pile of string textures used to draw strings
+		// necessary when the context is renewed
 		gl_texture_reset();
 #endif
 	}
 	fl_set_gl_context(this, context_);
-
-#ifdef __APPLE__
-	// Set the buffer rectangle here, since in resize() we won't have the
-	// correct parent window size to work with...
-	GLint xywh[4];
-
-	xywh[0] = 0;
-	xywh[1] = 0;
-
-	xywh[2] = w();
-	xywh[3] = h();
-
-	aglSetInteger(context_, AGL_BUFFER_RECT, xywh);
-	aglEnable(context_, AGL_BUFFER_RECT);
-//  printf("make_current: xywh=[%d %d %d %d]\n", xywh[0], xywh[1], xywh[2], xywh[3]);
-#endif // __APPLE__
 
 #if defined(WIN32) && USE_COLORMAP
 	if (fl_palette) {
@@ -227,8 +235,8 @@ void Fl_Gl_Window::ortho()
 	GLint v[2];
 	glGetIntegerv(GL_MAX_VIEWPORT_DIMS, v);
 	glLoadIdentity();
-	glViewport(w()-v[0], h()-v[1], v[0], v[1]);
-	glOrtho(w()-v[0], w(), h()-v[1], h(), -1, 1);
+	glViewport(pixel_w()-v[0], pixel_h()-v[1], v[0], v[1]);
+	glOrtho(pixel_w()-v[0], pixel_w(), pixel_h()-v[1], pixel_h(), -1, 1);
 #endif
 }
 
@@ -253,7 +261,7 @@ void Fl_Gl_Window::swap_buffers()
 		// STR# 2944 [1]
 		//    Save matrixmode/proj/modelview/rasterpos before doing overlay.
 		//
-		int wo=w(), ho=h();
+		int wo=pixel_w(), ho=pixel_h();
 		GLint matrixmode;
 		GLfloat pos[4];
 		glGetIntegerv(GL_MATRIX_MODE, &matrixmode);
@@ -278,8 +286,11 @@ void Fl_Gl_Window::swap_buffers()
 		glPopMatrix();
 		glMatrixMode(matrixmode);
 		glRasterPos3f(pos[0], pos[1], pos[2]);              // restore original glRasterPos
-	} else
+	}
+	/* // nothing to do here under Cocoa because [NSOpenGLContext -flushBuffer] done later replaces it
+	   else
 		aglSwapBuffers((AGLContext)context_);
+	   */
 #else
 # error unsupported platform
 #endif
@@ -297,19 +308,6 @@ void Fl_Gl_Window::flush()
 	uchar save_valid = valid_f_ & 1;
 #if HAVE_GL_OVERLAY && defined(WIN32)
 	uchar save_valid_f = valid_f_;
-#endif
-
-#if defined(__APPLE_QUARTZ__)
-	// warning: the Quartz version should probably use Core GL (CGL) instead of AGL
-	//: clear previous clipping in this shared port
-#if ! __LP64__
-	/*GrafPtr port = GetWindowPort( Fl_X::i(this)->window_ref() );
-	  Rect rect; SetRect( &rect, 0, 0, 0x7fff, 0x7fff );
-	  GrafPtr old; GetPort( &old );
-	  SetPort( port );
-	  ClipRect( &rect );
-	  SetPort( old );*/
-#endif
 #endif
 
 #if HAVE_GL_OVERLAY && defined(WIN32)
@@ -392,12 +390,12 @@ void Fl_Gl_Window::flush()
 					glReadBuffer(GL_BACK);
 					glDrawBuffer(GL_FRONT);
 					glLoadIdentity();
-					glViewport(0, 0, w(), h());
-					glOrtho(0, w(), 0, h(), -1, 1);
+					glViewport(0, 0, pixel_w(), pixel_h());
+					glOrtho(0, pixel_w(), 0, pixel_h(), -1, 1);
 					glRasterPos2i(0,0);
 					ortho_window = this;
 				}
-				glCopyPixels(0,0,w(),h(),GL_COLOR);
+				glCopyPixels(0,0,pixel_w(),pixel_h(),GL_COLOR);
 				make_current(); // set current context back to draw overlay
 				damage1_ = 0;
 
@@ -409,6 +407,9 @@ void Fl_Gl_Window::flush()
 			}
 
 		}
+#ifdef __APPLE__
+		gl_context_flushbuffer(context_);
+#endif
 
 		if (overlay==this && SWAP_TYPE != SWAP) { // fake overlay in front buffer
 			glDrawBuffer(GL_FRONT);
@@ -434,22 +435,27 @@ void Fl_Gl_Window::resize(int X,int Y,int W,int H)
 //  printf("Fl_Gl_Window::resize(X=%d, Y=%d, W=%d, H=%d)\n", X, Y, W, H);
 //  printf("current: x()=%d, y()=%d, w()=%d, h()=%d\n", x(), y(), w(), h());
 
-	if (W != w() || H != h()) valid(0);
+	int is_a_resize = (W != Fl_Widget::w() || H != Fl_Widget::h());
+	if (is_a_resize) valid(0);
 
-#ifdef __APPLE__
-	if (X != x() || Y != y() || W != w() || H != h()) aglUpdateContext(context_);
-#elif !defined(WIN32)
-	if ((W != w() || H != h()) && !resizable() && overlay && overlay != this) {
+#if ! ( defined(__APPLE__) || defined(WIN32) )
+	if (is_a_resize && !resizable() && overlay && overlay != this) {
 		((Fl_Gl_Window*)overlay)->resize(0,0,W,H);
 	}
 #endif
 
 	Fl_Window::resize(X,Y,W,H);
+#ifdef __APPLE__
+	if (is_a_resize) {
+		gl_context_update(context_);
+		redraw();
+	}
+#endif
 }
 
 /**
-  Returns or sets a pointer to the GLContext that this window is
-  using. This is a system-dependent structure, but it is portable to copy
+  Sets a pointer to the GLContext that this window is using.
+  This is a system-dependent structure, but it is portable to copy
   the context from one window to another. You can also set it to NULL,
   which will force FLTK to recreate the context the next time make_current()
   is called, this is useful for getting around bugs in OpenGL implementations.
@@ -556,18 +562,6 @@ void Fl_Gl_Window::draw()
  */
 int Fl_Gl_Window::handle(int event)
 {
-#ifdef __APPLE_QUARTZ__
-	if (event==FL_HIDE) {
-		// if we are not hidden, just the parent was hidden, so we must throw away the context
-		if (!visible_r())
-			context(0); // remove context without setting the hidden flags
-	}
-	if (event==FL_SHOW) {
-		// if we are not hidden, just the parent was shown, so we must create a new context
-		if (visible_r())
-			show(); //
-	}
-#endif
 	return Fl_Window::handle(event);
 }
 

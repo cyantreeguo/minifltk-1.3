@@ -1770,10 +1770,8 @@ void Fl_Window::hide()
 	if (count) delete[] doit;
 #elif __FLTK_MACOSX__
 	ip->destroy();
-	delete ip->subRect;
 #elif __FLTK_IPHONEOS__
 	ip->destroy();
-	delete ip->subRect;
 #elif __FLTK_LINUX__
 # if USE_XFT
 	fl_destroy_xft_draw(ip->xid);
@@ -2447,6 +2445,7 @@ void Fl::option(Fl_Option opt, bool val)
 	options_[opt] = val;
 }
 
+int Fl::use_high_res_GL_ = 0;
 //
 // End of "$Id: Fl.cxx 10159 2014-05-23 16:47:21Z manolo $".
 //

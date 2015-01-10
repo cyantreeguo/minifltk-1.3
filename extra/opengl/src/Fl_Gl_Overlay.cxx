@@ -22,7 +22,7 @@
 #include "Fl.H"
 #include "x.H"
 #include "Fl_Gl_Choice.H"
-#include "extra_gl/Fl_Gl_Window.H"
+#include "../Fl_Gl_Window.H"
 #include <stdlib.h>
 
 #if !HAVE_GL_OVERLAY

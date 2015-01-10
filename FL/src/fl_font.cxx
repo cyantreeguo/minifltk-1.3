@@ -57,6 +57,10 @@
 #else
 #  include "os/linux/x_fl_font.cxx"
 #endif
+XFontStruct *fl_X_core_font()
+{
+	return fl_xfont.value();
+}
 #elif __FLTK_WINCE__
 #  include "os/wince/fl_font.cxx"
 #else
@@ -89,7 +93,6 @@ void fl_text_extents(const char *c, int &dx, int &dy, int &w, int &h)
 		dy = 0;
 	}
 } // fl_text_extents
-
 
 void fl_draw(const char* str, int l, float x, float y)
 {

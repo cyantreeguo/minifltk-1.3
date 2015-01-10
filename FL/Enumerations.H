@@ -27,7 +27,7 @@
  * in the current patch release of FLTK. ** Use for static builds only! **
  * For more info on this macro, see: http://fltk.org/cmp.php#FLTK_ABI_VERSION
  */
-//#define FLTK_ABI_VERSION 10303
+//#define FLTK_ABI_VERSION 10304
 
 #include "config.h"
 #include "Fl_Export.H"
@@ -91,9 +91,13 @@
     calling the Fl::event_*() methods. This static information remains
     valid until the next event is read from the window system, so it
     is ok to look at it outside of the handle() method.
+	
+	Event numbers can be converted to their actual names using the
+    \ref fl_eventnames[] array defined in \#include &lt;FL/names.h&gt;
 
     \sa Fl::event_text(), Fl::event_key(), class Fl::
  */
+// DEV NOTE: Keep this list in sync with FL/names.H 
 enum Fl_Event {	// events
 	/** No event. */
 	FL_NO_EVENT		= 0,
