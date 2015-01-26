@@ -231,7 +231,7 @@ public:
 		return this;
 	}
 
-#if defined(__APPLE__) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_7
+#if defined(__APPLE__)
 	int pixel_w();
 	int pixel_h();
 #else
@@ -239,6 +239,7 @@ public:
 	 Generally identical with the result of the w() function, but on macintosh computers
 	 with a 'retina' display, and if Fl::use_high_res_GL(bool) is set to true,
 	 pixel_w() returns 2 * w().
+	 \version 1.3.4
 	 */
 	int pixel_w() {
 		return w();
@@ -247,6 +248,7 @@ public:
 	 Generally identical with the result of the h() function, but on macintosh computers
 	 with a 'retina' display, and if Fl::use_high_res_GL(bool) is set to true,
 	 pixel_h() returns 2 * h().
+	 \version 1.3.4
 	 */
 	int pixel_h() {
 		return h();
