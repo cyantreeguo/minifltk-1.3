@@ -21,7 +21,7 @@
 // on top of that.  Uses the hardware to draw the overlay if
 // possible, otherwise it just draws in the front buffer.
 
-#include "config.h"
+#include "fltk_config.h"
 #include "Fl.H"
 #include "Fl_Overlay_Window.H"
 #include "fl_draw.H"

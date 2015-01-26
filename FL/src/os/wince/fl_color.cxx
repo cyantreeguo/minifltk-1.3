@@ -25,7 +25,7 @@
 // being used to index arrays.  So I always copy them to an integer
 // before use.
 
-#include "config.h"
+#include "fltk_config.h"
 #include "Fl.H"
 #include "x.H"
 #include "fl_draw.H"

@@ -17,7 +17,7 @@
 //
 
 #include "Fl_Printer.H"
-#include "config.h"
+#include "fltk_config.h"
 #include "Fl.H"
 #include "fl_ask.H"
 #include "fl_draw.H"

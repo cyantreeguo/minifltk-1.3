@@ -24,7 +24,7 @@
 #include "x.H"
 #include "fl_draw.H"
 #ifdef __APPLE__
-#include "config.h"
+#include "fltk_config.h"
 #endif
 
 //#define USE_XOR

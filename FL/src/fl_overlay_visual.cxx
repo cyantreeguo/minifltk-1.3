@@ -21,7 +21,7 @@
 // Another disgusting X interface, based on code extracted and
 // purified with great difficulty from XLayerUtil.cxx:
 
-#include "config.h"
+#include "fltk_config.h"
 #if HAVE_OVERLAY
 #include "Fl.H"
 #include "x.H"

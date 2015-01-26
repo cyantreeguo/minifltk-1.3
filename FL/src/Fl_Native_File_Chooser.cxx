@@ -24,9 +24,9 @@
 #elif __FLTK_IPHONEOS__
 #include "Fl_Native_File_Chooser.H"
 #elif __FLTK_MACOSX__
-#include "config_mac.h"
+#include "fltk_config_mac.h"
 #elif __FLTK_LINUX__
-#include "config_linux.h"
+#include "fltk_config_linux.h"
 #elif __FLTK_WINCE__
 #include "os\wince\Fl_Native_File_Chooser.cxx"
 #else

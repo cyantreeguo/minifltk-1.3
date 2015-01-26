@@ -25,30 +25,35 @@
 #include "Fl_Menu_.H"
 
 /**
-  This widget provides a standard menubar interface.  Usually you will
-  put this widget along the top edge of your window.  The height of the
-  widget should be 30 for the menu titles to draw correctly with the
-  default font.
-  <P>The items on the bar and the menus they bring up are defined by a
-  single Fl_Menu_Item
-  array.  Because a Fl_Menu_Item array defines a hierarchy, the
-  top level menu defines the items in the menubar, while the submenus
-  define the pull-down menus. Sub-sub menus and lower pop up to the right
-  of the submenus. </P>
-  <P ALIGN=CENTER>\image html  menubar.png</P>
-  \image latex  menubar.png " menubar" width=12cm
-  <P>If there is an item in the top menu that is not a title of a
-  submenu, then it acts like a "button" in the menubar.  Clicking on it
-  will pick it. </P>
-  <P>When the user picks an item off the menu, the item's callback is
-  done with the menubar as the Fl_Widget* argument.  If the item
-  does not have a callback the menubar's callback is done instead. </P>
-  <P>Submenus will also pop up in response to shortcuts indicated by
-  putting a '&' character in the name field of the menu item. If you put a
-  '&' character in a top-level "button" then the shortcut picks it.  The
-  '&' character in submenus is ignored until the menu is popped up. </P>
+  This is a button that when pushed pops up a menu (or hierarchy of
+  menus) defined by an array of 
+  Fl_Menu_Item objects.
+  <P ALIGN=CENTER>\image html  menu_button.png</P>
+  \image latex  menu_button.png " menu_button" width=5cm
+  <P>Normally any mouse button will pop up a menu and it is lined up
+  below the button as shown in the picture.  However an Fl_Menu_Button
+  may also control a pop-up menu.  This is done by setting the type().
+  If type() is zero a normal menu button is produced. 
+  If it is nonzero then this is a pop-up menu. The bits in type() indicate 
+  what mouse buttons pop up the menu (see Fl_Menu_Button::popup_buttons). </P>
+  <P>The menu will also pop up in response to shortcuts indicated by
+  putting a '&' character in the label(). </P>
   <P>Typing the shortcut() of any of the menu items will cause
   callbacks exactly the same as when you pick the item with the mouse.
+  The '&' character in menu item names are only looked at when the menu is
+  popped up, however. </P>
+
+  When the user clicks a menu item, value() is set to that item
+  and then:
+
+      - The item's callback is done if one has been set; the
+        Fl_Menu_Button is passed as the Fl_Widget* argument, 
+        along with any userdata configured for the callback.
+
+      - If the item does not have a callback, the Fl_Menu_Button's callback
+        is done instead, along with any userdata configured for it.
+        The callback can determine which item was picked using
+        value(), mvalue(), item_pathname(), etc.
 */
 class FL_EXPORT Fl_Menu_Bar : public Fl_Menu_
 {

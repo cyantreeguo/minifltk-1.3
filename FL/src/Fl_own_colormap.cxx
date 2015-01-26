@@ -24,7 +24,7 @@
 // and copy the first 16 colors from the default colormap so that we won't
 // get huge color changes when switching windows.
 
-#include "config.h"
+#include "fltk_config.h"
 #include "Fl.H"
 #include "x.H"
 

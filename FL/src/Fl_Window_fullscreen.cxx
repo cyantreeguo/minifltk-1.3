@@ -29,7 +29,7 @@
 #include "Fl.H"
 #include "x.H"
 
-#include "config.h"
+#include "fltk_config.h"
 
 #if FLTK_ABI_VERSION < 10301
 int Fl_Window::no_fullscreen_x = 0;

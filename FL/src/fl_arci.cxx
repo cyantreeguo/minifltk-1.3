@@ -36,7 +36,7 @@
 #ifdef WIN32
 #  include "fltkmath.h"
 #endif
-#include "config.h"
+#include "fltk_config.h"
 
 void Fl_Graphics_Driver::arc(int x,int y,int w,int h,double a1,double a2)
 {

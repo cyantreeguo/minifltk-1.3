@@ -20,7 +20,7 @@
 // This is the system-independent portions.  The huge amount of
 // crap you need to do to communicate with X is in Fl_x.cxx, the
 // equivalent (but totally different) crap for MSWindows is in Fl_win32.cxx
-#include "config.h"
+#include "fltk_config.h"
 #include "Fl.H"
 #include "x.H"
 #include "Fl_RGB_Image.H"

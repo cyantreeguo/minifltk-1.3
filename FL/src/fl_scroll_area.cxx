@@ -20,7 +20,7 @@
 // a "callback" which is called to draw rectangular areas that are moved
 // into the drawing area.
 
-#include "config.h"
+#include "fltk_config.h"
 #include "Fl.H"
 #include "x.H"
 #include "fl_draw.H"

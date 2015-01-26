@@ -16,7 +16,7 @@
 //     http://www.fltk.org/str.php
 //
 
-#include "config.h"
+#include "fltk_config.h"
 #include "Enumerations.H"
 
 // one of these for each color in fltk's "colormap":

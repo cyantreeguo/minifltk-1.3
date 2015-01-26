@@ -27,7 +27,7 @@
 #ifdef WIN32
 # include <malloc.h> // needed for VisualC2010
 #elif !defined(__APPLE__)
-#include "config.h"
+#include "fltk_config.h"
 #if HAVE_DLFCN_H
 #include <dlfcn.h>
 #endif

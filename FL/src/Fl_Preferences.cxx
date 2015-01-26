@@ -50,16 +50,16 @@
 #elif __FLTK_MACOSX__
 #  include <ApplicationServices/ApplicationServices.h>
 #  include <unistd.h>
-#  include "config.h"
+#  include "fltk_config.h"
 #  include <dlfcn.h>
 #elif __FLTK_IPHONEOS__
 #  include <UIKit/UIKit.h>
 #  include <unistd.h>
-#  include "config.h"
+#  include "fltk_config.h"
 #  include <dlfcn.h>
 #elif __FLTK_LINUX__
 #  include <unistd.h>
-#  include "config.h"
+#  include "fltk_config.h"
 #  if HAVE_DLFCN_H
 #    include <dlfcn.h>
 #  endif

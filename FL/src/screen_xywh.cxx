@@ -19,7 +19,7 @@
 
 #include "Fl.H"
 #include "x.H"
-#include "config.h"
+#include "fltk_config.h"
 
 #define MAX_SCREENS 16
 

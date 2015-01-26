@@ -20,7 +20,7 @@
 #include "Fl_Single_Window.H"
 #include "fl_draw.H"
 #include "fl_show_colormap.H"
-#include "config.h"
+#include "fltk_config.h"
 
 #define BOXSIZE 14
 #define BORDER 4

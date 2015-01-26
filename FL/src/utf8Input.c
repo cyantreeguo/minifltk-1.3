@@ -23,7 +23,7 @@
  *     http://www.fltk.org/str.php
  */
 
-#include "config.h"
+#include "fltk_config.h"
 
 #if __FLTK_LINUX__
 

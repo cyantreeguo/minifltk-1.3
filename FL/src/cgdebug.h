@@ -23,10 +23,10 @@
 // more bugs show up.
 //
 // This header is activated by adding the following
-// line to "config.h"
+// line to "fltk_config.h"
 //   #include "src/cgdebug.h"
 //
-// Running "./configure" will remove this line from "config.h".
+// Running "./configure" will remove this line from "fltk_config.h".
 //
 // When used erreanously, Core Graphics prints warnings to
 // stderr. This is helpful, however it is not possible to

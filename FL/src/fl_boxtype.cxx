@@ -28,7 +28,7 @@
 #include "Fl.H"
 #include "Fl_Widget.H"
 #include "fl_draw.H"
-#include "config.h"
+#include "fltk_config.h"
 
 ////////////////////////////////////////////////////////////////
 

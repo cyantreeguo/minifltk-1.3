@@ -22,7 +22,7 @@
 
 #include "Fl.H"
 #include "x.H"
-#include "config.h"
+#include "fltk_config.h"
 
 #if __FLTK_MACOSX__
 

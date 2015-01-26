@@ -29,7 +29,7 @@
  */
 //#define FLTK_ABI_VERSION 10304
 
-#include "config.h"
+#include "fltk_config.h"
 #include "Fl_Export.H"
 #include "fl_types.h"
 

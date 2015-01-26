@@ -25,7 +25,7 @@
 #include "Fl.H"
 #include "Fl_Image.H"
 #include "Fl_Shared_Image.H"
-#include "config.h"
+#include "fltk_config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include "fl_utf8.h"

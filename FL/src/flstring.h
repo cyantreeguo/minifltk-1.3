@@ -20,7 +20,7 @@
 #  define flstring_h
 
 #  include "Fl_Export.H"
-#  include "config.h"
+#  include "fltk_config.h"
 #  include <stdio.h>
 #  include <stdarg.h>
 #  include <string.h>

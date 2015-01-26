@@ -19,7 +19,7 @@
 /* My own scandir sorting function, useful for the film industry where
    we have many files with numbers in their names: */
 
-#include "config.h"
+#include "fltk_config.h"
 #include <ctype.h>
 #include <stdlib.h>
 

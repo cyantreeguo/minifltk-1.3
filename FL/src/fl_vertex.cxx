@@ -28,7 +28,7 @@
 // matt: the Quartz implementation purposely doesn't use the Quartz matrix
 //       operations for reasons of compatibility and maintainability
 
-#include "config.h"
+#include "fltk_config.h"
 #include "fl_draw.H"
 #include "x.H"
 #include "Fl.H"

@@ -18,7 +18,7 @@
 
 #if !defined(FL_DOXYGEN)
 
-#  include "config.h"
+#  include "fltk_config.h"
 #if __FLTK_LINUX__
 
 #  define CONSOLIDATE_MOTION 1

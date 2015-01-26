@@ -16,7 +16,7 @@
 //     http://www.fltk.org/str.php
 //
 
-#include "config.h"
+#include "fltk_config.h"
 #include "Fl_Native_File_Chooser.H"
 #include "Fl_File_Icon.H"
 #define FLTK_CHOOSER_SINGLE    Fl_File_Chooser::SINGLE

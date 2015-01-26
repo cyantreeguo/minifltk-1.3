@@ -35,7 +35,7 @@
 
 ////////////////////////////////////////////////////////////////
 
-#include "config.h"
+#include "fltk_config.h"
 #include "Fl.H"
 #include "Fl_Printer.H"
 #include "fl_draw.H"

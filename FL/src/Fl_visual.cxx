@@ -18,7 +18,7 @@
 
 // Set the default visual according to passed switches:
 
-#include "config.h"
+#include "fltk_config.h"
 #include "Fl.H"
 #include "x.H"
 

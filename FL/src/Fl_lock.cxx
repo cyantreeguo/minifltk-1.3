@@ -18,7 +18,7 @@
 
 
 #include "Fl.H"
-#include "config.h"
+#include "fltk_config.h"
 
 #include <stdlib.h>
 

@@ -23,7 +23,7 @@
 // which are used so that clicks outside the program's windows
 // can be used to dismiss the menus.
 
-#include "config.h"
+#include "fltk_config.h"
 #include "Fl.H"
 #include "x.H"
 #include "fl_draw.H"

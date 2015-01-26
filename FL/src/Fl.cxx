@@ -21,7 +21,7 @@
 //          mostly to get around the single active context in QD and
 //          to implement clipping. This should be changed into pure
 //          Quartz calls in the near future.
-#include "config.h"
+#include "fltk_config.h"
 
 /* We require Windows 2000 features (e.g. VK definitions) */
 #if defined(WIN32)

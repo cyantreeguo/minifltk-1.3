@@ -24,7 +24,7 @@
 #ifndef FL_FONT_
 #define FL_FONT_
 
-#include "config.h"
+#include "fltk_config.h"
 
 #if __FLTK_WIN32__
 #elif __FLTK_WINCE__

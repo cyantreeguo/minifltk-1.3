@@ -26,7 +26,7 @@
 // Also all fl_clip routines, since they are always linked in so
 // that minimal update works.
 
-#include "config.h"
+#include "fltk_config.h"
 #include "Fl.H"
 #include "Fl_Widget.H"
 #include "Fl_Printer.H"

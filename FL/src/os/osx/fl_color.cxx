@@ -24,7 +24,7 @@
 // matt: Neither Quartz nor Quickdraw support colormaps in this implementation
 // matt: Quartz support done
 
-#include "config.h"
+#include "fltk_config.h"
 #include "Fl.H"
 #include "x.H"
 #include "fl_draw.H"
