@@ -5,7 +5,6 @@
 #include "Fl.H"
 #include "Fl_Pixmap.H"
 #include "Fl_Tree_Prefs.H"
-#include <string.h>		// strcmp
 
 //////////////////////
 // Fl_Tree_Prefs.cxx
@@ -164,12 +163,10 @@ Fl_Tree_Prefs::Fl_Tree_Prefs()
 	_itemdrawuserdata       = 0;
 #endif
 	// Let fltk's current 'scheme' affect defaults
-	if ( Fl::scheme() ) {
-		if ( strcmp(Fl::scheme(), "gtk+") == 0 ) {
-			_selectbox = _FL_GTK_THIN_UP_BOX;
-		} else if ( strcmp(Fl::scheme(), "plastic") == 0 ) {
-			_selectbox = _FL_PLASTIC_THIN_UP_BOX;
-		}
+	if (Fl::is_scheme("gtk+")) {
+		_selectbox = _FL_GTK_THIN_UP_BOX;
+	} else if (Fl::is_scheme("plastic")) {
+		_selectbox = _FL_PLASTIC_THIN_UP_BOX;
 	}
 }
 

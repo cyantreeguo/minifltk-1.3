@@ -823,31 +823,19 @@ void Fl_Graphics_Driver::restore_clip()
 #elif __FLTK_WINCE__
 	SelectClipRgn(fl_gc, r); //if r is NULL, clip is automatically cleared
 #elif __FLTK_MACOSX__
-	if ( fl_window ) { // clipping for a true window
+	if ( fl_window || fl_gc ) { // clipping for a true window or an offscreen buffer
 		Fl_X::q_clear_clipping();
 		Fl_X::q_fill_context();//flip coords if bitmap context
 		//apply program clip
-		if (r) {
-			CGContextClipToRects(fl_gc, r->rects, r->count);
-		}
-	} else if (fl_gc) { // clipping for an offscreen drawing world (CGBitmap)
-		Fl_X::q_clear_clipping();
-		Fl_X::q_fill_context();
 		if (r) {
 			CGContextClipToRects(fl_gc, r->rects, r->count);
 		}
 	}
 #elif __FLTK_IPHONEOS__
-	if ( fl_window ) { // clipping for a true window
+	if ( fl_window || fl_gc ) { // clipping for a true window or an offscreen buffer
 		Fl_X::q_clear_clipping();
 		Fl_X::q_fill_context();//flip coords if bitmap context
 		//apply program clip
-		if (r) {
-			CGContextClipToRects(fl_gc, r->rects, r->count);
-		}
-	} else if (fl_gc) { // clipping for an offscreen drawing world (CGBitmap)
-		Fl_X::q_clear_clipping();
-		Fl_X::q_fill_context();
 		if (r) {
 			CGContextClipToRects(fl_gc, r->rects, r->count);
 		}
@@ -1085,10 +1073,10 @@ int Fl_Graphics_Driver::clip_box(int x, int y, int w, int h, int& X, int& Y, int
 			else u = CGRectUnion(u, test);
 		}
 	}
-	X = int(u.origin.x);
-	Y = int(u.origin.y);
-	W = int(u.size.width + 1);
-	H = int(u.size.height + 1);
+	X = int(u.origin.x + 0.5); // reverse offset introduced by fl_cgrectmake_cocoa()
+	Y = int(u.origin.y + 0.5);
+	W = int(u.size.width + 0.5); // round to nearest integer
+	H = int(u.size.height + 0.5);
 	if(CGRectIsEmpty(u)) W = H = 0;
 	return ! CGRectEqualToRect(arg, u);
 #elif __FLTK_IPHONEOS__
@@ -1102,10 +1090,10 @@ int Fl_Graphics_Driver::clip_box(int x, int y, int w, int h, int& X, int& Y, int
 			else u = CGRectUnion(u, test);
 		}
 	}
-	X = int(u.origin.x);
-	Y = int(u.origin.y);
-	W = int(u.size.width + 1);
-	H = int(u.size.height + 1);
+	X = int(u.origin.x + 0.5); // reverse offset introduced by fl_cgrectmake_cocoa()
+	Y = int(u.origin.y + 0.5);
+	W = int(u.size.width + 0.5); // round to nearest integer
+	H = int(u.size.height + 0.5);
 	if(CGRectIsEmpty(u)) W = H = 0;
 	return ! CGRectEqualToRect(arg, u);
 #elif __FLTK_LINUX__

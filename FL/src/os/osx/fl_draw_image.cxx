@@ -90,7 +90,7 @@ static void innards(const uchar *buf, int X, int Y, int W, int H,
 	                                       src, 0L, false, kCGRenderingIntentDefault);
 	// draw the image into the destination context
 	if (img) {
-		CGRect rect = { { (CGFloat)X, (CGFloat)Y }, { (CGFloat)W, (CGFloat)H } };
+		CGRect rect = CGRectMake( X, Y,  W, H);
 		Fl_X::q_begin_image(rect, 0, 0, W, H);
 		CGContextDrawImage(fl_gc, rect, img);
 		Fl_X::q_end_image();

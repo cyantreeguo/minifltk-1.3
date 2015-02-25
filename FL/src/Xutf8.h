@@ -102,7 +102,7 @@ XUtf8UcsWidth(
         unsigned int            ucs);
 
 int
-XGetUtf8FontAndGlyph(
+fl_XGetUtf8FontAndGlyph(
         XUtf8FontStruct  *font_set,
         unsigned int            ucs,
         XFontStruct     **fnt,

@@ -30,6 +30,11 @@
 #include "Fl_Platform.h"
 #if !__FLTK_IPHONEOS__
 
+/* Signature of Fl_PostScript::close_command() functions passed as parameters. */
+extern "C" {
+	typedef int (Fl_PostScript_Close_Command)(FILE *);
+}
+
 /**
  \brief PostScript graphical backend.
  *
@@ -56,11 +61,6 @@
  <br> All other unicode characters or all other fonts (FL_FREE_FONT and above) are output as a bitmap.
  <br> FLTK standard fonts are output using the corresponding PostScript standard fonts.
  */
-
-/** Signature of Fl_PostScript::close_command() functions passed as parameters. */
-extern "C" {
-	typedef int (Fl_PostScript_Close_Command)(FILE *);
-}
 
 class FL_EXPORT Fl_PostScript_Graphics_Driver : public Fl_Graphics_Driver
 {
@@ -256,7 +256,7 @@ public:
 	~Fl_PostScript_File_Device();
 	int start_job(int pagecount, int* from, int* to);
 	int start_job(int pagecount, enum Fl_Paged_Device::Page_Format format = Fl_Paged_Device::A4,
-		enum Fl_Paged_Device::Page_Layout layout = Fl_Paged_Device::PORTRAIT);
+	              enum Fl_Paged_Device::Page_Layout layout = Fl_Paged_Device::PORTRAIT);
 	int start_job(FILE *ps_output, int pagecount, enum Fl_Paged_Device::Page_Format format = Fl_Paged_Device::A4,
 	              enum Fl_Paged_Device::Page_Layout layout = Fl_Paged_Device::PORTRAIT);
 	int start_page (void);

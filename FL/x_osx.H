@@ -79,9 +79,11 @@ typedef CGContextRef Fl_Offscreen;
 #ifdef __OBJC__
 @class NSCursor;
 @class NSOpenGLPixelFormat;
+@class NSOpenGLContext;
 #else
 class NSCursor;
 class NSOpenGLPixelFormat;
+class NSOpenGLContext;
 #endif // __OBJC__
 
 typedef CGContextRef Fl_Offscreen;
@@ -176,6 +178,8 @@ public:
 	bool changed_resolution();      // did window just moved to display with another resolution?
 	void changed_resolution(bool);// sets whether window just moved to display with another resolution
 #endif
+	bool in_windowDidResize();      // is window performing windowDidResize?
+	void in_windowDidResize(bool);  // sets whether window is performing windowDidResize
 	// Quartz additions:
 	CGContextRef gc;                 // graphics context (NULL when using QD)
 	static void q_fill_context();    // fill a Quartz context with current FLTK state
@@ -186,6 +190,12 @@ public:
 	// Cocoa additions
 	static int resolution_scaling_factor(Fl_Window*);
 	static NSOpenGLPixelFormat *mode_to_NSOpenGLPixelFormat(int mode, const int*); // computes NSOpenGLPixelFormat from Gl window's mode
+	static NSOpenGLContext* create_GLcontext_for_window(NSOpenGLPixelFormat *pixelformat, NSOpenGLContext *shared_ctx, Fl_Window *window);
+	static void GLcontext_update(NSOpenGLContext*);
+	static void GLcontext_flushbuffer(NSOpenGLContext*);
+	static void GLcontext_release(NSOpenGLContext*);
+	static void GLcontext_makecurrent(NSOpenGLContext*);
+	static void GL_cleardrawable(void);
 	void destroy(void);
 	void map(void);
 	void unmap(void);
@@ -206,6 +216,7 @@ public:
 	static int insertion_point_location(int *px, int *py, int *pheight); // computes window coordinates & height of insertion point
 	static const int CoreText_threshold;  // Mac OS version from which the Core Text API is used to display text
 	static Fl_Fontdesc* calc_fl_fonts(void); // computes the fl_fonts global variable
+	static int dnd(int use_selection); // call Fl_X::dnd(1) to support text dragging
 private:
 #if FLTK_ABI_VERSION >= 10304
 	CGRect* subRect_;           // makes sure subwindow remains inside its parent window

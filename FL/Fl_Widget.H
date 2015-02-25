@@ -56,10 +56,11 @@ typedef void (Fl_Callback1)(Fl_Widget*, long);
 
 /** This struct stores all information for a text or mixed graphics label.
 
-    \todo For FLTK 1.3, the Fl_Label type will become a widget by itself. That way
-          we will be avoiding a lot of code duplication by handling labels in
+    \todo There is an aspiration that the Fl_Label type will become a widget by itself.
+          That way we will be avoiding a lot of code duplication by handling labels in
           a similar fashion to widgets containing text. We also provide an easy
           interface for very complex labels, containing html or vector graphics.
+          However, this re-factoring is not in place in this release.
  */
 struct FL_EXPORT Fl_Label {
 	/** label text */
@@ -120,7 +121,7 @@ class FL_EXPORT Fl_Widget
 	Fl_Widget(const Fl_Widget &);
 	/** unimplemented assignment operator */
 	Fl_Widget& operator=(const Fl_Widget &);
-	
+
 protected:
 
 	/** Creates a widget at the given position and size.
@@ -251,6 +252,18 @@ public:
 	    \see Fl_Event
 	 */
 	virtual int handle(int event);
+
+	/** Returns whether the current label was assigned with copy_label().
+
+	      This can be useful for temporarily overwriting the widget's label
+	      and restoring it later.
+
+	      \retval 0 current label was assigned with label().
+	      \retval 1 current label was assigned with copy_label().
+	  */
+	int is_label_copied() const {
+		return ((flags_ & COPIED_LABEL) ? 1 : 0);
+	}
 
 	/** Returns a pointer to the parent widget.
 	    Usually this is a Fl_Group or Fl_Window.

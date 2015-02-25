@@ -289,39 +289,47 @@ static struct {
 	{fl_engraved_frame,	2,2,4,4,1},
 	{fl_embossed_frame,	2,2,4,4,1},
 	{fl_border_box,	1,1,2,2,1},
-	{fl_border_box,	1,1,5,5,0}, // _FL_SHADOW_BOX,
+	{fl_border_box,	1,1,5,5,0}, // _FL_SHADOW_BOX
 	{fl_border_frame,	1,1,2,2,1},
-	{fl_border_frame,	1,1,5,5,0}, // _FL_SHADOW_FRAME,
-	{fl_border_box,	1,1,2,2,0}, // _FL_ROUNDED_BOX,
-	{fl_border_box,	1,1,2,2,0}, // _FL_RSHADOW_BOX,
+	{fl_border_frame,	1,1,5,5,0}, // _FL_SHADOW_FRAME
+	{fl_border_box,	1,1,2,2,0}, // _FL_ROUNDED_BOX
+	{fl_border_box,	1,1,2,2,0}, // _FL_RSHADOW_BOX
 	{fl_border_frame,	1,1,2,2,0}, // _FL_ROUNDED_FRAME
-	{fl_rectf,		0,0,0,0,0}, // _FL_RFLAT_BOX,
+	{fl_rectf,		0,0,0,0,0}, // _FL_RFLAT_BOX
 	{fl_up_box,		3,3,6,6,0}, // _FL_ROUND_UP_BOX
-	{fl_down_box,		3,3,6,6,0}, // _FL_ROUND_DOWN_BOX,
+	{fl_down_box,		3,3,6,6,0}, // _FL_ROUND_DOWN_BOX
 	{fl_up_box,		0,0,0,0,0}, // _FL_DIAMOND_UP_BOX
 	{fl_down_box,		0,0,0,0,0}, // _FL_DIAMOND_DOWN_BOX
-	{fl_border_box,	1,1,2,2,0}, // _FL_OVAL_BOX,
-	{fl_border_box,	1,1,2,2,0}, // _FL_OVAL_SHADOW_BOX,
+	{fl_border_box,	1,1,2,2,0}, // _FL_OVAL_BOX
+	{fl_border_box,	1,1,2,2,0}, // _FL_OVAL_SHADOW_BOX
 	{fl_border_frame,	1,1,2,2,0}, // _FL_OVAL_FRAME
-	{fl_rectf,		0,0,0,0,0}, // _FL_OVAL_FLAT_BOX,
-	{fl_up_box,		4,4,8,8,0}, // _FL_PLASTIC_UP_BOX,
-	{fl_down_box,		2,2,4,4,0}, // _FL_PLASTIC_DOWN_BOX,
-	{fl_up_frame,		2,2,4,4,0}, // _FL_PLASTIC_UP_FRAME,
-	{fl_down_frame,	2,2,4,4,0}, // _FL_PLASTIC_DOWN_FRAME,
-	{fl_up_box,		2,2,4,4,0}, // _FL_PLASTIC_THIN_UP_BOX,
-	{fl_down_box,		2,2,4,4,0}, // _FL_PLASTIC_THIN_DOWN_BOX,
-	{fl_up_box,		2,2,4,4,0}, // _FL_PLASTIC_ROUND_UP_BOX,
-	{fl_down_box,		2,2,4,4,0}, // _FL_PLASTIC_ROUND_DOWN_BOX,
-	{fl_up_box,		2,2,4,4,0}, // _FL_GTK_UP_BOX,
-	{fl_down_box,		2,2,4,4,0}, // _FL_GTK_DOWN_BOX,
-	{fl_up_frame,		2,2,4,4,0}, // _FL_GTK_UP_FRAME,
-	{fl_down_frame,	2,2,4,4,0}, // _FL_GTK_DOWN_FRAME,
-	{fl_up_frame,		1,1,2,2,0}, // _FL_GTK_THIN_UP_FRAME,
-	{fl_down_frame,	1,1,2,2,0}, // _FL_GTK_THIN_DOWN_FRAME,
-	{fl_up_box,		1,1,2,2,0}, // _FL_GTK_THIN_ROUND_UP_BOX,
-	{fl_down_box,		1,1,2,2,0}, // _FL_GTK_THIN_ROUND_DOWN_BOX,
-	{fl_up_box,		2,2,4,4,0}, // _FL_GTK_ROUND_UP_BOX,
-	{fl_down_box,		2,2,4,4,0}, // _FL_GTK_ROUND_DOWN_BOX,
+	{fl_rectf,		0,0,0,0,0}, // _FL_OVAL_FLAT_BOX
+	{fl_up_box,		4,4,8,8,0}, // _FL_PLASTIC_UP_BOX
+	{fl_down_box,		2,2,4,4,0}, // _FL_PLASTIC_DOWN_BOX
+	{fl_up_frame,		2,2,4,4,0}, // _FL_PLASTIC_UP_FRAME
+	{fl_down_frame,	2,2,4,4,0}, // _FL_PLASTIC_DOWN_FRAME
+	{fl_up_box,		2,2,4,4,0}, // _FL_PLASTIC_THIN_UP_BOX
+	{fl_down_box,		2,2,4,4,0}, // _FL_PLASTIC_THIN_DOWN_BOX
+	{fl_up_box,		2,2,4,4,0}, // _FL_PLASTIC_ROUND_UP_BOX
+	{fl_down_box,		2,2,4,4,0}, // _FL_PLASTIC_ROUND_DOWN_BOX
+	{fl_up_box,		2,2,4,4,0}, // _FL_GTK_UP_BOX
+	{fl_down_box,		2,2,4,4,0}, // _FL_GTK_DOWN_BOX
+	{fl_up_frame,		2,2,4,4,0}, // _FL_GTK_UP_FRAME
+	{fl_down_frame,	2,2,4,4,0}, // _FL_GTK_DOWN_FRAME
+	{fl_up_frame,		1,1,2,2,0}, // _FL_GTK_THIN_UP_FRAME
+	{fl_down_frame,	1,1,2,2,0}, // _FL_GTK_THIN_DOWN_FRAME
+	{fl_up_box,		1,1,2,2,0}, // _FL_GTK_THIN_ROUND_UP_BOX
+	{fl_down_box,		1,1,2,2,0}, // _FL_GTK_THIN_ROUND_DOWN_BOX
+	{fl_up_box,		2,2,4,4,0}, // _FL_GTK_ROUND_UP_BOX
+	{fl_down_box,		2,2,4,4,0}, // _FL_GTK_ROUND_DOWN_BOX
+	{fl_up_box,		2,2,4,4,0}, // _FL_GLEAM_UP_BOX
+	{fl_down_box,		2,2,4,4,0}, // _FL_GLEAM_DOWN_BOX
+	{fl_up_frame,		2,2,4,4,0}, // _FL_GLEAM_UP_FRAME
+	{fl_down_frame,	2,2,4,4,0}, // _FL_GLEAM_DOWN_FRAME
+	{fl_up_box,		1,1,2,2,0}, // _FL_GLEAM_THIN_UP_BOX
+	{fl_down_box,		1,1,2,2,0}, // _FL_GLEAM_THIN_DOWN_BOX
+	{fl_up_box,	       	2,2,4,4,0}, // _FL_GLEAM_ROUND_UP_BOX
+	{fl_down_box,		2,2,4,4,0}, // _FL_GLEAM_ROUND_DOWN_BOX
 	{fl_up_box,		3,3,6,6,0}, // FL_FREE_BOX+0
 	{fl_down_box,		3,3,6,6,0}, // FL_FREE_BOX+1
 	{fl_up_box,		3,3,6,6,0}, // FL_FREE_BOX+2
@@ -329,7 +337,7 @@ static struct {
 	{fl_up_box,		3,3,6,6,0}, // FL_FREE_BOX+4
 	{fl_down_box,		3,3,6,6,0}, // FL_FREE_BOX+5
 	{fl_up_box,		3,3,6,6,0}, // FL_FREE_BOX+6
-	{fl_down_box,		3,3,6,6,0}, // FL_FREE_BOX+7
+	{fl_down_box,		3,3,6,6,0}  // FL_FREE_BOX+7
 };
 
 /**

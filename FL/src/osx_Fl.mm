@@ -1076,6 +1076,7 @@ static FLTextView *fltextview_instance = nil;
 - (void)anyWindowWillClose: (NSNotification *)notif;
 @end
 
+
 /* make subwindows re-appear after appl unhide or window deminiaturize
  (not necessary with 10.5 and above)
  */
@@ -1090,6 +1091,32 @@ static void orderfront_subwindows(FLWindow *xid)
 		[child orderWindow: NSWindowAbove relativeTo: [xid windowNumber]];
 		orderfront_subwindows(child);
 	}
+}
+
+#if FLTK_ABI_VERSION >= 10304
+static const unsigned windowDidResize_mask = 1;
+#else
+static const unsigned long windowDidResize_mask = 1;
+#endif
+
+bool Fl_X::in_windowDidResize()
+{
+#if FLTK_ABI_VERSION >= 10304
+	return mapped_to_retina_ & windowDidResize_mask;
+#else
+	return (unsigned long)xidChildren & windowDidResize_mask;
+#endif
+}
+
+void Fl_X::in_windowDidResize(bool b)
+{
+#if FLTK_ABI_VERSION >= 10304
+	if (b) mapped_to_retina_ |= windowDidResize_mask;
+	else mapped_to_retina_ &= ~windowDidResize_mask;
+#else
+	if (b) xidChildren = (Fl_X *)((unsigned long)xidChildren | windowDidResize_mask);
+	else xidChildren = (Fl_X *)((unsigned long)xidChildren & ~windowDidResize_mask);
+#endif
 }
 
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_7
@@ -1110,11 +1137,11 @@ static void compute_mapped_to_retina(Fl_Window *window)
 }
 
 #if FLTK_ABI_VERSION >= 10304
-static const unsigned mapped_mask = 1;
-static const unsigned changed_mask = 2;
+static const unsigned mapped_mask = 2;
+static const unsigned changed_mask = 4;
 #else
-static const unsigned long mapped_mask = 1; // sizeof(unsigned long) = sizeof(Fl_X*)
-static const unsigned long changed_mask = 2;
+static const unsigned long mapped_mask = 2; // sizeof(unsigned long) = sizeof(Fl_X*)
+static const unsigned long changed_mask = 4;
 #endif
 
 bool Fl_X::mapped_to_retina()
@@ -1250,8 +1277,10 @@ static FLWindowDelegate *flwindowdelegate_instance = nil;
 		parent = parent->window();
 	}
 	resize_from_system = window;
+	if (window->as_gl_window()) Fl_X::i(window)->in_windowDidResize(true);
 	update_e_xy_and_e_xy_root(nsw);
 	window->resize((int)pt2.x, (int)pt2.y, (int)r.size.width, (int)r.size.height);
+	if (window->as_gl_window()) Fl_X::i(window)->in_windowDidResize(false);
 	fl_unlock_function();
 }
 - (void)windowDidResignKey: (NSNotification *)notif
@@ -1297,6 +1326,7 @@ static FLWindowDelegate *flwindowdelegate_instance = nil;
 	Fl_Window *window = [nsw getFl_Window];
 	Fl::handle(FL_SHOW, window);
 	update_e_xy_and_e_xy_root(nsw);
+	Fl_X::i(window)->wait_for_expose = 0; // necessary when window was created miniaturized
 	Fl::flush(); // process redraws set by FL_SHOW
 	fl_unlock_function();
 }
@@ -1512,7 +1542,7 @@ static FLWindowDelegate *flwindowdelegate_instance = nil;
 - (BOOL)application: (NSApplication *)theApplication openFile: (NSString *)filename
 {
 	// without the next statement, the opening of the 1st window is delayed by several seconds
-	// under Mac OS ≥ 10.8 when a file is dragged on the application icon
+	// under Mac OS 鈮?10.8 when a file is dragged on the application icon
 	[[theApplication mainWindow] orderFront: self];
 	if (open_cb) {
 		fl_lock_function();
@@ -2624,6 +2654,7 @@ static FLTextInputContext *fltextinputcontext_instance = nil;
 }
 @end
 
+
 // For Fl_Gl_Window on retina display, returns 2, otherwise 1
 int Fl_X::resolution_scaling_factor(Fl_Window *win)
 {
@@ -2709,35 +2740,35 @@ NSOpenGLPixelFormat* Fl_X::mode_to_NSOpenGLPixelFormat(int m, const int *alistp)
 	return pixform;
 }
 
-NSOpenGLContext* gl_create_context_for_window(NSOpenGLPixelFormat *pixelformat,
-											  NSOpenGLContext *shared_ctx, Fl_Window *window)
+NSOpenGLContext* Fl_X::create_GLcontext_for_window(NSOpenGLPixelFormat *pixelformat,
+												   NSOpenGLContext *shared_ctx, Fl_Window *window)
 {
 	NSOpenGLContext *context = [[NSOpenGLContext alloc] initWithFormat: pixelformat shareContext: shared_ctx];
 	if (context) [context setView: [fl_xid(window) contentView]];
 	return context;
 }
 
-void gl_context_update(NSOpenGLContext *ctxt)
+void Fl_X::GLcontext_update(NSOpenGLContext *ctxt)
 {
 	[ctxt update];
 }
 
-void gl_context_flushbuffer(NSOpenGLContext *ctxt)
+void Fl_X::GLcontext_flushbuffer(NSOpenGLContext *ctxt)
 {
 	[ctxt flushBuffer];
 }
 
-void gl_context_release(NSOpenGLContext *ctxt)
+void Fl_X::GLcontext_release(NSOpenGLContext *ctxt)
 {
 	[ctxt release];
 }
 
-void gl_cleardrawable(void)
+void Fl_X::GL_cleardrawable(void)
 {
 	[[NSOpenGLContext currentContext] clearDrawable];
 }
 
-void gl_context_makecurrent(NSOpenGLContext *ctxt)
+void Fl_X::GLcontext_makecurrent(NSOpenGLContext *ctxt)
 {
 	[ctxt makeCurrentContext];
 }
@@ -2809,6 +2840,7 @@ static void set_subwindow_frame(Fl_Window *w) { // maps a subwindow at its corre
  */
 void Fl_X::make(Fl_Window *w)
 {
+	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 	Fl_Group::current(0);
 	fl_open_display();
 	NSInteger winlevel = NSNormalWindowLevel;
@@ -2975,7 +3007,6 @@ void Fl_X::make(Fl_Window *w)
 
 	w->set_visible();
 	if (w->border() || (!w->modal() && !w->tooltip_window())) Fl::handle(FL_FOCUS, w);
-	if (!w->parent()) Fl::first_window(w);
 	[cw setDelegate: [FLWindowDelegate singleInstance]];
 	if (fl_show_iconic) {
 		fl_show_iconic = 0;
@@ -2985,12 +3016,17 @@ void Fl_X::make(Fl_Window *w)
 										 // next 2 statements so a subwindow doesn't leak out of its parent window
 		[cw setOpaque: NO];
 		[cw setBackgroundColor: [NSColor clearColor]]; // transparent background color
-		CGRect prect = CGRectMake(0, 0, w->window()->w(), w->window()->h());
-		CGRect srect = CGRectMake(w->x(), w->y(), w->w(), w->h());
-		if (!CGRectContainsRect(prect, srect)) { // if subwindow extends outside its parent window
-			CGRect clip = CGRectIntersection(prect, srect);
-			clip = CGRectOffset(clip, -w->x(), -w->y());
-			x->subRect(new CGRect(clip));
+		CGRect srect = CGRectMake(0, 0, w->w(), w->h());
+		Fl_Window * parent,*from = w;
+		int fromx = 0, fromy = 0;
+		while ((parent = from->window()) != NULL) {
+			fromx -= from->x(); // parent origin in w's coordinates
+			fromy -= from->y();
+			srect = CGRectIntersection(CGRectMake(fromx, fromy, parent->w(), parent->h()), srect);
+			from = parent;
+		}
+		if (!CGRectEqualToRect(srect, CGRectMake(0, 0, w->w(), w->h()))) { // if subwindow extends outside its parent windows
+			x->subRect(new CGRect(srect));
 		}
 		set_subwindow_frame(w);
 		// needed if top window was first displayed miniaturized
@@ -3021,6 +3057,7 @@ void Fl_X::make(Fl_Window *w)
 	Fl::e_number = old_event;
 
 	// if (w->modal()) { Fl::modal_ = w; fl_fix_focus(); }
+	[pool release];
 }
 
 
@@ -3032,8 +3069,8 @@ void Fl_Window::size_range_()
 	int bx, by, bt;
 	get_window_frame_sizes(bx, by, bt);
 	size_range_set = 1;
-	NSSize minSize = { minw, minh + bt };
-	NSSize maxSize = { maxw ? maxw : 32000, maxh ? maxh + bt : 32000 };
+	NSSize minSize = NSMakeSize(minw, minh + bt);
+	NSSize maxSize = NSMakeSize(maxw ? maxw : 32000, maxh ? maxh + bt : 32000);
 	if (i && i->xid) {
 		[i->xid setMinSize: minSize];
 		[i->xid setMaxSize: maxSize];
@@ -3100,7 +3137,7 @@ void Fl_Window::show()
 			if (!fl_capture) {
 				[i->xid makeKeyAndOrderFront: nil];
 			}
-		}
+		} else set_visible();
 	}
 }
 
@@ -3470,7 +3507,7 @@ static int get_plain_text_from_clipboard(char **buffer, int previous_length)
 	return length;
 }
 
-static Fl_Image* get_image_from_clipboard()
+static Fl_Image* get_image_from_clipboard(Fl_Widget *receiver)
 {
 	Fl_RGB_Image *image = NULL;
 	uchar *imagedata;
@@ -3480,8 +3517,8 @@ static Fl_Image* get_image_from_clipboard()
 	NSArray  *possible = [NSArray arrayWithObjects: @"com.adobe.pdf", @"public.tiff", @"com.apple.pict", nil];
 	NSString *found = nil;
 	NSUInteger rank;
-	for (rank = 0; rank < [present count]; rank++) { // find first of possible types present in pasteboard
-		for (NSUInteger i = 0; i < [possible count]; i++) {
+	for (NSUInteger i = 0; i < [possible count]; i++) {
+		for (rank = 0; rank < [present count]; rank++) { // find first of possible types present in pasteboard
 			if ([[present objectAtIndex: rank] isEqualToString: [possible objectAtIndex: i]]) {
 				found = [present objectAtIndex: rank];
 				goto after_loop;
@@ -3508,7 +3545,8 @@ after_loop:
 				if ([found isEqualToString: @"com.adobe.pdf"]) {
 					vectorial = [NSPDFImageRep imageRepWithData: data];
 					rect = [(NSPDFImageRep *)vectorial bounds]; // in points =  1/72 inch
-					Fl_Window *win = Fl::first_window();
+					Fl_Window *win = receiver->top_window();
+					if (!win) win = Fl::first_window();
 					int screen_num = win ? Fl::screen_num(win->x(), win->y(), win->w(), win->h()) : 0;
 					float hr, vr;
 					Fl::screen_dpi(hr, vr, screen_num); // 1 inch = hr pixels = 72 points -> hr/72 pixel/point
@@ -3559,7 +3597,7 @@ void Fl::paste(Fl_Widget &receiver, int clipboard, const char *type)
 		if (strcmp(type, Fl::clipboard_plain_text) == 0) {
 			fl_selection_length[1] = get_plain_text_from_clipboard(&fl_selection_buffer[1],  fl_selection_length[1]);
 		} else if (strcmp(type, Fl::clipboard_image) == 0) {
-			Fl::e_clipboard_data = get_image_from_clipboard();
+			Fl::e_clipboard_data = get_image_from_clipboard(&receiver);
 			if (Fl::e_clipboard_data) {
 				int done = receiver.handle(FL_PASTE);
 				Fl::e_clipboard_type = "";
@@ -3603,9 +3641,9 @@ void Fl_X::map()
 		set_subwindow_frame(w);
 	}
 	//+ link to window list
-	if (w && w->parent()) {
-		w->redraw(); // possibly not necessary
-	}
+	/*if (w && w->parent()) {
+	  w->redraw(); // possibly not necessary
+	}*/
 	if (cursor) {
 		[(NSCursor *)cursor release];
 		cursor = NULL;
@@ -3888,7 +3926,7 @@ static void createAppleMenu(void)
 	}
 	if (fl_mac_os_version >= 100400) { // services+hide+quit already in menu in OS 10.3
 									   // Services Menu
-		services = [[NSMenu alloc] init];
+		services = [[NSMenu alloc] initWithTitle: @""];
 		menuItem = [appleMenu
 					addItemWithTitle: NSLocalizedString([NSString stringWithUTF8String: Fl_Mac_App_Menu::services], nil)
 							  action: nil
@@ -4022,7 +4060,12 @@ static NSImage* defaultDragImage(int *pwidth, int *pheight)
 	return image;
 }
 
-int Fl::dnd(void)
+int Fl::dnd()
+{
+	return Fl_X::dnd(0);
+}
+
+int Fl_X::dnd(int use_selection)
 {
 	CFDataRef text = CFDataCreate(kCFAllocatorDefault, (UInt8 *)fl_selection_buffer[0], fl_selection_length[0]);
 	if (text == NULL) return false;
@@ -4039,7 +4082,7 @@ int Fl::dnd(void)
 
 	int width, height;
 	NSImage *image;
-	if (dynamic_cast<Fl_Input_ *>(w) != NULL ||  dynamic_cast<Fl_Text_Display *>(w) != NULL) {
+	if (use_selection) {
 		fl_selection_buffer[0][fl_selection_length[0]] = 0;
 		image = imageFromText(fl_selection_buffer[0], &width, &height);
 	} else {
@@ -4374,7 +4417,7 @@ void Fl_Paged_Device::print_window(Fl_Window *win, int x_offset, int y_offset)
 	win->label(title); // put back the window title
 	this->set_current(); // back to the Fl_Paged_Device
 	if (img && to_quartz) { // print the title bar
-		CGRect rect = { { x_offset, y_offset }, { win->w(), bt } };
+		CGRect rect = CGRectMake(x_offset, y_offset, win->w(), bt);
 		Fl_X::q_begin_image(rect, 0, 0, win->w(), bt);
 		CGContextDrawImage(fl_gc, rect, img);
 		Fl_X::q_end_image();
@@ -4398,7 +4441,7 @@ void Fl_Paged_Device::print_window(Fl_Window *win, int x_offset, int y_offset)
 			NSSize size = [title_s sizeWithAttributes: attr];
 			int x = x_offset + win->w() / 2 - size.width / 2;
 			if (x < x_offset + skip) x = x_offset + skip;
-			NSRect r = { { x, y_offset + bt / 2 + 4 }, { win->w() - skip, bt } };
+			NSRect r = NSMakeRect(x, y_offset + bt / 2 + 4, win->w() - skip, bt);
 			[[NSGraphicsContext currentContext] setShouldAntialias: YES];
 			[title_s drawWithRect: r options: (NSStringDrawingOptions)0 attributes: attr]; // 10.4
 			[[NSGraphicsContext currentContext] setShouldAntialias: NO];

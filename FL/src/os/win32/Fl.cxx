@@ -696,9 +696,11 @@ public:
 			if ( *i == '\r' && *(i+1) == '\n' ) {	// leave \r\n untranslated
 				i+=2;
 				outlen+=2;
+				continue;
 			} else if ( *i == '\n' ) {		// \n by itself? leave room to insert \r
 				i++;
 				outlen+=2;
+				continue;
 			} else {
 				++i;
 				++outlen;
@@ -711,9 +713,11 @@ public:
 			if ( *i == '\r' && *(i+1) == '\n' ) {	// leave \r\n untranslated
 				*o++ = *i++;
 				*o++ = *i++;
+				continue;
 			} else if ( *i == '\n' ) {		// \n by itself? insert \r
 				*o++ = '\r';
 				*o++ = *i++;
+				continue;
 			} else {
 				*o++ = *i++;
 			}
@@ -1980,7 +1984,7 @@ Fl_X* Fl_X::make(Fl_Window* w)
 		wcw.lpfnWndProc = (WNDPROC)WndProc;
 		wcw.cbClsExtra = wcw.cbWndExtra = 0;
 		wcw.hInstance = fl_display;
-		if (!w->icon())
+		if (!w->icon() && !w->icon_->count)
 			w->icon((void *)LoadIcon(NULL, IDI_APPLICATION));
 		wcw.hIcon = wcw.hIconSm = (HICON)w->icon();
 		wcw.hCursor = LoadCursor(NULL, IDC_ARROW);

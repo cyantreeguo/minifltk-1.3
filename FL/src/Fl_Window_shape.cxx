@@ -373,11 +373,13 @@ void Fl_Window::draw()
 	}
 
 	// The following is similar to Fl_Group::draw(), but ...
-	//  - we draw the box with x=0 and y=0 instead of x() and y()
-	//  - we don't draw a label
+	//  - draws the box at (0,0), i.e. with x=0 and y=0 instead of x() and y()
+	//  - draws the label at (0,0): this draws the background image, if any
+	// Note: align() *must* be set correctly for this to work as expected
 
 	if (damage() & ~FL_DAMAGE_CHILD) {	 // draw the entire thing
 		draw_box(box(),0,0,w(),h(),color()); // draw box with x/y = 0
+		draw_label(0,0,w(),h());		 // draws label and/or bg image
 	}
 	draw_children();
 
@@ -437,8 +439,6 @@ void Fl_Window::draw()
 	Fl::cairo_make_current(this); // checkout if an update is necessary
 # endif
 }
-
-
 
 //
 // End of "$Id: Fl_Window_shape.cxx 10327 2014-09-21 14:59:11Z manolo $".

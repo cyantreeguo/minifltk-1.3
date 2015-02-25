@@ -91,13 +91,13 @@
     calling the Fl::event_*() methods. This static information remains
     valid until the next event is read from the window system, so it
     is ok to look at it outside of the handle() method.
-	
+
 	Event numbers can be converted to their actual names using the
     \ref fl_eventnames[] array defined in \#include &lt;FL/names.h&gt;
 
     \sa Fl::event_text(), Fl::event_key(), class Fl::
  */
-// DEV NOTE: Keep this list in sync with FL/names.H 
+// DEV NOTE: Keep this list in sync with FL/names.H
 enum Fl_Event {	// events
 	/** No event. */
 	FL_NO_EVENT		= 0,
@@ -475,7 +475,7 @@ enum Fl_When { // Fl_Widget::when():
 		\see src/Fl_get_system_colors.cxx
 */
 /*@{*/
-enum Fl_Boxtype { // boxtypes (if you change these you must fix fl_boxtype.C):
+enum Fl_Boxtype { // boxtypes (if you change these you must fix fl_boxtype.cxx):
 
 	FL_NO_BOX = 0,		///< nothing is drawn at all, this box is invisible
 	FL_FLAT_BOX,			///< a flat box
@@ -518,21 +518,21 @@ enum Fl_Boxtype { // boxtypes (if you change these you must fix fl_boxtype.C):
 	_FL_GTK_UP_BOX,		///< gtk+ version of FL_UP_BOX
 	_FL_GTK_DOWN_BOX,		///< gtk+ version of FL_DOWN_BOX
 	_FL_GTK_UP_FRAME,		///< gtk+ version of FL_UP_FRAME
-	_FL_GTK_DOWN_FRAME,		///< gtk+ version of FL_DOWN_RAME
+	_FL_GTK_DOWN_FRAME,		///< gtk+ version of FL_DOWN_FRAME
 	_FL_GTK_THIN_UP_BOX,		///< gtk+ version of FL_THIN_UP_BOX
 	_FL_GTK_THIN_DOWN_BOX,	///< gtk+ version of FL_THIN_DOWN_BOX
-	_FL_GTK_THIN_UP_FRAME,	///< gtk+ version of FL_UP_FRAME
+	_FL_GTK_THIN_UP_FRAME,	///< gtk+ version of FL_THIN_UP_FRAME
 	_FL_GTK_THIN_DOWN_FRAME,	///< gtk+ version of FL_THIN_DOWN_FRAME
 	_FL_GTK_ROUND_UP_BOX,		///< gtk+ version of FL_ROUND_UP_BOX
 	_FL_GTK_ROUND_DOWN_BOX,	///< gtk+ version of FL_ROUND_DOWN_BOX
-	_FL_GLEAM_UP_BOX,		///< gleam version of FL_GLEAM_UP_BOX
-	_FL_GLEAM_DOWN_BOX,		///< gleam version of FL_GLEAM_DOWN_BOX
-	_FL_GLEAM_UP_FRAME, 		///< gleam version of FL_GLEAM_UP_FRAME
-	_FL_GLEAM_DOWN_FRAME,		///< gleam version of FL_GLEAM_DOWN_FRAME
-	_FL_GLEAM_THIN_UP_BOX,    	///< gleam version of FL_GLEAM_THIN_UP_BOX
-	_FL_GLEAM_THIN_DOWN_BOX,	///< gleam version of FL_GLEAM_THIN_DOWN_BOX
-	_FL_GLEAM_ROUND_UP_BOX,   	///< gleam version of FL_GLEAM_ROUND_UP_BOX
-	_FL_GLEAM_ROUND_DOWN_BOX,	///< gleam version of FL_GLEAM_ROUND_DOWN_BOX
+	_FL_GLEAM_UP_BOX,		///< gleam version of FL_UP_BOX
+	_FL_GLEAM_DOWN_BOX,		///< gleam version of FL_DOWN_BOX
+	_FL_GLEAM_UP_FRAME,		///< gleam version of FL_UP_FRAME
+	_FL_GLEAM_DOWN_FRAME,		///< gleam version of FL_DOWN_FRAME
+	_FL_GLEAM_THIN_UP_BOX,	///< gleam version of FL_THIN_UP_BOX
+	_FL_GLEAM_THIN_DOWN_BOX,	///< gleam version of FL_THIN_DOWN_BOX
+	_FL_GLEAM_ROUND_UP_BOX,	///< gleam version of FL_ROUND_UP_BOX
+	_FL_GLEAM_ROUND_DOWN_BOX,	///< gleam version of FL_ROUND_DOWN_BOX
 	FL_FREE_BOXTYPE		///< the first free box type for creation of new box types
 };
 extern FL_EXPORT Fl_Boxtype fl_define_FL_ROUND_UP_BOX();

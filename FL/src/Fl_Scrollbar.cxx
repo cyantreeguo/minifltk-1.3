@@ -236,7 +236,7 @@ void Fl_Scrollbar::draw()
 			if (w1 < 1) w1 = 1;
 			int x1 = X+(H-w1-1)/2;
 			int yy1 = Y+(H-2*w1-1)/2;
-			if (Fl::scheme_ && !strcmp(Fl::scheme_, "gtk+")) {
+			if (Fl::is_scheme("gtk+")) {
 				fl_polygon(x1, yy1+w1, x1+w1, yy1+2*w1, x1+w1-1, yy1+w1, x1+w1, yy1);
 				x1 += (W-H);
 				fl_polygon(x1, yy1, x1+1, yy1+w1, x1, yy1+2*w1, x1+w1, yy1+w1);
@@ -265,7 +265,7 @@ void Fl_Scrollbar::draw()
 			if (w1 < 1) w1 = 1;
 			int x1 = X+(W-2*w1-1)/2;
 			int yy1 = Y+(W-w1-1)/2;
-			if (Fl::scheme_ && !strcmp(Fl::scheme_, "gtk+")) {
+			if (Fl::is_scheme("gtk+")) {
 				fl_polygon(x1, yy1+w1, x1+w1, yy1+w1-1, x1+2*w1, yy1+w1, x1+w1, yy1);
 				yy1 += H-W;
 				fl_polygon(x1, yy1, x1+w1, yy1+1, x1+w1, yy1+w1);

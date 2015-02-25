@@ -45,7 +45,7 @@
   and then:
 
       - The item's callback is done if one has been set; the
-        Fl_Choice is passed as the Fl_Widget* argument, 
+        Fl_Choice is passed as the Fl_Widget* argument,
         along with any userdata configured for the callback.
 
       - If the item does not have a callback, the Fl_Choice widget's
@@ -105,7 +105,7 @@ protected:
 			draw_box(FL_UP_BOX, color());
 
 			fl_color(active_r() ? labelcolor() : fl_inactive(labelcolor()));
-			if (!strcmp(Fl::scheme(), "plastic")) {
+			if (Fl::is_scheme("plastic")) {
 				// Show larger up/down arrows...
 				fl_polygon(x1, y1 + 3, x1 + w1, y1 + w1 + 3, x1 + 2 * w1, y1 + 3);
 				fl_polygon(x1, y1 + 1, x1 + w1, y1 - w1 + 1, x1 + 2 * w1, y1 + 1);

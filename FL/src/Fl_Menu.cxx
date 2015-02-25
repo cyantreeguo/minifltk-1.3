@@ -71,14 +71,12 @@ static const Fl_Menu_* button=0;
 // tiny window for title of menu:
 class menutitle : public Fl_Menu_Window
 {
-	void draw()
-	{
+	void draw() {
 		menu->draw(0, 0, w(), h(), button, 2);
 	}
 public:
 	const Fl_Menu_Item* menu;
-	menutitle(int X, int Y, int W, int H, const Fl_Menu_Item* L) : Fl_Menu_Window(X, Y, W, H, 0)
-	{
+	menutitle(int X, int Y, int W, int H, const Fl_Menu_Item* L) : Fl_Menu_Window(X, Y, W, H, 0) {
 		end();
 		set_modal();
 		clear_border();
@@ -93,8 +91,7 @@ public:
 // each vertical menu has one of these:
 class menuwindow : public Fl_Menu_Window
 {
-	void draw()
-	{
+	void draw() {
 		if (damage() != FL_DAMAGE_CHILD) {	// complete redraw
 			fl_draw_box(box(), 0, 0, w(), h(), button ? button->color() : color());
 			if (menu) {
@@ -111,8 +108,7 @@ class menuwindow : public Fl_Menu_Window
 		drawn_selected = selected;
 	}
 
-	void drawentry(const Fl_Menu_Item* m, int n, int eraseit)
-	{
+	void drawentry(const Fl_Menu_Item* m, int n, int eraseit) {
 		if (!m) return; // this happens if -1 is selected item and redrawn
 
 		int BW = Fl::box_dx(box());
@@ -138,21 +134,21 @@ class menuwindow : public Fl_Menu_Window
 			fl_polygon(x1+2, y1, x1+2, y1+sz, x1+sz/2+2, y1+sz/2);
 		} else if (m->shortcut_) {
 			Fl_Font f = m->labelsize_ || m->labelfont_ ? (Fl_Font)m->labelfont_ :
-				button ? button->textfont() : FL_HELVETICA;
-		fl_font(f, m->labelsize_ ? m->labelsize_ :
-			button ? button->textsize() : FL_NORMAL_SIZE);
-		const char *k, *s = fl_shortcut_label(m->shortcut_, &k);
-		if (fl_utf_nb_char((const unsigned char*)k, (int) strlen(k))<=4) {
-			// righ-align the modifiers and left-align the key
-			char buf[32];
-			strcpy(buf, s);
-			buf[k-s] = 0;
-			fl_draw(buf, xx, yy, ww-shortcutWidth, hh, FL_ALIGN_RIGHT);
-			fl_draw(  k, xx+ww-shortcutWidth, yy, shortcutWidth, hh, FL_ALIGN_LEFT);
-		} else {
-			// right-align to the menu
-			fl_draw(s, xx, yy, ww-4, hh, FL_ALIGN_RIGHT);
-		}
+			            button ? button->textfont() : FL_HELVETICA;
+			fl_font(f, m->labelsize_ ? m->labelsize_ :
+			        button ? button->textsize() : FL_NORMAL_SIZE);
+			const char *k, *s = fl_shortcut_label(m->shortcut_, &k);
+			if (fl_utf_nb_char((const unsigned char*)k, (int) strlen(k))<=4) {
+				// righ-align the modifiers and left-align the key
+				char buf[32];
+				strcpy(buf, s);
+				buf[k-s] = 0;
+				fl_draw(buf, xx, yy, ww-shortcutWidth, hh, FL_ALIGN_RIGHT);
+				fl_draw(  k, xx+ww-shortcutWidth, yy, shortcutWidth, hh, FL_ALIGN_LEFT);
+			} else {
+				// right-align to the menu
+				fl_draw(s, xx, yy, ww-4, hh, FL_ALIGN_RIGHT);
+			}
 		}
 
 		if (m->flags & FL_MENU_DIVIDER) {
@@ -175,9 +171,8 @@ public:
 	int shortcutWidth;
 	const Fl_Menu_Item* menu;
 	//menuwindow(const Fl_Menu_Item* m, int X, int Y, int W, int H, const Fl_Menu_Item* picked, const Fl_Menu_Item* title, int menubar = 0, int menubar_title = 0, int right_edge = 0);
-	menuwindow(const Fl_Menu_Item* m, int X, int Y, int Wp, int Hp, const Fl_Menu_Item* picked, const Fl_Menu_Item* t, 
-		int menubar=0, int menubar_title=0, int right_edge=0) : Fl_Menu_Window(X, Y, Wp, Hp, 0)
-	{
+	menuwindow(const Fl_Menu_Item* m, int X, int Y, int Wp, int Hp, const Fl_Menu_Item* picked, const Fl_Menu_Item* t,
+	           int menubar=0, int menubar_title=0, int right_edge=0) : Fl_Menu_Window(X, Y, Wp, Hp, 0) {
 		int scr_x, scr_y, scr_w, scr_h;
 		int tx = X, ty = Y;
 
@@ -203,18 +198,18 @@ public:
 		{
 			int j = 0;
 			if (m) for (const Fl_Menu_Item* m1=m; ; m1 = m1->next(), j++) {
-				if (picked) {
-					if (m1 == picked) {
-						selected = j;
-						picked = 0;
-					} else if (m1 > picked) {
-						selected = j-1;
-						picked = 0;
-						Wp = Hp = 0;
+					if (picked) {
+						if (m1 == picked) {
+							selected = j;
+							picked = 0;
+						} else if (m1 > picked) {
+							selected = j-1;
+							picked = 0;
+							Wp = Hp = 0;
+						}
 					}
+					if (!m1->text) break;
 				}
-				if (!m1->text) break;
-			}
 			numitems = j;
 		}
 
@@ -233,33 +228,33 @@ public:
 		if (t) Wtitle = t->measure(&Htitle, button) + 12;
 		int W = 0;
 		if (m) for (; m->text; m = m->next()) {
-			int hh;
-			int w1 = m->measure(&hh, button);
-			if (hh+LEADING>itemheight) itemheight = hh+LEADING;
-			if (m->flags&(FL_SUBMENU|FL_SUBMENU_POINTER))
-				w1 += FL_NORMAL_SIZE;
-			if (w1 > W) W = w1;
-			// calculate the maximum width of all shortcuts
-			if (m->shortcut_) {
-				// s is a pointerto the utf8 string for the entire shortcut
-				// k points only to the key part (minus the modifier keys)
-				const char *k, *s = fl_shortcut_label(m->shortcut_, &k);
-				if (fl_utf_nb_char((const unsigned char*)k, (int) strlen(k))<=4) {
-					// a regular shortcut has a right-justified modifier followed by a left-justified key
-					w1 = int(fl_width(s, (int) (k-s)));
-					if (w1 > hotModsw) hotModsw = w1;
-					w1 = int(fl_width(k))+4;
-					if (w1 > hotKeysw) hotKeysw = w1;
-				} else {
-					// a shortcut with a long modifier is right-justified to the menu
-					w1 = int(fl_width(s))+4;
-					if (w1 > (hotModsw+hotKeysw)) {
-						hotModsw = w1-hotKeysw;
+				int hh;
+				int w1 = m->measure(&hh, button);
+				if (hh+LEADING>itemheight) itemheight = hh+LEADING;
+				if (m->flags&(FL_SUBMENU|FL_SUBMENU_POINTER))
+					w1 += FL_NORMAL_SIZE;
+				if (w1 > W) W = w1;
+				// calculate the maximum width of all shortcuts
+				if (m->shortcut_) {
+					// s is a pointerto the utf8 string for the entire shortcut
+					// k points only to the key part (minus the modifier keys)
+					const char *k, *s = fl_shortcut_label(m->shortcut_, &k);
+					if (fl_utf_nb_char((const unsigned char*)k, (int) strlen(k))<=4) {
+						// a regular shortcut has a right-justified modifier followed by a left-justified key
+						w1 = int(fl_width(s, (int) (k-s)));
+						if (w1 > hotModsw) hotModsw = w1;
+						w1 = int(fl_width(k))+4;
+						if (w1 > hotKeysw) hotKeysw = w1;
+					} else {
+						// a shortcut with a long modifier is right-justified to the menu
+						w1 = int(fl_width(s))+4;
+						if (w1 > (hotModsw+hotKeysw)) {
+							hotModsw = w1-hotKeysw;
+						}
 					}
 				}
+				if (m->labelcolor_ || Fl::scheme() || m->labeltype_ > FL_NO_LABEL) clear_overlay();
 			}
-			if (m->labelcolor_ || Fl::scheme() || m->labeltype_ > FL_NO_LABEL) clear_overlay();
-		}
 		shortcutWidth = hotKeysw;
 		if (selected >= 0 && !Wp) X -= W/2;
 		int BW = Fl::box_dx(box());
@@ -318,22 +313,19 @@ public:
 		}
 	}
 
-	~menuwindow()
-	{
+	~menuwindow() {
 		hide();
 		delete title;
 	}
 
-	void set_selected(int n)
-	{
+	void set_selected(int n) {
 		if (n != selected) {
 			selected = n;
 			damage(FL_DAMAGE_CHILD);
 		}
 	}
 
-	int find_selected(int mx, int my)
-	{
+	int find_selected(int mx, int my) {
 		if (!menu || !menu->text) return -1;
 		mx -= x();
 		my -= y();
@@ -356,8 +348,7 @@ public:
 	}
 
 	// return horizontal position for item n in a menubar:
-	int titlex(int n)
-	{
+	int titlex(int n) {
 		const Fl_Menu_Item* m;
 		int xx = 3;
 		for (m=menu->first(); n--; m = m->next()) xx += m->measure(0, button) + 16;
@@ -365,8 +356,7 @@ public:
 	}
 
 	// scroll so item i is visible on screen
-	void autoscroll(int n)
-	{
+	void autoscroll(int n) {
 		int scr_y, scr_h;
 		int Y = y()+Fl::box_dx(box())+2+n*itemheight;
 
@@ -382,20 +372,18 @@ public:
 		// y(y()+Y); // don't wait for response from X
 	}
 
-	void position(int X, int Y)
-	{
+	void position(int X, int Y) {
 		if (title) {
 			title->position(X, title->y()+Y-y());
 		}
 		Fl_Menu_Window::position(X, Y);
 		// x(X); y(Y); // don't wait for response from X
 	}
-	
+
 	// return 1, if the given root coordinates are inside the window
-	int is_inside(int mx, int my)
-	{
+	int is_inside(int mx, int my) {
 		if ( mx < x_root() || mx >= x_root() + w() || my < y_root() || my >= y_root() + h()) {
-				return 0;
+			return 0;
 		}
 		if (itemheight == 0 && find_selected(mx, my) == -1) {
 			// in the menubar but out from any menu header
@@ -431,8 +419,7 @@ int Fl_Menu_Item::measure(int* hp, const Fl_Menu_* m) const
 }
 
 /** Draws the menu item in bounding box x,y,w,h, optionally selects the item. */
-void Fl_Menu_Item::draw(int x, int y, int w, int h, const Fl_Menu_* m,
-                        int selected) const
+void Fl_Menu_Item::draw(int x, int y, int w, int h, const Fl_Menu_* m, int selected) const
 {
 	Fl_Label l;
 	l.value   = text;
@@ -477,13 +464,11 @@ void Fl_Menu_Item::draw(int x, int y, int w, int h, const Fl_Menu_* m,
 				int tW = (W - Fl::box_dw(FL_ROUND_DOWN_BOX)) / 2 + 1;
 				if ((W - tW) & 1) tW++;	// Make sure difference is even to center
 				int td = (W - tW) / 2;
-				if (Fl::scheme()) {
-					if (!strcmp(Fl::scheme(), "gtk+")) {
-						fl_color(FL_SELECTION_COLOR);
-						tW --;
-						fl_pie(x + td + 1, y + d + td - 1, tW + 3, tW + 3, 0.0, 360.0);
-						fl_color(fl_color_average(FL_WHITE, FL_SELECTION_COLOR, 0.2f));
-					} else fl_color(labelcolor_);
+				if (Fl::is_scheme("gtk+")) {
+					fl_color(FL_SELECTION_COLOR);
+					tW --;
+					fl_pie(x + td + 1, y + d + td - 1, tW + 3, tW + 3, 0.0, 360.0);
+					fl_color(fl_color_average(FL_WHITE, FL_SELECTION_COLOR, 0.2f));
 				} else fl_color(labelcolor_);
 
 				switch (tW) {
@@ -512,7 +497,7 @@ void Fl_Menu_Item::draw(int x, int y, int w, int h, const Fl_Menu_* m,
 					break;
 				}
 
-				if (Fl::scheme() && !strcmp(Fl::scheme(), "gtk+")) {
+				if (Fl::is_scheme("gtk+")) {
 					fl_color(fl_color_average(FL_WHITE, FL_SELECTION_COLOR, 0.5));
 					fl_arc(x + td + 2, y + d + td, tW + 1, tW + 1, 60.0, 180.0);
 				}
@@ -520,7 +505,7 @@ void Fl_Menu_Item::draw(int x, int y, int w, int h, const Fl_Menu_* m,
 		} else {
 			fl_draw_box(FL_DOWN_BOX, x+2, y+d, W, W, FL_BACKGROUND2_COLOR);
 			if (value()) {
-				if (Fl::scheme() && !strcmp(Fl::scheme(), "gtk+")) {
+				if (Fl::is_scheme("gtk+")) {
 					fl_color(FL_SELECTION_COLOR);
 				} else {
 					fl_color(labelcolor_);
@@ -577,8 +562,7 @@ struct menustate {
 	int state;
 	menuwindow* fakemenu; // kludge for buttons in menubar
 	// return 1 if the coordinates are inside any of the menuwindows
-	int is_inside(int mx, int my)
-	{
+	int is_inside(int mx, int my) {
 		int i;
 		for (i=nummenus-1; i>=0; i--) {
 			if (p[i]->is_inside(mx, my))
