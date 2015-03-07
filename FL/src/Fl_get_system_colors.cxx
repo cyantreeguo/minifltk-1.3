@@ -171,7 +171,7 @@ int fl_parse_color(const char* p, uchar& r, uchar& g, uchar& b)
 
     This is done by Fl_Window::show(argc,argv) before applying
     the -fg and -bg switches.
-    
+
     On X this reads some common values from the Xdefaults database.
     KDE users can set these values by running the "krdb" program, and
     newer versions of KDE set this automatically if you check the "apply
@@ -379,7 +379,7 @@ int Fl::reload_scheme()
 
 		tile.uncache();
 
-		if (!scheme_bg_) scheme_bg_ = new Fl_Tiled_Image(&tile, w(), h());
+		if (!scheme_bg_) scheme_bg_ = new Fl_Tiled_Image(&tile, 0, 0);
 
 		// Load plastic buttons, etc...
 		set_boxtype(FL_UP_FRAME,        FL_PLASTIC_UP_FRAME);
@@ -462,6 +462,14 @@ int Fl::reload_scheme()
 	}
 
 	// Set (or clear) the background tile for all windows...
+
+	// FIXME: This makes it impossible to assign a background image
+	// and/or a label to a window. IMHO we should be able to assign a
+	// background image to a window. Currently (as of FLTK 1.3.3) there
+	// is the workaround to use a group inside the window to achieve this.
+	// See also STR #3075.
+	// AlbrechtS, 01 Mar 2015
+
 	for (win = first_window(); win; win = next_window(win)) {
 		win->labeltype(scheme_bg_ ? FL_NORMAL_LABEL : FL_NO_LABEL);
 		win->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);

@@ -23,7 +23,7 @@
 
 #ifndef FL_DOXYGEN		// PREVENT DOXYGEN'S USE OF THIS FILE
 
-#include <FL/Enumerations.H>
+#include "Enumerations.H"
 
 #if FLTK_ABI_VERSION < 10304
 #define _ofn_ptr (&_ofn)

@@ -26,22 +26,17 @@
 
 
 /**
-  This class supports tiling of images
-  over a specified area. The source (tile) image is <B>not</B>
-  copied unless you call the color_average(),
-  desaturate(),
-  or inactive()
-  methods.
+  This class supports tiling of images over a specified area.
+
+  The source (tile) image is \b not copied unless you call the
+  color_average(), desaturate(), or inactive() methods.
 */
 class FL_EXPORT Fl_Tiled_Image : public Fl_Image
 {
 protected:
-
-	Fl_Image	*image_;		// The image that is shared
+	Fl_Image	*image_;		// The image that is tiled
 	int		alloc_image_;		// Did we allocate this image?
-
 public:
-
 	Fl_Tiled_Image(Fl_Image *i, int W = 0, int H = 0);
 	virtual ~Fl_Tiled_Image();
 
@@ -55,7 +50,7 @@ public:
 	void draw(int X, int Y) {
 		draw(X, Y, w(), h(), 0, 0);
 	}
-	/** Gets The image that is shared */
+	/** Gets The image that is tiled */
 	Fl_Image *image() {
 		return image_;
 	}

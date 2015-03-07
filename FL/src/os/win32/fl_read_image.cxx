@@ -16,10 +16,10 @@
 //     http://www.fltk.org/str.php
 //
 
-#  include <FL/Fl_RGB_Image.H>
-#  include <FL/Fl_Window.H>
-#  include <FL/Fl_Plugin.H>
-#  include <FL/Fl_Device.H>
+#  include "Fl_RGB_Image.H"
+#  include "Fl_Window.H"
+#  include "Fl_Plugin.H"
+#  include "Fl_Device.H"
 
 static uchar *read_win_rectangle(uchar *p, int X, int Y, int w, int h, int alpha);
 
