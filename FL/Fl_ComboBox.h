@@ -72,6 +72,7 @@ public:
 		if (v == -1) return value((const Fl_Menu_Item *)0);
 		if (v < 0 || v >= (size() - 1)) return 0;
 		if (!Fl_Menu_::value(v)) return 0;
+		inp_->value(text(v));
 		redraw();
 		return 1;
 	}
@@ -120,7 +121,7 @@ protected:
 		{
 			switch (event) {
 			case FL_PUSH:
-				Fl_Input::handle(event);
+				if ( Fl::event_clicks() == 0 ) Fl_Input::handle(event);
 				if ( ! readonly() ) {
 					if ( issel_ == 1 ) {
 						position(0, size());
