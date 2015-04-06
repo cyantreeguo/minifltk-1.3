@@ -182,6 +182,8 @@ Fl_Win32_TrayIcon::~Fl_Win32_TrayIcon()
 	Delete();
 
 	StopAnimation();
+	
+	Fl::remove_handler(msg_handler);
 }
 
 void Fl_Win32_TrayIcon::Delete()
