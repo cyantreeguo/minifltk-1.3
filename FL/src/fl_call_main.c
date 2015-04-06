@@ -115,6 +115,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	ar[__argc] = 0;
 	/* Run the standard main entry point function... */
 	rc = main(__argc, ar);
+	
+	for (i=0; i<__argc+1; i++) {
+		free(ar[i]);
+	}
+	free(ar);
 
 #  ifdef _DEBUG
 	fclose(stdin);
