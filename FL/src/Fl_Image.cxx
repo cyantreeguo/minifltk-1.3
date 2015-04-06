@@ -576,6 +576,14 @@ static int start(Fl_RGB_Image *img, int XP, int YP, int WP, int HP, int w, int h
 	return 0;
 }
 
+/** Draws an Fl_Image scaled to width \p W & height \p H with top-left corner at \em X,Y
+ \return zero when the graphics driver doesn't implement scaled drawing, non-zero if it does implement it.
+ */
+int Fl_Graphics_Driver::draw_scaled(Fl_Image *img, int X, int Y, int W, int H)
+{
+	return 0;
+}
+
 #ifdef __APPLE__
 static void imgProviderReleaseData (void *info, const void *data, size_t size)
 {
@@ -641,7 +649,42 @@ void Fl_Quartz_Graphics_Driver::draw(Fl_RGB_Image *img, int XP, int YP, int WP, 
 	}
 }
 
+int Fl_Quartz_Graphics_Driver::draw_scaled(Fl_Image *img, int XP, int YP, int WP, int HP)
+{
+	int X, Y, W, H;
+	fl_clip_box(XP,YP,WP,HP,X,Y,W,H); // X,Y,W,H will give the unclipped area of XP,YP,WP,HP
+	if (W == 0 || H == 0) return 1;
+	fl_push_no_clip(); // remove the FLTK clip that can't be rescaled
+	CGContextSaveGState(fl_gc);
+	CGContextClipToRect(fl_gc, CGRectMake(X, Y, W, H)); // this clip path will be rescaled & translated
+	CGContextTranslateCTM(fl_gc, XP, YP);
+	CGContextScaleCTM(fl_gc, float(WP)/img->w(), float(HP)/img->h());
+	img->draw(0, 0, img->w(), img->h(), 0, 0);
+	CGContextRestoreGState(fl_gc);
+	fl_pop_clip(); // restore FLTK's clip
+	return 1;
+}
+
 #elif defined(WIN32)
+
+static Fl_Offscreen build_id(Fl_RGB_Image *img, void **pmask)
+{
+	Fl_Offscreen offs = fl_create_offscreen(img->w(), img->h());
+	if ((img->d() == 2 || img->d() == 4) && fl_can_do_alpha_blending()) {
+		fl_begin_offscreen(offs);
+		fl_draw_image(img->array, 0, 0, img->w(), img->h(), img->d()|FL_IMAGE_WITH_ALPHA, img->ld());
+		fl_end_offscreen();
+	} else {
+		fl_begin_offscreen(offs);
+		fl_draw_image(img->array, 0, 0, img->w(), img->h(), img->d(), img->ld());
+		fl_end_offscreen();
+		if (img->d() == 2 || img->d() == 4) {
+			*pmask = fl_create_alphamask(img->w(), img->h(), img->d(), img->ld(), img->array);
+		}
+	}
+	return offs;
+}
+
 void Fl_GDI_Graphics_Driver::draw(Fl_RGB_Image *img, int XP, int YP, int WP, int HP, int cx, int cy)
 {
 	int X, Y, W, H;
@@ -653,21 +696,7 @@ void Fl_GDI_Graphics_Driver::draw(Fl_RGB_Image *img, int XP, int YP, int WP, int
 	if (start(img, XP, YP, WP, HP, img->w(), img->h(), cx, cy, X, Y, W, H)) {
 		return;
 	}
-	if (!img->id_) {
-		img->id_ = fl_create_offscreen(img->w(), img->h());
-		if ((img->d() == 2 || img->d() == 4) && fl_can_do_alpha_blending()) {
-			fl_begin_offscreen((Fl_Offscreen)img->id_);
-			fl_draw_image(img->array, 0, 0, img->w(), img->h(), img->d()|FL_IMAGE_WITH_ALPHA, img->ld());
-			fl_end_offscreen();
-		} else {
-			fl_begin_offscreen((Fl_Offscreen)img->id_);
-			fl_draw_image(img->array, 0, 0, img->w(), img->h(), img->d(), img->ld());
-			fl_end_offscreen();
-			if (img->d() == 2 || img->d() == 4) {
-				img->mask_ = fl_create_alphamask(img->w(), img->h(), img->d(), img->ld(), img->array);
-			}
-		}
-	}
+	if (!img->id_) img->id_ = build_id(img, &(img->mask_));
 	if (img->mask_) {
 		HDC new_gc = CreateCompatibleDC(fl_gc);
 		int save = SaveDC(new_gc);
@@ -682,6 +711,21 @@ void Fl_GDI_Graphics_Driver::draw(Fl_RGB_Image *img, int XP, int YP, int WP, int
 	} else {
 		copy_offscreen(X, Y, W, H, (Fl_Offscreen)img->id_, cx, cy);
 	}
+}
+
+int Fl_GDI_Printer_Graphics_Driver::draw_scaled(Fl_Image *img, int XP, int YP, int WP, int HP)
+{
+	XFORM old_tr, tr;
+	GetWorldTransform(fl_gc, &old_tr); // storing old transform
+	tr.eM11 = float(WP)/float(img->w());
+	tr.eM22 = float(HP)/float(img->h());
+	tr.eM12 = tr.eM21 = 0;
+	tr.eDx =  XP;
+	tr.eDy =  YP;
+	ModifyWorldTransform(fl_gc, &tr, MWT_LEFTMULTIPLY);
+	img->draw(0, 0, img->w(), img->h(), 0, 0);
+	SetWorldTransform(fl_gc, &old_tr);
+	return 1;
 }
 
 #else
@@ -701,6 +745,11 @@ void Fl_Xlib_Graphics_Driver::draw(Fl_RGB_Image *img, int XP, int YP, int WP, in
 			img->id_ = fl_create_offscreen(img->w(), img->h());
 			fl_begin_offscreen((Fl_Offscreen)img->id_);
 			fl_draw_image(img->array, 0, 0, img->w(), img->h(), img->d(), img->ld());
+			fl_end_offscreen();
+		} else if (img->d() == 4 && fl_can_do_alpha_blending()) {
+			img->id_ = fl_create_offscreen_with_alpha(img->w(), img->h());
+			fl_begin_offscreen((Fl_Offscreen)img->id_);
+			fl_draw_image(img->array, 0, 0, img->w(), img->h(), img->d() | FL_IMAGE_WITH_ALPHA, img->ld());
 			fl_end_offscreen();
 		}
 	}
@@ -723,7 +772,10 @@ void Fl_Xlib_Graphics_Driver::draw(Fl_RGB_Image *img, int XP, int YP, int WP, in
 			XSetClipOrigin(fl_display, fl_gc, X-cx, Y-cy);
 		}
 
-		copy_offscreen(X, Y, W, H, img->id_, cx, cy);
+		if (img->d() == 4 && fl_can_do_alpha_blending())
+			copy_offscreen_with_alpha(X, Y, W, H, img->id_, cx, cy);
+		else
+			copy_offscreen(X, Y, W, H, img->id_, cx, cy);
 
 		if (img->mask_) {
 			// put the old clip region back

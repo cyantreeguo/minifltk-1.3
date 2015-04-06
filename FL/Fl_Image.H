@@ -184,12 +184,15 @@ public:
 	virtual void label(Fl_Widget*w);
 	virtual void label(Fl_Menu_Item*m);
 	/**
-	  Draws the image with a bounding box.
-	  This form specifies
-	  a bounding box for the image, with the origin
-	  (upper-lefthand corner) of the image offset by the cx
-	  and cy arguments.
-	*/
+	    Draws the image with a bounding box.
+	    Arguments <tt>X,Y,W,H</tt> specify
+	    a bounding box for the image, with the origin
+	    (upper-left corner) of the image offset by the \c cx
+	    and \c cy arguments.\n
+	   In other words:  <tt>fl_push_clip(X,Y,W,H)</tt> is applied,
+	   the image is drawn with its upper-left corner at <tt>X-cx,Y-cy</tt> and its own width and height,
+	   <tt>fl_pop_clip</tt><tt>()</tt> is applied.
+	  */
 	virtual void draw(int X, int Y, int W, int H, int cx=0, int cy=0); // platform dependent
 	/**
 	  Draws the image.
@@ -222,6 +225,7 @@ class FL_EXPORT Fl_RGB_Image : public Fl_Image
 {
 	friend class Fl_Quartz_Graphics_Driver;
 	friend class Fl_GDI_Graphics_Driver;
+	friend class Fl_GDI_Printer_Graphics_Driver;
 	friend class Fl_Xlib_Graphics_Driver;
 	static size_t max_size_;
 public:

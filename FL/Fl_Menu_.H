@@ -218,6 +218,8 @@ public:
 	void down_color(unsigned c) {
 		selection_color(c);
 	}
+	
+	void setonly(Fl_Menu_Item* item);
 };
 
 #endif

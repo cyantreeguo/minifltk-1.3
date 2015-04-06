@@ -936,6 +936,32 @@ static void cocoaMouseWheelHandler(NSEvent *theEvent)
 }
 
 /*
+ * Cocoa Magnify Gesture Handler
+ */
+static void cocoaMagnifyHandler(NSEvent *theEvent)
+{
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6
+  fl_lock_function();
+  Fl_Window *window = (Fl_Window*)[(FLWindow*)[theEvent window] getFl_Window];
+  if ( !window->shown() ) {
+    fl_unlock_function();
+    return;
+  }
+  Fl::first_window(window);
+  Fl::e_dy = [theEvent magnification]*1000; // 10.5.2
+  if ( Fl::e_dy) {
+    NSPoint pos = [theEvent locationInWindow];
+    pos.y = window->h() - pos.y;
+    NSUInteger mods = [theEvent modifierFlags];
+    mods_to_e_state( mods );
+    update_e_xy_and_e_xy_root([theEvent window]);
+    Fl::handle( FL_ZOOM_GESTURE, window );
+  }
+  fl_unlock_function();
+#endif
+}
+
+/*
  * Cocoa Mouse Button Handler
  */
 static void cocoaMouseHandler(NSEvent *theEvent)
@@ -2142,6 +2168,7 @@ static FLTextInputContext *fltextinputcontext_instance = nil;
 - (void)rightMouseDragged: (NSEvent *)theEvent;
 - (void)otherMouseDragged: (NSEvent *)theEvent;
 - (void)scrollWheel: (NSEvent *)theEvent;
+- (void)magnifyWithEvent:(NSEvent *)theEvent;
 - (void)keyDown: (NSEvent *)theEvent;
 - (void)keyUp: (NSEvent *)theEvent;
 - (void)flagsChanged: (NSEvent *)theEvent;
@@ -2274,6 +2301,9 @@ static FLTextInputContext *fltextinputcontext_instance = nil;
 - (void)scrollWheel: (NSEvent *)theEvent
 {
 	cocoaMouseWheelHandler(theEvent);
+}
+- (void)magnifyWithEvent:(NSEvent *)theEvent {
+  cocoaMagnifyHandler(theEvent);
 }
 - (void)keyDown: (NSEvent *)theEvent
 {

@@ -217,7 +217,7 @@ void Fl_Table::col_width(int col, int width)
 		redraw();
 	}
 	// COLUMN RESIZE CALLBACK
-	if ( Fl_Widget::callback() && when() & FL_WHEN_CHANGED ) {
+	if ( Fl::focus() == this && Fl_Widget::callback() && when() & FL_WHEN_CHANGED ) {
 		do_callback(CONTEXT_RC_RESIZE, 0, col);
 	}
 }

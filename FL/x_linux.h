@@ -42,6 +42,7 @@ extern FL_EXPORT ulong fl_event_time;
 // off-screen pixmaps: create, destroy, draw into, copy to window:
 typedef ulong Fl_Offscreen;
 #    define fl_create_offscreen(w,h) XCreatePixmap(fl_display, RootWindow(fl_display, fl_screen), w, h, fl_visual->depth)
+#    define fl_create_offscreen_with_alpha(w,h) XCreatePixmap(fl_display, RootWindow(fl_display, fl_screen), w, h, 32)
 // begin/end are macros that save the old state in local variables:
 #    define fl_begin_offscreen(pixmap) \
   Window _sw=fl_window; fl_window=pixmap; \
@@ -145,6 +146,7 @@ public:
 		wi->y(Y);
 	}
 	static int ewmh_supported();
+	static int xrender_supported();
 	static void activate_window(Window w);
 };
 

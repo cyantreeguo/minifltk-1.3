@@ -105,10 +105,10 @@ public:
  drawing operations (e.g., fl_rectf()) that operate on the current drawing surface (see Fl_Surface_Device).
  Drawing operations are functionally presented in \ref drawing and as function lists
  in the \ref fl_drawings and \ref fl_attributes modules.
- 
+
  \p The Fl_Graphics_Driver class is of interest if one wants to perform new kinds of drawing operations.
- An example would be to draw to a PDF file. This would involve creating a new Fl_Graphics_Driver derived class,
- say, my_PDF_Graphics_Driver. This new class should implement all virtual methods of the Fl_Graphics_Driver class
+ An example would be to draw to a PDF file. This would involve creating a new Fl_Graphics_Driver derived
+ class. This new class should implement all virtual methods of the Fl_Graphics_Driver class
  to support all FLTK drawing functions.
   */
 class FL_EXPORT Fl_Graphics_Driver : public Fl_Device
@@ -451,9 +451,14 @@ public:
 	inline void font_descriptor(Fl_Font_Descriptor *d) {
 		font_descriptor_ = d;
 	}
+#if FLTK_ABI_VERSION >= 10304 || defined(FL_DOXYGEN)
+	virtual
+#endif
+	int draw_scaled(Fl_Image *img, int X, int Y, int W, int H);
 	/** \brief The destructor */
 	virtual ~Fl_Graphics_Driver() {
 		if (p) free(p);
+		if ( font_descriptor_ ) free(font_descriptor_);
 	}
 };
 
@@ -482,6 +487,7 @@ public:
 	void draw(Fl_Pixmap *pxm, int XP, int YP, int WP, int HP, int cx, int cy);
 	void draw(Fl_Bitmap *pxm, int XP, int YP, int WP, int HP, int cx, int cy);
 	void draw(Fl_RGB_Image *img, int XP, int YP, int WP, int HP, int cx, int cy);
+	int draw_scaled(Fl_Image *img, int XP, int YP, int WP, int HP);
 	void draw_image(const uchar* buf, int X,int Y,int W,int H, int D=3, int L=0);
 	void draw_image(Fl_Draw_Image_Cb cb, void* data, int X,int Y,int W,int H, int D=3);
 	void draw_image_mono(const uchar* buf, int X,int Y,int W,int H, int D=1, int L=0);
@@ -506,6 +512,8 @@ public:
 class FL_EXPORT Fl_GDI_Graphics_Driver : public Fl_Graphics_Driver
 {
 public:
+	~Fl_GDI_Graphics_Driver();
+
 	static const char *class_id;
 	const char *class_name() {
 		return class_id;
@@ -548,6 +556,7 @@ public:
 	};
 	void draw(Fl_Pixmap *pxm, int XP, int YP, int WP, int HP, int cx, int cy);
 	void draw(Fl_Bitmap *bm, int XP, int YP, int WP, int HP, int cx, int cy);
+	int draw_scaled(Fl_Image *img, int XP, int YP, int WP, int HP);
 };
 #endif
 #if !(defined(__APPLE__) || defined(WIN32))
@@ -582,23 +591,26 @@ public:
 	int height();
 	int descent();
 	void copy_offscreen(int x, int y, int w, int h, Fl_Offscreen pixmap, int srcx, int srcy);
+#if ! defined(FL_DOXYGEN)
+	void copy_offscreen_with_alpha(int x, int y, int w, int h, Fl_Offscreen pixmap, int srcx, int srcy);
+#endif
 };
 #endif
 
 /**
  \brief A drawing surface that's susceptible to receive graphical output.
  A drawing surface is typically used as follows:
- \li Create \c surface, an object from a particular Fl_Surface_Device derived class (e.g., Fl_Copy_Surface, Fl_Printer).
- \li Memorize what is the current drawing surface with <tt> Fl_Surface_Device *old_current = Fl_Surface_Device::surface();</tt>
- \li Call \c surface->set_current(); to redirect all graphics requests to \c surface which becomes the new 
+ <ol><li> Create \c surface, an object from a particular Fl_Surface_Device derived class (e.g., Fl_Copy_Surface, Fl_Printer).
+ <li> Memorize what is the current drawing surface with <tt> Fl_Surface_Device *old_current = Fl_Surface_Device::surface();</tt>
+ <li> Call \c surface->set_current(); to redirect all graphics requests to \c surface which becomes the new
  current drawing surface (not necessary with class Fl_Printer because it is done by Fl_Printer::start_job()).
- \li At this point any of the \ref fl_drawings (e.g., fl_rect()) or the \ref fl_attributes or \ref drawing_images functions 
- (e.g., fl_draw_image(), Fl_Image::draw()) operate on the new current drawing surface. 
+ <li> At this point any of the \ref fl_drawings (e.g., fl_rect()) or the \ref fl_attributes or \ref drawing_images functions
+ (e.g., fl_draw_image(), Fl_Image::draw()) operates on the new current drawing surface.
  Certain drawing surfaces allow additional ways to draw to them (e.g., Fl_Printer::print_widget(), Fl_Image_Surface::draw()).
- \li After all drawing requests have been performed, redirect graphics requests back to their previous destination 
+ <li> After all drawing requests have been performed, redirect graphics requests back to their previous destination
  with \c old_current->set_current();.
- \li Delete \c surface.
- 
+ <li> Delete \c surface.
+ </ol>
  The current drawing surface is initially the computer's display, an instance of the Fl_Display_Device class.
  */
 class FL_EXPORT Fl_Surface_Device : public Fl_Device
@@ -625,7 +637,8 @@ public:
 	inline Fl_Graphics_Driver *driver() {
 		return _driver;
 	};
-	/** \brief the surface that currently receives graphics output */
+	/** The current drawing surface.
+	   In other words, the Fl_Surface_Device object that currently receives all graphics output */
 	static inline Fl_Surface_Device *surface() {
 		return _surface;
 	};

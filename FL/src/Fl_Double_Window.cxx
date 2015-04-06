@@ -134,17 +134,49 @@ void Fl_Graphics_Driver::copy_offscreen(int x, int y, int w, int h, Fl_Offscreen
 
 #if __FLTK_LINUX__
 
+#if HAVE_XRENDER
+#include <X11/extensions/Xrender.h>
+#endif
+
 void Fl_Xlib_Graphics_Driver::copy_offscreen(int x, int y, int w, int h, Fl_Offscreen pixmap, int srcx, int srcy)
 {
 	XCopyArea(fl_display, pixmap, fl_window, fl_gc, srcx, srcy, w, h, x, y);
 }
 
+void Fl_Xlib_Graphics_Driver::copy_offscreen_with_alpha(int x, int y, int w, int h,
+                Fl_Offscreen pixmap, int srcx, int srcy)
+{
+#if HAVE_XRENDER
+	XRenderPictureAttributes srcattr;
+	memset(&srcattr, 0, sizeof(XRenderPictureAttributes));
+	static XRenderPictFormat *srcfmt = XRenderFindStandardFormat(fl_display, PictStandardARGB32);
+	static XRenderPictFormat *dstfmt = XRenderFindStandardFormat(fl_display, PictStandardRGB24);
 
-// maybe someone feels inclined to implement alpha blending on X11?
+	Picture src = XRenderCreatePicture(fl_display, pixmap, srcfmt, 0, &srcattr);
+	Picture dst = XRenderCreatePicture(fl_display, fl_window, dstfmt, 0, &srcattr);
+
+	if (!src || !dst) {
+		fprintf(stderr, "Failed to create Render pictures (%lu %lu)\n", src, dst);
+		return;
+	}
+
+	const Fl_Region clipr = fl_clip_region();
+	if (clipr)
+		XRenderSetPictureClipRegion(fl_display, dst, clipr);
+
+	XRenderComposite(fl_display, PictOpOver, src, None, dst, srcx, srcy, 0, 0,
+	                 x, y, w, h);
+
+	XRenderFreePicture(fl_display, src);
+	XRenderFreePicture(fl_display, dst);
+#endif
+}
+
 char fl_can_do_alpha_blending()
 {
-	return 0;
+	return Fl_X::xrender_supported();
 }
+
 #elif __FLTK_WIN32__
 // Code used to switch output to an off-screen window.  See macros in
 // x_win32.H which save the old state in local variables.
@@ -483,7 +515,7 @@ Fl_Offscreen Fl_Quartz_Graphics_Driver::create_offscreen_with_alpha(int w, int h
 	void *data = calloc(w*h,4);
 	CGColorSpaceRef lut = CGColorSpaceCreateDeviceRGB();
 	CGContextRef ctx = CGBitmapContextCreate(
-	        data, w, h, 8, w*4, lut, kCGImageAlphaPremultipliedLast);
+	                           data, w, h, 8, w*4, lut, kCGImageAlphaPremultipliedLast);
 	CGColorSpaceRelease(lut);
 	return (Fl_Offscreen)ctx;
 }
@@ -503,7 +535,7 @@ Fl_Offscreen fl_create_offscreen(int w, int h)
 	void *data = calloc(w*h,4);
 	CGColorSpaceRef lut = CGColorSpaceCreateDeviceRGB();
 	CGContextRef ctx = CGBitmapContextCreate(
-	        data, w, h, 8, w*4, lut, kCGImageAlphaNoneSkipLast);
+	                           data, w, h, 8, w*4, lut, kCGImageAlphaNoneSkipLast);
 	CGColorSpaceRelease(lut);
 	return (Fl_Offscreen)ctx;
 }
@@ -528,7 +560,7 @@ void Fl_Quartz_Graphics_Driver::copy_offscreen(int x,int y,int w,int h,Fl_Offscr
 	CFRetain(src);
 	CGDataProviderRef src_bytes = CGDataProviderCreateWithData( src, data, sw*sh*4, bmProviderRelease);
 	CGImageRef img = CGImageCreate( sw, sh, 8, 4*8, 4*sw, lut, alpha,
-	src_bytes, 0L, false, kCGRenderingIntentDefault);
+	                                src_bytes, 0L, false, kCGRenderingIntentDefault);
 	// fl_push_clip();
 	CGRect rect = CGRectMake(x, y, w, h);
 	Fl_X::q_begin_image(rect, srcx, srcy, sw, sh);

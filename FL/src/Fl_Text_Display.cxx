@@ -3844,7 +3844,7 @@ void Fl_Text_Display::draw(void)
 		             text_area.w+LEFT_MARGIN+RIGHT_MARGIN,
 		             text_area.h);
 
-		int X, Y;
+		int X=0, Y=0;
 		if (position_to_xy(mCursorPos, &X, &Y)) {
 			draw_cursor(X, Y);
 			mCursorOldY = Y;

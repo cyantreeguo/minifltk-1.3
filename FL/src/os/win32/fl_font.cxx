@@ -466,6 +466,15 @@ void Fl_GDI_Graphics_Driver::rtl_draw(const char* c, int n, int x, int y)
 #endif
 	SetTextColor(fl_gc, oldColor);
 }
+
+Fl_GDI_Graphics_Driver::~Fl_GDI_Graphics_Driver()
+{
+	if ( wstr != NULL ) {
+		free(wstr);
+		wstr = NULL;
+	}
+}
+
 #endif
 //
 // End of "$Id: fl_font_win32.cxx 10137 2014-04-30 20:03:12Z manolo $".

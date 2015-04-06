@@ -266,6 +266,36 @@ public:
 
 	// API version number
 	static double version();
+	static int api_version();
+
+	// ABI version number
+	static int abi_version();
+
+	/*
+	  Returns whether the runtime library ABI version is correct.
+
+	  This enables you to check the ABI version of the linked FLTK
+	  library at runtime.
+
+	  Returns 1 (true) if the compiled ABI version (in the header files)
+	  and the linked library ABI version (used at runtime) are the same,
+	  0 (false) otherwise.
+
+	  Argument \p val can be used to query a particular library ABI version.
+	  Use for instance 10303 to query if the runtime library is compatible
+	  with FLTK ABI version 1.3.3. This is rarely useful.
+
+	  The default \p val argument is FL_ABI_VERSION, which checks the version
+	  defined at configure time (i.e. in the header files at program
+	  compilation time) against the linked library version used at runtime.
+	  This is particularly useful if you linked with a shared object library,
+	  but it also concerns static linking.
+
+	  \see Fl::abi_version()
+	*/
+	static inline int abi_check(const int val = FL_ABI_VERSION) {
+		return val == abi_version();
+	}
 
 	// argument parsers:
 	static int arg(int argc, char **argv, int& i);
@@ -895,7 +925,7 @@ public:
 	Set things up so the handle function of the \p receiver widget will be called with an FL_PASTE event some
 	time in the future if the clipboard does contain data of the requested type. During processing of this event,
 	and if \p type is Fl::clipboard_plain_text, the text data from the specified \p source are in Fl::event_text()
-	with UTF-8 encoding, and the number of characters in Fl::event_length();
+	with UTF-8 encoding, and the number of bytes in Fl::event_length();
 	if \p type is Fl::clipboard_image, Fl::event_clipboard() returns a pointer to the
 	image data, as an Fl_Image *.
 	The receiver
