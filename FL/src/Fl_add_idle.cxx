@@ -19,6 +19,8 @@
 // Allows you to manage an arbitrary set of idle() callbacks.
 // Replaces the older set_idle() call (which is used to implement this)
 
+// modify by cyantree
+
 #include "Fl.H"
 
 struct idle_cb {
@@ -30,9 +32,9 @@ struct idle_cb {
 // the callbacks are stored linked in a ring.  last points at the one
 // just called, first at the next to call.  last->next == first.
 
-static idle_cb* first;
-static idle_cb* last;
-static idle_cb* freelist;
+static idle_cb* first=NULL;
+static idle_cb* last=NULL;
+//static idle_cb* freelist=NULL;
 
 static void call_idle()
 {
@@ -61,15 +63,31 @@ static void call_idle()
 */
 void Fl::add_idle(Fl_Idle_Handler cb, void* data)
 {
+	/*
 	idle_cb* p = freelist;
 	if (p) freelist = p->next;
-	else p = new idle_cb;
+	idle_cb* p = last;
+	if (p) last = p->next;
+	else p =  (struct idle_cb*)malloc(sizeof(struct idle_cb));
 	p->cb = cb;
 	p->data = data;
 	if (first) {
 		last->next = p;
 		last = p;
 		p->next = first;
+	} else {
+		first = last = p;
+		p->next = p;
+		set_idle(call_idle);
+	}
+	*/
+	idle_cb* p = (struct idle_cb*)malloc(sizeof(struct idle_cb));
+	p->cb = cb;
+	p->data = data;
+	if (first) {
+		last->next = p;
+		p->next = first;
+		first = p;
 	} else {
 		first = last = p;
 		p->next = p;
@@ -95,6 +113,7 @@ int Fl::has_idle(Fl_Idle_Handler cb, void* data)
 */
 void Fl::remove_idle(Fl_Idle_Handler cb, void* data)
 {
+	/*
 	idle_cb* p = first;
 	if (!p) return;
 	idle_cb* l = last;
@@ -106,12 +125,34 @@ void Fl::remove_idle(Fl_Idle_Handler cb, void* data)
 	if (l == p) { // only one
 		first = last = 0;
 		set_idle(0);
+		free(p);
+		freelist = NULL;
+		return;
 	} else {
 		last = l;
 		first = l->next = p->next;
 	}
 	p->next = freelist;
 	freelist = p;
+	*/
+	idle_cb* p = first;
+	if (!p) return;
+	idle_cb* l = last;
+	for (;; p = p->next) {
+		if (p->cb == cb && p->data == data) break;
+		if (p==last) return; // not found
+		l = p;
+	}
+	if (l == p) { // only one
+		first = last = 0;
+		set_idle(0);
+		free(p);
+		return;
+	} else {
+		last = l;
+		first = l->next = p->next;
+		free(p);
+	}
 }
 
 //
