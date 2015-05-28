@@ -32,26 +32,33 @@ struct Fl_Menu_Item;
 struct Fl_Label;
 
 /** \enum Fl_RGB_Scaling
-    The scaling algorithm to use for RGB images.
+ The scaling algorithm to use for RGB images.
 */
 enum Fl_RGB_Scaling {
 	FL_RGB_SCALING_NEAREST = 0, ///< default RGB image scaling algorithm
-	FL_RGB_SCALING_BILINEAR ///< more accurate, but slower RGB image scaling algorithm
+	FL_RGB_SCALING_BILINEAR     ///< more accurate, but slower RGB image scaling algorithm
 };
 
 /**
-  Fl_Image is the base class used for caching and
-  drawing all kinds of images in FLTK. This class keeps track of
-  common image data such as the pixels, colormap, width, height,
-  and depth. Virtual methods are used to provide type-specific
-  image handling.
+ \brief Base class for image caching and drawing.
 
-  Since the Fl_Image class does not support image
-  drawing by itself, calling the draw() method results in
-  a box with an X in it being drawn instead.
+ Fl_Image is the base class used for caching and drawing all kinds of images
+ in FLTK. This class keeps track of common image data such as the pixels,
+ colormap, width, height, and depth. Virtual methods are used to provide
+ type-specific image handling.
+
+ Since the Fl_Image class does not support image
+ drawing by itself, calling the draw() method results in
+ a box with an X in it being drawn instead.
 */
 class FL_EXPORT Fl_Image
 {
+public:
+	static const int ERR_NO_IMAGE    = -1;
+	static const int ERR_FILE_ACCESS = -2;
+	static const int ERR_FORMAT      = -3;
+
+private:
 	int w_, h_, d_, ld_, count_;
 	const char * const *data_;
 	static Fl_RGB_Scaling RGB_scaling_;
@@ -106,7 +113,8 @@ public:
 	int w() const {
 		return w_;
 	}
-	/**     Returns the current image height in pixels.
+	/**
+	Returns the current image height in pixels.
 	 */
 	int h() const {
 		return h_;
@@ -144,20 +152,8 @@ public:
 		return data_;
 	}
 
-	/**
-	  The constructor creates an empty image with the specified
-	  width, height, and depth. The width and height are in pixels.
-	  The depth is 0 for bitmaps, 1 for pixmap (colormap) images, and
-	  1 to 4 for color images.
-	*/
-	Fl_Image(int W, int H, int D) {
-		w_ = W;
-		h_ = H;
-		d_ = D;
-		ld_ = 0;
-		count_ = 0;
-		data_ = 0;
-	}
+	int fail();
+	Fl_Image(int W, int H, int D);
 	virtual ~Fl_Image();
 	virtual Fl_Image *copy(int W, int H);
 	/**
@@ -172,11 +168,13 @@ public:
 	}
 	virtual void color_average(Fl_Color c, float i);
 	/**
-	  The inactive() method calls
-	  color_average(FL_BACKGROUND_COLOR, 0.33f) to produce
-	  an image that appears grayed out. <I>This method does not
-	  alter the original image data.</I>
-	*/
+	 The inactive() method calls
+	 color_average(FL_BACKGROUND_COLOR, 0.33f) to produce
+	 an image that appears grayed out.
+
+	 An internal copy is made of the original image before
+	 changes are applied, to avoid modifying the original image.
+	 */
 	void inactive() {
 		color_average(FL_GRAY, .33f);
 	}
@@ -184,15 +182,16 @@ public:
 	virtual void label(Fl_Widget*w);
 	virtual void label(Fl_Menu_Item*m);
 	/**
-	    Draws the image with a bounding box.
-	    Arguments <tt>X,Y,W,H</tt> specify
-	    a bounding box for the image, with the origin
-	    (upper-left corner) of the image offset by the \c cx
-	    and \c cy arguments.\n
-	   In other words:  <tt>fl_push_clip(X,Y,W,H)</tt> is applied,
-	   the image is drawn with its upper-left corner at <tt>X-cx,Y-cy</tt> and its own width and height,
-	   <tt>fl_pop_clip</tt><tt>()</tt> is applied.
-	  */
+	 Draws the image with a bounding box.
+	 Arguments <tt>X,Y,W,H</tt> specify
+	 a bounding box for the image, with the origin
+	 (upper-left corner) of the image offset by the \c cx
+	 and \c cy arguments.
+
+	 In other words:  <tt>fl_push_clip(X,Y,W,H)</tt> is applied,
+	 the image is drawn with its upper-left corner at <tt>X-cx,Y-cy</tt> and its own width and height,
+	 <tt>fl_pop_clip</tt><tt>()</tt> is applied.
+	 */
 	virtual void draw(int X, int Y, int W, int H, int cx=0, int cy=0); // platform dependent
 	/**
 	  Draws the image.
@@ -255,27 +254,7 @@ private:
 #endif
 
 public:
-
-	/**
-	  The constructor creates a new image from the specified data.
-	  \param[in] bits   The image data array.
-	  \param[in] W      The width of the image in pixels
-	  \param[in] H      The height of the image in pixels
-	  \param[in] D      The image depth, or 'number of channels'. Default=3<br>
-	                    If D=1, each uchar in bits[] is a grayscale pixel value.<br>
-			    If D=2, each uchar pair in bits[] is a grayscale + alpha pixel value.<br>
-			    If D=3, each uchar triplet in bits[] is an R/G/B pixel value<br>
-			    If D=4, each uchar quad in bits[] is an R/G/B/A pixel value.
-	  \param[in] LD     Line data size (default=0).<br>
-	                    Line data is extra data that is included after each line
-			    of color image data and is normally not present.
-	  \see Fl_Image::data(), Fl_Image::w(), Fl_Image::h(), Fl_Image::d(), Fl_Image::ld()
-	  */
-	Fl_RGB_Image(const uchar *bits, int W, int H, int D=3, int LD=0) :
-		Fl_Image(W,H,D), array(bits), alloc_array(0), id_(0), mask_(0) {
-		data((const char **)&array, 1);
-		ld(LD);
-	}
+	Fl_RGB_Image(const uchar *bits, int W, int H, int D=3, int LD=0);
 	Fl_RGB_Image(const Fl_Pixmap *pxm, Fl_Color bg=FL_GRAY);
 	virtual ~Fl_RGB_Image();
 	virtual Fl_Image *copy(int W, int H);

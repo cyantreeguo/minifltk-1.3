@@ -44,12 +44,9 @@ extern "C"
 #include "Fl_Window.H"
 #include "Fl_Tooltip.H"
 #include "Fl_Printer.H"
-#include "Fl_Input_.H"
-#include "Fl_Text_Display.H"
 #include "Fl_Copy_Surface.H"
 #include <stdio.h>
 #include <stdlib.h>
-#include "flstring.h"
 #include <unistd.h>
 #include <stdarg.h>
 #include <math.h>
@@ -91,14 +88,13 @@ extern int fl_send_system_handlers(void *e);
 static void convert_crlf(char *string, size_t len);
 static void createAppleMenu(void);
 static void cocoaMouseHandler(NSEvent *theEvent);
-static int calc_mac_os_version();
 static void clipboard_check(void);
 static NSString* calc_utf8_format(void);
 static unsigned make_current_counts = 0; // if > 0, then Fl_Window::make_current() can be called only once
 static Fl_X *fl_x_to_redraw = NULL; // set by Fl_X::flush() to the Fl_X object of the window to be redrawn
 static NSBitmapImageRep* rect_to_NSBitmapImageRep(Fl_Window *win, int x, int y, int w, int h);
 
-Fl_Display_Device *Fl_Display_Device::_display = new Fl_Display_Device(new Fl_Quartz_Graphics_Driver); // the platform display
+int fl_mac_os_version = Fl_X::calc_mac_os_version();		// the version number of the running Mac OS X (e.g., 100604 for 10.6.4)
 
 // public variables
 CGContextRef fl_gc = 0;
@@ -107,8 +103,6 @@ bool fl_show_iconic;                    // true if called from iconize() - shows
 //int fl_disable_transient_for;           // secret method of removing TRANSIENT_FOR
 Window fl_window;
 Fl_Window *Fl_Window::current_;
-int fl_mac_os_version = calc_mac_os_version();      // the version number of the running Mac OS X (e.g., 100604 for 10.6.4)
-Fl_Fontdesc *fl_fonts = Fl_X::calc_fl_fonts();
 static NSString *utf8_format = calc_utf8_format();
 
 // forward declarations of variables in this file
@@ -3469,6 +3463,14 @@ static void clipboard_check(void)
 	fl_trigger_clipboard_notify(1);
 }
 
+static void resize_selection_buffer(int len, int clipboard) {
+  if (len <= fl_selection_buffer_length[clipboard])
+    return;
+  delete[] fl_selection_buffer[clipboard];
+  fl_selection_buffer[clipboard] = new char[len+100];
+  fl_selection_buffer_length[clipboard] = len+100;
+}
+
 /*
  * create a selection
  * stuff: pointer to selected data
@@ -3477,64 +3479,61 @@ static void clipboard_check(void)
  */
 void Fl::copy(const char *stuff, int len, int clipboard, const char *type)
 {
-	if (!stuff || len < 0) return;
-	if (len + 1 > fl_selection_buffer_length[clipboard]) {
-		delete[]fl_selection_buffer[clipboard];
-		fl_selection_buffer[clipboard] = new char[len + 100];
-		fl_selection_buffer_length[clipboard] = len + 100;
-	}
-	memcpy(fl_selection_buffer[clipboard], stuff, len);
-	fl_selection_buffer[clipboard][len] = 0; // needed for direct paste
-	fl_selection_length[clipboard] = len;
-	if (clipboard) {
-		CFDataRef text = CFDataCreate(kCFAllocatorDefault, (UInt8 *)fl_selection_buffer[1], len);
-		if (text == NULL) return; // there was a pb creating the object, abort.
-		NSPasteboard *clip = [NSPasteboard generalPasteboard];
-		[clip declareTypes: [NSArray arrayWithObject: utf8_format] owner: nil];
-		[clip setData: (NSData *)text forType: utf8_format];
-		CFRelease(text);
-	}
+	if (!stuff || len<0) return;
+  if (clipboard >= 2)
+    clipboard = 1; // Only on X11 do multiple clipboards make sense.
+
+  resize_selection_buffer(len+1, clipboard);
+  memcpy(fl_selection_buffer[clipboard], stuff, len);
+  fl_selection_buffer[clipboard][len] = 0; // needed for direct paste
+  fl_selection_length[clipboard] = len;
+  if (clipboard) {
+    CFDataRef text = CFDataCreate(kCFAllocatorDefault, (UInt8*)fl_selection_buffer[1], len);
+    if (text==NULL) return; // there was a pb creating the object, abort.
+    NSPasteboard *clip = [NSPasteboard generalPasteboard];
+    [clip declareTypes:[NSArray arrayWithObject:utf8_format] owner:nil];
+    [clip setData:(NSData*)text forType:utf8_format];
+    CFRelease(text);
+  }
 }
 
-static int get_plain_text_from_clipboard(char **buffer, int previous_length)
+static int get_plain_text_from_clipboard(int clipboard)
 {
 	NSInteger length = 0;
-	NSPasteboard *clip = [NSPasteboard generalPasteboard];
-	NSString *found = [clip availableTypeFromArray: [NSArray arrayWithObjects: utf8_format, @"public.utf16-plain-text", @"com.apple.traditional-mac-plain-text", nil]];
-	if (found) {
-		NSData *data = [clip dataForType: found];
-		if (data) {
-			NSInteger len;
-			char *aux_c = NULL;
-			if (![found isEqualToString: utf8_format]) {
-				NSString *auxstring;
-				auxstring = (NSString *)CFStringCreateWithBytes(NULL,
-																(const UInt8 *)[data bytes],
-																[data length],
-																[found isEqualToString: @"public.utf16-plain-text"] ? kCFStringEncodingUnicode : kCFStringEncodingMacRoman,
-																false);
-				aux_c = strdup([auxstring UTF8String]);
-				[auxstring release];
-				len = strlen(aux_c) + 1;
-			} else len = [data length] + 1;
-			if (len >= previous_length) {
-				length = len;
-				delete[] *buffer;
-				*buffer = new char[len];
-			}
-			if (![found isEqualToString: utf8_format]) {
-				strcpy(*buffer, aux_c);
-				free(aux_c);
-			} else {
-				[data getBytes: *buffer];
-			}
-			(*buffer)[len - 1] = 0;
-			length = len - 1;
-			convert_crlf(*buffer, len - 1); // turn all \r characters into \n:
-			Fl::e_clipboard_type = Fl::clipboard_plain_text;
-		}
-	}
-	return length;
+  NSPasteboard *clip = [NSPasteboard generalPasteboard];
+  NSString *found = [clip availableTypeFromArray:[NSArray arrayWithObjects:utf8_format, @"public.utf16-plain-text", @"com.apple.traditional-mac-plain-text", nil]];
+  if (found) {
+    NSData *data = [clip dataForType:found];
+    if (data) {
+      NSInteger len;
+      char *aux_c = NULL;
+      if (![found isEqualToString:utf8_format]) {
+	NSString *auxstring;
+	auxstring = (NSString *)CFStringCreateWithBytes(NULL, 
+							(const UInt8*)[data bytes], 
+							[data length],
+							[found isEqualToString:@"public.utf16-plain-text"] ? kCFStringEncodingUnicode : kCFStringEncodingMacRoman,
+							false);
+	aux_c = strdup([auxstring UTF8String]);
+	[auxstring release];
+	len = strlen(aux_c) + 1;
+      }
+      else len = [data length] + 1;
+      resize_selection_buffer(len, clipboard);
+      if (![found isEqualToString:utf8_format]) {
+        strcpy(fl_selection_buffer[clipboard], aux_c);
+        free(aux_c);
+      }
+      else {
+        [data getBytes:fl_selection_buffer[clipboard]];
+      }
+      fl_selection_buffer[clipboard][len - 1] = 0;
+      length = len - 1;
+      convert_crlf(fl_selection_buffer[clipboard], len - 1); // turn all \r characters into \n:
+      Fl::e_clipboard_type = Fl::clipboard_plain_text;
+    }
+  }    
+  return length;
 }
 
 static Fl_Image* get_image_from_clipboard(Fl_Widget *receiver)
@@ -3625,7 +3624,7 @@ void Fl::paste(Fl_Widget &receiver, int clipboard, const char *type)
 	if (clipboard) {
 		Fl::e_clipboard_type = "";
 		if (strcmp(type, Fl::clipboard_plain_text) == 0) {
-			fl_selection_length[1] = get_plain_text_from_clipboard(&fl_selection_buffer[1],  fl_selection_length[1]);
+			fl_selection_length[1] = get_plain_text_from_clipboard(1);
 		} else if (strcmp(type, Fl::clipboard_image) == 0) {
 			Fl::e_clipboard_data = get_image_from_clipboard(&receiver);
 			if (Fl::e_clipboard_data) {
@@ -4499,21 +4498,16 @@ void Fl_Paged_Device::print_window(Fl_Window *win, int x_offset, int y_offset)
  */
 void* Fl_X::get_carbon_function(const char *function_name)
 {
-	static void *carbon = NULL;
-	void *f = NULL;
-	if (!carbon) {
-		carbon = dlopen("/System/Library/Frameworks/Carbon.framework/Carbon", RTLD_LAZY);
-	}
-	if (carbon) {
-		f = dlsym(carbon, function_name);
-	}
-	return f;
+	static void *carbon = dlopen("/System/Library/Frameworks/Carbon.framework/Carbon", RTLD_LAZY);
+	return (carbon ? dlsym(carbon, function_name) : NULL);
 }
 
 /* Returns the version of the running Mac OS as an int such as 100802 for 10.8.2
  */
-static int calc_mac_os_version()
+int Fl_X::calc_mac_os_version() 
 {
+	if (fl_mac_os_version) return fl_mac_os_version;
+
 	int M, m, b = 0;
 	NSAutoreleasePool *localPool = [[NSAutoreleasePool alloc] init];
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_10

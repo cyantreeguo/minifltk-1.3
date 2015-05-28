@@ -178,10 +178,6 @@ static void fl_clipboard_notify_target(HWND wnd);
 static void fl_clipboard_notify_untarget(HWND wnd);
 
 // Internal variables
-static Fl_GDI_Graphics_Driver fl_gdi_driver;
-static Fl_Display_Device fl_gdi_display(&fl_gdi_driver);
-Fl_Display_Device *Fl_Display_Device::_display = &fl_gdi_display; // the platform display
-
 static HWND clipboard_wnd = 0;
 static HWND next_clipboard_wnd = 0;
 
@@ -452,6 +448,17 @@ void* Fl::thread_message()
 extern int fl_send_system_handlers(void *e);
 MSG fl_msg;
 
+// A local helper function to flush any pending callback requests
+// from the awake ring-buffer
+static void process_awake_handler_requests(void)
+{
+	Fl_Awake_Handler func;
+	void *data;
+	while (Fl::get_awake_handler_(func, data) == 0) {
+		func(data);
+	}
+}
+
 // This is never called with time_to_wait < 0.0.
 // It *should* return negative on error, 0 if nothing happens before
 // timeout, and >0 if any callbacks were done.  This version only
@@ -526,15 +533,37 @@ int fl_wait(double time_to_wait)
 		if (fl_msg.message == fl_wake_msg) {
 			// Used for awaking wait() from another thread
 			thread_message_ = (void*)fl_msg.wParam;
-			Fl_Awake_Handler func;
-			void *data;
-			while (Fl::get_awake_handler_(func, data)==0)
-				func(data);
+			process_awake_handler_requests();
 		}
 
 		TranslateMessage(&fl_msg);
 		DispatchMessageW(&fl_msg);
 	}
+
+// The following conditional test:
+	//    (Fl::awake_ring_head_ != Fl::awake_ring_tail_)
+	// is a workaround / fix for STR #3143. This works, but a better solution
+	// would be to understand why the PostThreadMessage() messages are not
+	// seen by the main window if it is being dragged/ resized at the time.
+	// If a worker thread posts an awake callback to the ring buffer
+	// whilst the main window is unresponsive (if a drag or resize operation
+	// is in progress) we may miss the PostThreadMessage(). So here, we check if
+	// there is anything pending in the awake ring buffer and if so process
+	// it. This is not strictly thread safe (for speed it compares the head
+	// and tail indices without first locking the ring buffer) but is intended
+	// only as a fall-back recovery mechanism if the awake processing stalls.
+	// If the test erroneously returns true (may happen if we test the indices
+	// whilst they are being modified) we will call process_awake_handler_requests()
+	// unnecessarily, but this has no harmful consequences so is safe to do.
+	// Note also that if we miss the PostThreadMessage(), then thread_message_
+	// will not be updated, so this is not a perfect solution, but it does
+	// recover and process any pending awake callbacks.
+	// Normally the ring buffer head and tail indices will match and this
+	// comparison will do nothing. Addresses STR #3143
+	if (Fl::awake_ring_head_ != Fl::awake_ring_tail_) {
+		process_awake_handler_requests();
+	}
+
 	Fl::flush();
 
 	// This should return 0 if only timer events were handled:
@@ -772,6 +801,8 @@ void Fl::copy(const char *stuff, int len, int clipboard, const char *type)
 {
 	//printf("Fl::copy\n");
 	if (!stuff || len<0) return;
+	if (clipboard >= 2)
+		clipboard = 1; // Only on X11 do multiple clipboards make sense.
 
 	// Convert \n -> \r\n (for old apps like Notepad, DOS)
 	Lf2CrlfConvert buf(stuff, len);
@@ -1662,30 +1693,34 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 //   1   |  fix   |   yes
 //   2   |  size  |   yes
 
-int Fl_X::fake_X_wm(const Fl_Window* w,int &X,int &Y, int &bt,int &bx, int &by)
+static int fake_X_wm_style(const Fl_Window* w,int &X,int &Y, int &bt,int &bx, int &by, DWORD style, DWORD styleEx,
+                           int w_maxw, int w_minw, int w_maxh, int w_minh, uchar w_size_range_set)
 {
 	int W, H, xoff, yoff, dx, dy;
 	int ret = bx = by = bt = 0;
 
 	int fallback = 1;
 	if (!w->parent()) {
-		HWND hwnd = fl_xid(w);
-		if (hwnd) {
+		if (fl_xid(w) || style) {
 			// The block below calculates the window borders by requesting the
 			// required decorated window rectangle for a desired client rectangle.
 			// If any part of the function above fails, we will drop to a
 			// fallback to get the best guess which is always available.
-			HWND hwnd = fl_xid(w);
-			// request the style flags of this window, as WIN32 sees them
-			LONG style = GetWindowLong(hwnd, GWL_STYLE);
-			LONG exstyle = GetWindowLong(hwnd, GWL_EXSTYLE);
+
+			if (!style) {
+				HWND hwnd = fl_xid(w);
+				// request the style flags of this window, as WIN32 sees them
+				style = GetWindowLong(hwnd, GWL_STYLE);
+				styleEx = GetWindowLong(hwnd, GWL_EXSTYLE);
+			}
+
 			RECT r;
 			r.left = w->x();
 			r.top = w->y();
 			r.right = w->x()+w->w();
 			r.bottom = w->y()+w->h();
 			// get the decoration rectangle for the desired client rectangle
-			BOOL ok = AdjustWindowRectEx(&r, style, FALSE, exstyle);
+			BOOL ok = AdjustWindowRectEx(&r, style, FALSE, styleEx);
 			if (ok) {
 				X = r.left;
 				Y = r.top;
@@ -1698,7 +1733,7 @@ int Fl_X::fake_X_wm(const Fl_Window* w,int &X,int &Y, int &bt,int &bx, int &by)
 				yoff = by + bt;
 				dx = W - w->w();
 				dy = H - w->h();
-				if (w->size_range_set && (w->maxw != w->minw || w->maxh != w->minh))
+				if (w_size_range_set && (w_maxw != w_minw || w_maxh != w_minh))
 					ret = 2;
 				else
 					ret = 1;
@@ -1709,7 +1744,7 @@ int Fl_X::fake_X_wm(const Fl_Window* w,int &X,int &Y, int &bt,int &bx, int &by)
 	// This is the original (pre 1.1.7) routine to calculate window border sizes.
 	if (fallback) {
 		if (w->border() && !w->parent()) {
-			if (w->size_range_set && (w->maxw != w->minw || w->maxh != w->minh)) {
+			if (w_size_range_set && (w_maxw != w_minw || w_maxh != w_minh)) {
 				ret = 2;
 				bx = GetSystemMetrics(SM_CXSIZEFRAME);
 				by = GetSystemMetrics(SM_CYSIZEFRAME);
@@ -1761,6 +1796,11 @@ int Fl_X::fake_X_wm(const Fl_Window* w,int &X,int &Y, int &bt,int &bx, int &by)
 	}
 
 	return ret;
+}
+
+int Fl_X::fake_X_wm(const Fl_Window* w,int &X,int &Y, int &bt,int &bx, int &by)
+{
+	return fake_X_wm_style(w, X, Y, bt, bx, by, 0, 0, w->maxw, w->minw, w->maxh, w->minh, w->size_range_set);
 }
 
 ////////////////////////////////////////////////////////////////
@@ -2029,8 +2069,13 @@ Fl_X* Fl_X::make(Fl_Window* w)
 			}
 		}
 		styleEx |= WS_EX_WINDOWEDGE | WS_EX_CONTROLPARENT;
-		int xwm = xp , ywm = yp , bt, bx, by;
-		switch (fake_X_wm(w, xwm, ywm, bt, bx, by)) {
+		int wintype = 0;
+		if (w->border() && !w->parent()) {
+			if (w->size_range_set && (w->maxw != w->minw || w->maxh != w->minh)) wintype = 2;
+			else wintype = 1;
+		}
+
+		switch (wintype) {
 			// No border (used for menus)
 		case 0:
 			style |= WS_POPUP;
@@ -2051,6 +2096,9 @@ Fl_X* Fl_X::make(Fl_Window* w)
 				style |= WS_MINIMIZEBOX;
 			break;
 		}
+
+		int xwm = xp , ywm = yp , bt, bx, by;
+		fake_X_wm_style(w, xwm, ywm, bt, bx, by, style, styleEx, w->maxw, w->minw, w->maxh, w->minh, w->size_range_set);
 		if (by+bt) {
 			wp += 2*bx;
 			hp += 2*by+bt;

@@ -93,7 +93,10 @@
 */
 class FL_EXPORT Fl_Input_ : public Fl_Widget
 {
-	unsigned char caret_;
+public:
+	inline unsigned char caret_exists() { return caret_time_exists_; }
+private:
+	unsigned char caret_, caret_time_exists_;
 	int caret_x_, caret_y_, caret_w_, caret_h_;
 
 	/** \internal Storage for the text field. */

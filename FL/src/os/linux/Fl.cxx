@@ -72,10 +72,6 @@ static bool have_xfixes = false;
 #    include <X11/extensions/Xrender.h>
 #  endif
 
-static Fl_Xlib_Graphics_Driver fl_xlib_driver;
-static Fl_Display_Device fl_xlib_display(&fl_xlib_driver);
-Fl_Display_Device *Fl_Display_Device::_display = &fl_xlib_display;// the platform display
-
 ////////////////////////////////////////////////////////////////
 // interface to poll/select call:
 
@@ -368,6 +364,7 @@ static Atom fl_XaTextUriList;
 static Atom fl_XaImageBmp;
 static Atom fl_XaImagePNG;
 static Atom fl_INCR;
+static Atom fl_NET_WM_PID;
 static Atom fl_NET_WM_NAME;			// utf8 aware window label
 static Atom fl_NET_WM_ICON_NAME;		// utf8 aware window icon name
 static Atom fl_NET_SUPPORTING_WM_CHECK;
@@ -751,6 +748,7 @@ void fl_open_display(Display* d)
 	fl_XaImageBmp         = XInternAtom(d, "image/bmp",           0);
 	fl_XaImagePNG         = XInternAtom(d, "image/png",           0);
 	fl_INCR               = XInternAtom(d, "INCR",                0);
+	fl_NET_WM_PID         = XInternAtom(d, "_NET_WM_PID",         0);
 	fl_NET_WM_NAME        = XInternAtom(d, "_NET_WM_NAME",        0);
 	fl_NET_WM_ICON_NAME   = XInternAtom(d, "_NET_WM_ICON_NAME",   0);
 	fl_NET_SUPPORTING_WM_CHECK = XInternAtom(d, "_NET_SUPPORTING_WM_CHECK", 0);
@@ -1041,6 +1039,13 @@ static int get_xwinprop(Window wnd, Atom prop, long max_length,
 void Fl::copy(const char *stuff, int len, int clipboard, const char *type)
 {
 	if (!stuff || len<0) return;
+
+	if (clipboard >= 2) {
+		copy(stuff, len, 0, type);
+		copy(stuff, len, 1, type);
+		return;
+	}
+
 	if (len+1 > fl_selection_buffer_length[clipboard]) {
 		delete[] fl_selection_buffer[clipboard];
 		fl_selection_buffer[clipboard] = new char[len+100];
@@ -2590,6 +2595,15 @@ void Fl_X::make_xid(Fl_Window* win, XVisualInfo *visual, Colormap colormap)
 	                                   visual->visual,
 	                                   mask, &attr));
 	int showit = 1;
+
+	// Set WM_CLIENT_MACHINE and WM_LOCALE_NAME
+	XSetWMProperties(fl_display, xp->xid, NULL, NULL, NULL, 0, NULL, NULL, NULL);
+
+	// Set _NET_WM_PID
+	long pid;
+	pid = getpid();
+	XChangeProperty(fl_display, xp->xid, fl_NET_WM_PID,
+	                XA_CARDINAL, 32, 0, (unsigned char *)&pid, 1);
 
 	if (!win->parent() && !attr.override_redirect) {
 		// Communicate all kinds 'o junk to the X Window Manager:

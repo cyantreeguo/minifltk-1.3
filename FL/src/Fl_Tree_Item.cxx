@@ -81,6 +81,9 @@ void Fl_Tree_Item::_Init(const Fl_Tree_Prefs &prefs, Fl_Tree *tree)
 	_label_xywh[2]    = 0;
 	_label_xywh[3]    = 0;
 	_usericon         = 0;
+#if FLTK_ABI_VERSION >= 10304
+	_userdeicon       = 0;
+#endif
 	_userdata         = 0;
 	_parent           = 0;
 #if FLTK_ABI_VERSION >= 10303
@@ -116,6 +119,9 @@ Fl_Tree_Item::~Fl_Tree_Item()
 	}
 	_widget = 0;			// Fl_Group will handle destruction
 	_usericon = 0;		// user handled allocation
+#if FLTK_ABI_VERSION >= 10304
+	if ( _userdeicon ) delete _userdeicon;	// delete our copy (if any) for deactivated icon
+#endif
 	//_children.clear();		// array's destructor handles itself
 }
 
@@ -509,7 +515,7 @@ Fl_Tree_Item* Fl_Tree_Item::deparent(int pos)
 ///
 /// \returns
 ///    -  0: on success
-///    - -1: on error (e.g. if \p 'pos' out of range)
+///    - -1: on error (e.g. if \p 'pos' out of range) with no changes made.
 ///
 int Fl_Tree_Item::reparent(Fl_Tree_Item *newchild, int pos)
 {
@@ -519,7 +525,7 @@ int Fl_Tree_Item::reparent(Fl_Tree_Item *newchild, int pos)
 	return 0;
 }
 
-/// Move the item 'to' to sibling position of 'from'.
+/// Move the item 'from' to sibling position of 'to'.
 ///
 /// \returns
 ///    -  0: Success
@@ -589,7 +595,7 @@ int Fl_Tree_Item::move(Fl_Tree_Item *item, int op, int pos)
 	} else {					// different parent?
 		if ( to > to_parent->children() )		// try to prevent a reparent() error
 			return -4;
-		if ( from_parent->deparent(from) < 0 )	// deparent self from current parent
+		if ( from_parent->deparent(from) == NULL )	// deparent self from current parent
 			return -5;
 		if ( to_parent->reparent(this, to) < 0 ) {	// reparent self to new parent at position 'to'
 			to_parent->reparent(this, 0);		// failed? shouldn't happen, reparent at 0
@@ -994,7 +1000,7 @@ int Fl_Tree_Item::calc_item_height(const Fl_Tree_Prefs &prefs) const
 Fl_Color Fl_Tree_Item::drawfgcolor() const
 {
 	return is_selected() ? fl_contrast(_labelfgcolor, tree()->selection_color())
-	       : is_active() ? _labelfgcolor
+	       : (is_active() && tree()->active_r()) ? _labelfgcolor
 	       : fl_inactive(_labelfgcolor);
 }
 
@@ -1005,7 +1011,7 @@ Fl_Color Fl_Tree_Item::drawfgcolor() const
 Fl_Color Fl_Tree_Item::drawbgcolor() const
 {
 	const Fl_Color unspecified = 0xffffffff;
-	return is_selected() ? is_active() ? tree()->selection_color()
+	return is_selected() ? is_active() && tree()->active_r() ? tree()->selection_color()
 	       : fl_inactive(tree()->selection_color())
 		       : _labelbgcolor == unspecified ? tree()->color()
 		       : _labelbgcolor;
@@ -1211,6 +1217,9 @@ void Fl_Tree_Item::draw(int X, int &Y, int W, Fl_Tree_Item *itemfocus,
 	}
 	char clipped = ((Y+H) < tree_top) || (Y>tree_bot) ? 1 : 0;
 	if (!render) clipped = 0;			// NOT rendering? Then don't clip, so we calc unclipped items
+#if FLTK_ABI_VERSION >= 10304
+	char active = (is_active() && tree()->active_r()) ? 1 : 0;
+#endif
 	char drawthis = ( is_root() && prefs.showroot() == 0 ) ? 0 : 1;
 	if ( !clipped ) {
 		Fl_Color fg = drawfgcolor();
@@ -1239,13 +1248,36 @@ void Fl_Tree_Item::draw(int X, int &Y, int W, Fl_Tree_Item *itemfocus,
 				// Draw collapse icon
 				if ( render && has_children() && prefs.showcollapse() ) {
 					// Draw icon image
+#if FLTK_ABI_VERSION >= 10304
+					if ( is_open() ) {
+						if ( active ) prefs.closeicon()->draw(icon_x,icon_y);
+						else          prefs.closedeicon()->draw(icon_x,icon_y);
+					} else {
+						if ( active ) prefs.openicon()->draw(icon_x,icon_y);
+						else          prefs.opendeicon()->draw(icon_x,icon_y);
+					}
+#else
 					if ( is_open() ) {
 						prefs.closeicon()->draw(icon_x,icon_y);
 					} else {
 						prefs.openicon()->draw(icon_x,icon_y);
 					}
+#endif
 				}
 				// Draw user icon (if any)
+#if FLTK_ABI_VERSION >= 10304
+				if ( render && usericon() ) {
+					// Item has user icon? Use it
+					int uicon_y = item_y_center - (usericon()->h() >> 1);
+					if ( active ) usericon()->draw(uicon_x,uicon_y);
+					else          userdeicon()->draw(uicon_x,uicon_y);
+				} else if ( render && prefs.usericon() ) {
+					// Prefs has user icon? Use it
+					int uicon_y = item_y_center - (prefs.usericon()->h() >> 1);
+					if ( active ) prefs.usericon()->draw(uicon_x,uicon_y);
+					else          prefs.userdeicon()->draw(uicon_x,uicon_y);
+				}
+#else
 				if ( render && usericon() ) {
 					// Item has user icon? Use it
 					int uicon_y = item_y_center - (usericon()->h() >> 1);
@@ -1255,6 +1287,7 @@ void Fl_Tree_Item::draw(int X, int &Y, int W, Fl_Tree_Item *itemfocus,
 					int uicon_y = item_y_center - (prefs.usericon()->h() >> 1);
 					prefs.usericon()->draw(uicon_x,uicon_y);
 				}
+#endif
 				// Draw item's content
 				xmax = draw_item_content(render);
 			}			// end non-child damage
@@ -1406,12 +1439,14 @@ wx += (lw + 3);
 	}
 	char clipped = ((Y+H) < tree_top) || (Y>tree_bot) ? 1 : 0;
 	char drawthis = ( is_root() && prefs.showroot() == 0 ) ? 0 : 1;
+	char active = (is_active() && tree->active_r()) ? 1 : 0;
 	if ( !clipped ) {
 		const Fl_Color unspecified = 0xffffffff;
+
 		Fl_Color fg = is_selected() ? fl_contrast(_labelfgcolor, tree->selection_color())
-		              : is_active() ? _labelfgcolor
+		              : active ? _labelfgcolor
 		              : fl_inactive(_labelfgcolor);
-		Fl_Color bg = is_selected() ? is_active() ? tree->selection_color()
+		Fl_Color bg = is_selected() ? active ? tree->selection_color()
 		              : fl_inactive(tree->selection_color())
 			              : _labelbgcolor == unspecified ? tree->color()
 			              : _labelbgcolor;
@@ -1439,11 +1474,21 @@ wx += (lw + 3);
 				// Draw collapse icon
 				if ( has_children() && prefs.showcollapse() ) {
 					// Draw icon image
+#if FLTK_ABI_VERSION >= 10304
 					if ( is_open() ) {
-						prefs.closeicon()->draw(icon_x,icon_y);
+						if ( active ) prefs.closeicon()->draw(icon_x,icon_y);
+						else          prefs.closedeicon()->draw(icon_x,icon_y);
 					} else {
-						prefs.openicon()->draw(icon_x,icon_y);
+						if ( active ) prefs.openicon()->draw(icon_x,icon_y);
+						else          prefs.opendeicon()->draw(icon_x,icon_y);
 					}
+#else
+if ( is_open() ) {
+	prefs.closeicon()->draw(icon_x,icon_y);
+} else {
+	prefs.openicon()->draw(icon_x,icon_y);
+}
+#endif
 				}
 				// Draw background for the item.. only if different from tree's bg color
 				if ( bg != tree->color() || is_selected() ) {
@@ -1456,15 +1501,29 @@ wx += (lw + 3);
 					if ( widget() ) widget()->damage(FL_DAMAGE_ALL);	// if there's a child widget, we just damaged it
 				}
 				// Draw user icon (if any)
+#if FLTK_ABI_VERSION >= 10304
 				if ( usericon() ) {
 					// Item has user icon? Use it
 					int uicon_y = item_y_center - (usericon()->h() >> 1);
-					usericon()->draw(uicon_x,uicon_y);
+					if ( active ) usericon()->draw(uicon_x,uicon_y);
+					else          userdeicon()->draw(uicon_x,uicon_y);
 				} else if ( prefs.usericon() ) {
 					// Prefs has user icon? Use it
 					int uicon_y = item_y_center - (prefs.usericon()->h() >> 1);
-					prefs.usericon()->draw(uicon_x,uicon_y);
+					if ( active ) prefs.usericon()->draw(uicon_x,uicon_y);
+					else          prefs.userdeicon()->draw(uicon_x,uicon_y);
 				}
+#else
+if ( usericon() ) {
+	// Item has user icon? Use it
+	int uicon_y = item_y_center - (usericon()->h() >> 1);
+	usericon()->draw(uicon_x,uicon_y);
+} else if ( prefs.usericon() ) {
+	// Prefs has user icon? Use it
+	int uicon_y = item_y_center - (prefs.usericon()->h() >> 1);
+	prefs.usericon()->draw(uicon_x,uicon_y);
+}
+#endif
 				// Draw label
 #if FLTK_ABI_VERSION >= 10301
 				if ( _label &&
@@ -1472,51 +1531,50 @@ wx += (lw + 3);
 				       (prefs.item_draw_mode() & FL_TREE_ITEM_DRAW_LABEL_AND_WIDGET) ) )
 #else /*FLTK_ABI_VERSION*/
 if ( _label && !widget() )	// back compat: don't draw label if widget() present
-#endif
-				{
-					/*FLTK_ABI_VERSION*/
+#endif 
+{ /*FLTK_ABI_VERSION*/
 					fl_color(fg);
-					fl_font(_labelfont, _labelsize);
-					int label_y = Y+(H/2)+(_labelsize/2)-fl_descent()/2;
-					fl_draw(_label, label_x, label_y);
-				}
-			}			// end non-child damage
-			// Draw child FLTK widget?
-			if ( widget() ) {
-				((Fl_Tree*)tree)->draw_child(*widget());		// let group handle drawing child
-				if ( widget()->label() )
-					((Fl_Tree*)tree)->draw_outside_label(*widget());	// label too
+				fl_font(_labelfont, _labelsize);
+				int label_y = Y+(H/2)+(_labelsize/2)-fl_descent()/2;
+				fl_draw(_label, label_x, label_y);
 			}
-			// Draw focus box around item's bg last
-			if ( this == itemfocus &&
-			     Fl::visible_focus() &&
-			     Fl::focus() == tree &&
-			     prefs.selectmode() != FL_TREE_SELECT_NONE ) {
-				draw_item_focus(FL_NO_BOX,fg,bg,bg_x+1,bg_y+1,bg_w-1,bg_h-1);
-			}
-		}			// end drawthis
-	}			// end clipped
-	if ( drawthis ) Y += H2;			// adjust Y (even if clipped)
-	// Draw child items (if any)
-	if ( has_children() && is_open() ) {
-		int child_x = drawthis ? (hconn_x_center - (icon_w/2) + 1)	// offset children to right,
-		              : X;					// unless didn't drawthis
-		int child_w = W - (child_x-X);
-		int child_y_start = Y;
-		for ( int t=0; t<children(); t++ ) {
-			int lastchild = ((t+1)==children()) ? 1 : 0;
-			_children[t]->draw(child_x, Y, child_w, tree, itemfocus, prefs, lastchild);
+		}			// end non-child damage
+		// Draw child FLTK widget?
+		if ( widget() ) {
+			((Fl_Tree*)tree)->draw_child(*widget());		// let group handle drawing child
+			if ( widget()->label() )
+				((Fl_Tree*)tree)->draw_outside_label(*widget());	// label too
 		}
-		if ( has_children() && is_open() ) {
-			Y += prefs.openchild_marginbottom();		// offset below open child tree
+		// Draw focus box around item's bg last
+		if ( this == itemfocus &&
+		     Fl::visible_focus() &&
+		     Fl::focus() == tree &&
+		     prefs.selectmode() != FL_TREE_SELECT_NONE ) {
+			draw_item_focus(FL_NO_BOX,fg,bg,bg_x+1,bg_y+1,bg_w-1,bg_h-1);
 		}
-		if ( ! lastchild ) {
-			// Special 'clipped' calculation. (intentional variable shadowing)
-			int clipped = ((child_y_start < tree_top) && (Y < tree_top)) ||
-			              ((child_y_start > tree_bot) && (Y > tree_bot));
-			if (!clipped) draw_vertical_connector(hconn_x, child_y_start, Y, prefs);
-		}
+	}			// end drawthis
+}			// end clipped
+if ( drawthis ) Y += H2;			// adjust Y (even if clipped)
+// Draw child items (if any)
+if ( has_children() && is_open() ) {
+	int child_x = drawthis ? (hconn_x_center - (icon_w/2) + 1)	// offset children to right,
+	              : X;					// unless didn't drawthis
+	int child_w = W - (child_x-X);
+	int child_y_start = Y;
+	for ( int t=0; t<children(); t++ ) {
+		int lastchild = ((t+1)==children()) ? 1 : 0;
+		_children[t]->draw(child_x, Y, child_w, tree, itemfocus, prefs, lastchild);
 	}
+	if ( has_children() && is_open() ) {
+		Y += prefs.openchild_marginbottom();		// offset below open child tree
+	}
+	if ( ! lastchild ) {
+		// Special 'clipped' calculation. (intentional variable shadowing)
+		int clipped = ((child_y_start < tree_top) && (Y < tree_top)) ||
+		              ((child_y_start > tree_bot) && (Y > tree_bot));
+		if (!clipped) draw_vertical_connector(hconn_x, child_y_start, Y, prefs);
+	}
+}
 }
 #endif
 

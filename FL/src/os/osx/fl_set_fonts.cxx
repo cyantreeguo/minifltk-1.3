@@ -32,6 +32,7 @@
 // turn a stored font name into a pretty name:
 const char* Fl::get_font_name(Fl_Font fnum, int* ap)
 {
+	if (!fl_fonts) fl_fonts = Fl_X::calc_fl_fonts();
 	Fl_Fontdesc *f = fl_fonts + fnum;
 	if (!f->fontname[0]) {
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_5
@@ -199,6 +200,7 @@ Fl_Font Fl::set_fonts(const char* xstarname)
 static int array[128];
 int Fl::get_font_sizes(Fl_Font fnum, int*& sizep)
 {
+	if (!fl_fonts) fl_fonts = Fl_X::calc_fl_fonts();
 	Fl_Fontdesc *s = fl_fonts+fnum;
 	if (!s->name) s = fl_fonts; // empty slot in table, use entry 0
 	int cnt = 0;

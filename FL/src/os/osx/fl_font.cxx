@@ -18,6 +18,9 @@
 
 #include "fltk_config.h"
 #if __FLTK_MACOSX__
+#include <math.h>
+
+Fl_Fontdesc* fl_fonts = Fl_X::calc_fl_fonts();
 
 /* from fl_utf.c */
 extern unsigned fl_utf8toUtf16(const char* src, unsigned srclen, unsigned short* dst, unsigned dstlen);
@@ -50,7 +53,7 @@ Fl_Font_Descriptor::Fl_Font_Descriptor(const char* name, Fl_Fontsize Size)
 		double w;
 		CTFontGetAdvancesForGlyphs(fontref, kCTFontHorizontalOrientation, glyph, advances, 2);
 		w = advances[0].width;
-		if ( abs(advances[0].width - advances[1].width) < 1E-2 ) {//this is a fixed-width font
+		if ( fabs(advances[0].width - advances[1].width) < 1E-2 ) {//this is a fixed-width font
 			// slightly rescale fixed-width fonts so the character width has an integral value
 			CFRelease(fontref);
 			CGFloat fsize = size / ( w/floor(w + 0.5) );
@@ -183,10 +186,10 @@ static Fl_Fontdesc built_in_table_PS[] = { // PostScript font names preferred wh
 	{"Arial-BoldMT"},
 	{"Arial-ItalicMT"},
 	{"Arial-BoldItalicMT"},
-	{"CourierNewPSMT"},
-	{"CourierNewPS-BoldMT"},
-	{"CourierNewPS-ItalicMT"},
-	{"CourierNewPS-BoldItalicMT"},
+	{"Courier"},
+	{"Courier-Bold"},
+	{"Courier-Oblique"},
+	{"Courier-BoldOblique"},
 	{"TimesNewRomanPSMT"},
 	{"TimesNewRomanPS-BoldMT"},
 	{"TimesNewRomanPS-ItalicMT"},
@@ -203,8 +206,8 @@ static Fl_Fontdesc built_in_table_full[] = { // full font names used before 10.5
 	{"Arial Bold"},
 	{"Arial Italic"},
 	{"Arial Bold Italic"},
-	{"Courier New"},
-	{"Courier New Bold"},
+	{"Courier"},
+	{"Courier Bold"},
 	{"Courier New Italic"},
 	{"Courier New Bold Italic"},
 	{"Times New Roman"},
@@ -235,6 +238,8 @@ static UniChar *mac_Utf8_to_Utf16(const char *txt, int len, int *new_len)
 
 Fl_Fontdesc* Fl_X::calc_fl_fonts(void)
 {
+	if (fl_fonts) return fl_fonts;
+	if (!fl_mac_os_version) fl_mac_os_version = calc_mac_os_version();
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_5
 	return (fl_mac_os_version >= Fl_X::CoreText_threshold ? built_in_table_PS : built_in_table_full);
 #else

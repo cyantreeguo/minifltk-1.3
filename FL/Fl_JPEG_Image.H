@@ -47,11 +47,15 @@ public:
 		unsigned char *buf;
 		unsigned char *p, *ptr;	// Pointer to pixel values
 
-		if ((fp = fl_fopen(filename, "rb")) == NULL) return;
+		if ((fp = fl_fopen(filename, "rb")) == NULL) {
+			ld(ERR_FILE_ACCESS);
+			return;
+		}
 		fseek(fp, 0, SEEK_END);
 		size = (int) ftell(fp);
 		if ( size <= 0 ) {
 			fclose(fp);
+			ld(ERR_FORMAT);
 			return;
 		}
 		buf = (unsigned char*)malloc(size);

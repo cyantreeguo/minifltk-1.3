@@ -29,9 +29,7 @@
 */
 class FL_EXPORT Fl_BMP_Image : public Fl_RGB_Image
 {
-
 public:
-
 	Fl_BMP_Image(const char* filename);
 };
 

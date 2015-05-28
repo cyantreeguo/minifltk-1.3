@@ -70,7 +70,12 @@ int Fl_System_Printer::start_job (int pagecount, int *frompage, int *topage)
 	pd.Flags = PD_RETURNDC | PD_USEDEVMODECOPIESANDCOLLATE | PD_NOSELECTION;
 	pd.nMinPage = 1;
 	pd.nMaxPage = pagecount;
-	if (PrintDlg (&pd) != 0) {
+	BOOL b = PrintDlg (&pd);
+	if (pd.hwndOwner) { // restore the correct state of mouse buttons and keyboard modifier keys (STR #3221)
+		WNDPROC windproc = (WNDPROC)GetWindowLongPtrW(pd.hwndOwner, GWLP_WNDPROC);
+		CallWindowProc(windproc, pd.hwndOwner, WM_ACTIVATEAPP, 1, 0);
+	}
+	if (b != 0) {
 		hPr = pd.hDC;
 		if (hPr != NULL) {
 			strcpy (docName, "FLTK");

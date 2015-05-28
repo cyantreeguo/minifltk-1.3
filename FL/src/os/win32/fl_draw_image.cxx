@@ -262,7 +262,7 @@ static void innards(const uchar *buf, int X, int Y, int W, int H,
 				}
 			}
 		}
-		if (Fl_Surface_Device::surface() != Fl_Display_Device::display_device()) {
+		if (Fl_Surface_Device::surface() == Fl_Display_Device::display_device()) {
 			// if print context, device and logical units are not equal, so SetDIBitsToDevice
 			// does not do the expected job, whereas StretchDIBits does it.
 			StretchDIBits(fl_gc, x, y+j-k, w, k, 0, 0, w, k,

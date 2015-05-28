@@ -1079,8 +1079,9 @@ void Fl_Input_::caret()
 }
 static void tick(void *v)
 {
-	((Fl_Input_*)v)->caret();
-	Fl::add_timeout(CARET_FLUSH_TIME, tick, v);
+	Fl_Input_ *input = (Fl_Input_ *)v;
+	input->caret();
+	if ( input->caret_exists() ) Fl::repeat_timeout(CARET_FLUSH_TIME, tick, v);
 }
 
 /**
@@ -1113,12 +1114,22 @@ int Fl_Input_::handletext(int event, int X, int Y, int W, int H)
 			minimal_update(mark_, position_);
 		if ( caret_ == 0 ) {
 			caret_ = 1;
-			Fl::add_timeout(CARET_FLUSH_TIME, tick, this);
+			if ( ! caret_time_exists_ ) {
+				if ( ! Fl::has_timeout(tick, this) ) Fl::add_timeout(CARET_FLUSH_TIME, tick, this);
+				caret_time_exists_ = 1;
+				//printf("add timeout\n");
+			}
 		}
 		return 1;
 
 	case FL_UNFOCUS:
-		if ( caret_ > 0 ) Fl::remove_timeout(tick, this);
+		if ( caret_ > 0 ) {
+			if ( caret_time_exists_ ) {
+				if ( Fl::has_timeout(tick, this) ) Fl::remove_timeout(tick, this);
+				caret_time_exists_ = 0;
+				//printf("remove timeout\n");
+			}
+		}
 		caret_ = 0;
 
 		if (active_r() && window()) window()->cursor(FL_CURSOR_DEFAULT);
@@ -1234,6 +1245,7 @@ Fl_Input_::Fl_Input_(int X, int Y, int W, int H, const char* l)
 	: Fl_Widget(X, Y, W, H, l)
 {
 	caret_ = 0;
+	caret_time_exists_ = 0;
 	caret_x_ = caret_y_ = caret_w_ = caret_h_ = 0;
 
 	box(FL_DOWN_BOX);
@@ -1426,7 +1438,8 @@ void Fl_Input_::resize(int X, int Y, int W, int H)
 */
 Fl_Input_::~Fl_Input_()
 {
-	if ( caret_ > 0 ) Fl::remove_timeout(tick, this);
+	//if ( caret_ > 0 ) 
+	if ( caret_time_exists_ ) Fl::remove_timeout(tick, this);
 	if (undowidget == this) undowidget = 0;
 	if (bufsize) free((void*)buffer);
 }
