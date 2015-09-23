@@ -29,9 +29,9 @@
 
 /**
   Base class of all widgets that have a menu in FLTK.
-  Currently FLTK provides you with 
+  Currently FLTK provides you with
   Fl_Menu_Button, Fl_Menu_Bar, and Fl_Choice.
-  
+
   <P>The class contains a pointer to an array of structures of type  Fl_Menu_Item.  The
   array may either be supplied directly by the user program, or it may
   be "private": a dynamically allocated array managed by the Fl_Menu_.
@@ -60,6 +60,9 @@ protected:
 	Fl_Font textfont_;
 	Fl_Fontsize textsize_;
 	Fl_Color textcolor_;
+
+	int item_pathname_(char *name, int namelen, const Fl_Menu_Item *finditem,
+	                   const Fl_Menu_Item *menu=0) const;
 
 public:
 	Fl_Menu_(int,int,int,int,const char * =0);
@@ -218,7 +221,7 @@ public:
 	void down_color(unsigned c) {
 		selection_color(c);
 	}
-	
+
 	void setonly(Fl_Menu_Item* item);
 };
 

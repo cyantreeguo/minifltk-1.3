@@ -654,9 +654,11 @@ class FL_EXPORT Fl_Display_Device : public Fl_Surface_Device
 	static Fl_Display_Device *_display; // the platform display device
 #ifdef __APPLE__
 	friend class Fl_X;
-#endif
-#if defined(__APPLE__) || defined(FL_DOXYGEN)
+	friend class Fl_Graphics_Driver;
 	static bool high_res_window_; //< true when drawing to a window of a retina display (Mac OS X only)
+	static bool high_resolution() {
+		return high_res_window_;
+	}
 #endif
 public:
 	static const char *class_id;
@@ -665,11 +667,6 @@ public:
 	};
 	Fl_Display_Device(Fl_Graphics_Driver *graphics_driver);
 	static Fl_Display_Device *display_device();
-#ifdef __APPLE__
-	static bool high_resolution() {
-		return high_res_window_;
-	}
-#endif
 };
 
 /**

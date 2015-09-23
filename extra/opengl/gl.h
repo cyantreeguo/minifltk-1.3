@@ -56,23 +56,35 @@
 
 #  ifdef __APPLE__
 #    include <OpenGL/gl.h>
+#    ifdef FL_LIBRARY
+#      include <FL/x.H>
+#      if MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_4
+#        include <OpenGL/glext.h>
+#      endif
+#    endif // FL_LIBRARY
 #  else
 #    include <GL/gl.h>
-#  endif
+#  endif  // __APPLE__
 
 FL_EXPORT void gl_start();
 FL_EXPORT void gl_finish();
 
 FL_EXPORT void gl_color(Fl_Color i);
 /** back compatibility */
-inline void gl_color(int c) {gl_color((Fl_Color)c);}
+inline void gl_color(int c)
+{
+	gl_color((Fl_Color)c);
+}
 
 FL_EXPORT void gl_rect(int x,int y,int w,int h);
 /**
   Fills the given rectangle with the current color.
   \see gl_rect(int x, int y, int w, int h)
   */
-inline void gl_rectf(int x,int y,int w,int h) {glRecti(x,y,x+w,y+h);}
+inline void gl_rectf(int x,int y,int w,int h)
+{
+	glRecti(x,y,x+w,y+h);
+}
 
 FL_EXPORT void gl_font(int fontid, int size);
 FL_EXPORT int  gl_height();

@@ -252,7 +252,7 @@ int Fl::event_key(int k)
 int Fl::get_key(int k)
 {
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_4
-	if(CGEventSourceKeyState != NULL) {
+	if (&CGEventSourceKeyState != NULL) {
 		return (int)CGEventSourceKeyState(kCGEventSourceStateCombinedSessionState, fltk2mac(k) );
 	} else
 #endif

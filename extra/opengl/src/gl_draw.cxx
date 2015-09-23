@@ -36,10 +36,6 @@
 #include "Xutf8.h"
 #endif
 
-#ifdef __APPLE__
-static int gl_scale = 1; // set to 2 for high resolution Fl_Gl_Window
-#endif
-
 /** Returns the current font's height */
 int   gl_height()
 {
@@ -362,7 +358,22 @@ void gl_draw_image(const uchar* b, int x, int y, int w, int h, int d, int ld)
 
 #if __APPLE__ || defined(FL_DOXYGEN)
 
-#include <FL/glu.h>  // for gluUnProject()
+/* Text drawing to an OpenGL scene under Mac OS X is implemented using textures, as recommended by Apple.
+ This allows to use any font at any size, and any Unicode character.
+ Some old Apple hardware doesn't implement the required GL_EXT_texture_rectangle extension.
+ For these, glutStrokeString() is used to draw text. In that case, it's possible to vary text size,
+ but not text font, and only ASCII characters can be drawn.
+ */
+
+#if MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_4
+#define kCGBitmapByteOrder32Host 0
+#define GL_TEXTURE_RECTANGLE_ARB GL_TEXTURE_RECTANGLE_EXT
+#endif
+static int gl_scale = 1; // set to 2 for high resolution Fl_Gl_Window
+static int has_texture_rectangle = 0; // true means GL_EXT_texture_rectangle is available
+
+#include <FL/glu.h>  // for gluUnProject() and gluCheckExtension()
+#include <FL/glut.H> // for glutStrokeString() and glutStrokeLength()
 
 // manages a fifo pile of pre-computed string textures
 class gl_texture_fifo
@@ -374,14 +385,14 @@ private:
 		char *utf8; //its text
 		Fl_Font_Descriptor *fdesc; // its font
 		int width; // its width
-		int height; // its height
+		float ratio; // used without rectangle texture
 		int scale; // 1 or 2 for low/high resolution
 	} data;
 	data *fifo; // array of pile elements
 	int size_; // pile height
 	int current; // the oldest texture to have entered the pile
 	int last; // pile top
-	int textures_generated; // true iff glGenTextures has been called
+	int textures_generated; // true after glGenTextures has been called
 	void display_texture(int rank);
 	int compute_texture(const char* str, int n);
 	int already_known(const char *str, int n);
@@ -424,34 +435,44 @@ void gl_texture_fifo::display_texture(int rank)
 	glLoadIdentity ();
 	float winw = gl_scale * Fl_Window::current()->w();
 	float winh = gl_scale * Fl_Window::current()->h();
-	glScalef (2.0f / winw, 2.0f /  winh, 1.0f);
-	glTranslatef (-winw / 2.0f, -winh / 2.0f, 0.0f);
-	//write the texture on screen
-	GLfloat pos[4];
-	glGetFloatv(GL_CURRENT_RASTER_POSITION, pos);
-	CGRect bounds = CGRectMake (pos[0], pos[1] - gl_scale*fl_descent(), fifo[rank].width, fifo[rank].height);
-
 	// GL_COLOR_BUFFER_BIT for glBlendFunc, GL_ENABLE_BIT for glEnable / glDisable
 	glPushAttrib(GL_ENABLE_BIT | GL_TEXTURE_BIT | GL_COLOR_BUFFER_BIT);
 	glDisable (GL_DEPTH_TEST); // ensure text is not removed by depth buffer test.
 	glEnable (GL_BLEND); // for text fading
 	glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // ditto
-	glEnable (GL_TEXTURE_RECTANGLE_EXT);
 	glDisable(GL_LIGHTING);
-	glBindTexture (GL_TEXTURE_RECTANGLE_EXT, fifo[rank].texName);
-	glBegin (GL_QUADS);
-	glTexCoord2f (0.0f, 0.0f); // draw lower left in world coordinates
-	glVertex2f (bounds.origin.x, bounds.origin.y);
+	GLfloat pos[4];
+	glGetFloatv(GL_CURRENT_RASTER_POSITION, pos);
+	float R = 2;
+	if (!has_texture_rectangle) {
+		R *= fifo[rank].ratio;
+	}
+	glScalef (R/winw, R/winh, 1.0f);
+	glTranslatef (-winw/R, -winh/R, 0.0f);
+	if (has_texture_rectangle) {
+		glEnable (GL_TEXTURE_RECTANGLE_ARB);
+		glBindTexture (GL_TEXTURE_RECTANGLE_ARB, fifo[rank].texName);
+		GLint height;
+		glGetTexLevelParameteriv(GL_TEXTURE_RECTANGLE_ARB, 0, GL_TEXTURE_HEIGHT, &height);
+		CGRect bounds = CGRectMake (pos[0], pos[1] - gl_scale*fl_descent(), fifo[rank].width, height);
+		//write the texture on screen
+		glBegin (GL_QUADS);
+		glTexCoord2f (0.0f, 0.0f); // draw lower left in world coordinates
+		glVertex2f (bounds.origin.x, bounds.origin.y);
 
-	glTexCoord2f (0.0f, fifo[rank].height); // draw upper left in world coordinates
-	glVertex2f (bounds.origin.x, bounds.origin.y + bounds.size.height);
+		glTexCoord2f (0.0f, height); // draw upper left in world coordinates
+		glVertex2f (bounds.origin.x, bounds.origin.y + bounds.size.height);
 
-	glTexCoord2f (fifo[rank].width, fifo[rank].height); // draw upper right in world coordinates
-	glVertex2f (bounds.origin.x + bounds.size.width, bounds.origin.y + bounds.size.height);
+		glTexCoord2f (fifo[rank].width, height); // draw upper right in world coordinates
+		glVertex2f (bounds.origin.x + bounds.size.width, bounds.origin.y + bounds.size.height);
 
-	glTexCoord2f (fifo[rank].width, 0.0f); // draw lower right in world coordinates
-	glVertex2f (bounds.origin.x + bounds.size.width, bounds.origin.y);
-	glEnd ();
+		glTexCoord2f (fifo[rank].width, 0.0f); // draw lower right in world coordinates
+		glVertex2f (bounds.origin.x + bounds.size.width, bounds.origin.y);
+		glEnd ();
+	} else {
+		glTranslatef(pos[0]*2/R, pos[1]*2/R, 0.0);
+		glutStrokeString(GLUT_STROKE_ROMAN, (uchar*)fifo[rank].utf8);
+	}
 	glPopAttrib();
 
 	// reset original matrices
@@ -478,40 +499,45 @@ int gl_texture_fifo::compute_texture(const char* str, int n)
 {
 	current = (current + 1) % size_;
 	if (current > last) last = current;
-	//write str to a bitmap just big enough
 	if ( fifo[current].utf8 ) free(fifo[current].utf8);
 	fifo[current].utf8 = (char *)malloc(n + 1);
 	memcpy(fifo[current].utf8, str, n);
 	fifo[current].utf8[n] = 0;
-	fifo[current].width = 0, fifo[current].height = 0;
-	fl_measure(fifo[current].utf8, fifo[current].width, fifo[current].height, 0);
-	fifo[current].width *= gl_scale;
-	fifo[current].height *= gl_scale;
-	fifo[current].scale = gl_scale;
-	CGColorSpaceRef lut = CGColorSpaceCreateDeviceRGB();
-	void *base = calloc(4*fifo[current].width, fifo[current].height);
-	if (base == NULL) return -1;
-	CGContextRef save_gc = fl_gc;
-	fl_gc = CGBitmapContextCreate(base, fifo[current].width, fifo[current].height, 8, fifo[current].width*4, lut, kCGImageAlphaPremultipliedLast);
-	CGColorSpaceRelease(lut);
 	fl_graphics_driver->font_descriptor(gl_fontsize);
-	GLfloat colors[4];
-	glGetFloatv(GL_CURRENT_COLOR, colors);
-	fl_color((uchar)(colors[0]*255), (uchar)(colors[1]*255), (uchar)(colors[2]*255));
-	CGContextTranslateCTM(fl_gc, 0, fifo[current].height - gl_scale*fl_descent());
-	CGContextScaleCTM(fl_gc, gl_scale, gl_scale);
-	fl_draw(str, n, 0, 0);
-	//put this bitmap in a texture
-	glPushAttrib(GL_TEXTURE_BIT);
-	glBindTexture (GL_TEXTURE_RECTANGLE_EXT, fifo[current].texName);
-	glTexParameteri(GL_TEXTURE_RECTANGLE_EXT, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_RECTANGLE_EXT, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexImage2D(GL_TEXTURE_RECTANGLE_EXT, 0, GL_RGBA, fifo[current].width, fifo[current].height, 0,  GL_RGBA, GL_UNSIGNED_BYTE, base);
-	glPopAttrib();
-	CGContextRelease(fl_gc);
-	fl_gc = save_gc;
-	free(base);
+	int h;
+	fl_measure(fifo[current].utf8, fifo[current].width, h, 0);
+	fifo[current].width *= gl_scale;
+	h *= gl_scale;
+	fifo[current].scale = gl_scale;
 	fifo[current].fdesc = gl_fontsize;
+	if (has_texture_rectangle) {
+		//write str to a bitmap just big enough
+		CGColorSpaceRef lut = CGColorSpaceCreateDeviceRGB();
+		void *base = NULL;
+		if (fl_mac_os_version < 100600) base = calloc(4*fifo[current].width, h);
+		CGContextRef save_gc = fl_gc;
+		fl_gc = CGBitmapContextCreate(base, fifo[current].width, h, 8, fifo[current].width*4, lut,
+		                              (CGBitmapInfo)(kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Host));
+		CGColorSpaceRelease(lut);
+		GLfloat colors[4];
+		glGetFloatv(GL_CURRENT_COLOR, colors);
+		fl_color((uchar)(colors[0]*255), (uchar)(colors[1]*255), (uchar)(colors[2]*255));
+		CGContextTranslateCTM(fl_gc, 0, h - gl_scale*fl_descent());
+		CGContextScaleCTM(fl_gc, gl_scale, gl_scale);
+		fl_draw(str, n, 0, 0);
+		//put this bitmap in a texture
+		glPushAttrib(GL_TEXTURE_BIT);
+		glBindTexture (GL_TEXTURE_RECTANGLE_ARB, fifo[current].texName);
+		glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glPixelStorei(GL_UNPACK_ROW_LENGTH, fifo[current].width);
+		glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, fifo[current].width, h, 0,  GL_BGRA_EXT, GL_UNSIGNED_INT_8_8_8_8_REV, CGBitmapContextGetData(fl_gc));
+		glPopAttrib();
+		CGContextRelease(fl_gc);
+		fl_gc = save_gc;
+		if (base) free(base);
+	} else {
+		fifo[current].ratio = float(fifo[current].width)/glutStrokeLength(GLUT_STROKE_ROMAN, (uchar*)fifo[current].utf8);
+	}
 	return current;
 }
 
@@ -535,7 +561,8 @@ static void gl_draw_textures(const char* str, int n)
 	//fprintf(stderr,"gl_scale=%d\n",gl_scale);
 	if (! gl_fifo) gl_fifo = new gl_texture_fifo();
 	if (!gl_fifo->textures_generated) {
-		for (int i = 0; i < gl_fifo->size_; i++) glGenTextures (1, &(gl_fifo->fifo[i].texName));
+		has_texture_rectangle = gluCheckExtension((GLubyte*)"GL_EXT_texture_rectangle", glGetString(GL_EXTENSIONS));
+		if (has_texture_rectangle) for (int i = 0; i < gl_fifo->size_; i++) glGenTextures(1, &(gl_fifo->fifo[i].texName));
 		gl_fifo->textures_generated = 1;
 	}
 	int rank = gl_fifo->already_known(str, n);

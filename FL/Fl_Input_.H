@@ -94,7 +94,9 @@
 class FL_EXPORT Fl_Input_ : public Fl_Widget
 {
 public:
-	inline unsigned char caret_exists() { return caret_time_exists_; }
+	inline unsigned char caret_exists() {
+		return caret_time_exists_;
+	}
 private:
 	unsigned char caret_, caret_time_exists_;
 	int caret_x_, caret_y_, caret_w_, caret_h_;
@@ -102,7 +104,7 @@ private:
 	/** \internal Storage for the text field. */
 	const char* value_;
 
-	/** \internal Buffer memory for expanded text. \see expand() */
+	/** \internal Current size of internal value() buffer in bytes. */
 	char* buffer;
 
 	/** \internal Size of text in bytes in the \p value_ field. */
@@ -114,8 +116,8 @@ private:
 	/** \internal Position of the cursor in the document. */
 	int position_;
 
-	/** \internal Position of the other end of the selected text. If \p position_ equals
-	    \p mark_, no text is selected */
+	/** \internal Position of the other end of the selected text.
+	      If \p position_ equals \p mark_, no text is selected */
 	int mark_;
 
 	/** \internal Behavior of Tab key in multiline input widget.
@@ -130,7 +132,7 @@ private:
 	    of the buffer. */
 	int mu_p;
 
-	/** \internal Maximum number of characters. */
+	/** \internal Maximum number of (UTF-8) characters a user can input. */
 	int maximum_size_;
 
 	/** \internal Shortcut key that will fetch focus for this widget. */
@@ -287,12 +289,14 @@ public:
 	}
 
 	/** Sets the maximum length of the input field in characters.
-	  This limits the number of <b>characters</b> that can be inserted
-	  in the widget.
-	  \since FLTK 1.3 this is different than the buffer size, since one
-	  character can be more than one byte in UTF-8 encoding. In FLTK 1.1
-	  this was the same (one byte = one character).
-	*/
+
+	    This limits the number of <b>characters</b> that can be inserted
+	    in the widget.
+
+	    Since FLTK 1.3 this is different than the buffer size, since one
+	    character can be more than one byte in UTF-8 encoding. In FLTK 1.1
+	    this was the same (one byte = one character).
+	  */
 	void maximum_size(int m) {
 		maximum_size_ = m;
 	}

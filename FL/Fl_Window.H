@@ -145,9 +145,9 @@ protected:
 #endif
 	shape_data_type *shape_data_; ///< non-null means the window has a non-rectangular shape
 private:
-	void shape_bitmap_(Fl_Bitmap* b);
-	void shape_alpha_(Fl_RGB_Image* img, int offset);
-	void shape_pixmap_(Fl_Pixmap* pixmap);
+	void shape_bitmap_(Fl_Image* b);
+	void shape_alpha_(Fl_Image* img, int offset);
+	void shape_pixmap_(Fl_Image* pixmap);
 public:
 	void shape(const Fl_Image* img);
 	/** Set the window's shape with an Fl_Image.
@@ -529,20 +529,31 @@ public:
 		return i != 0;
 	}
 	/**
-	  Puts the window on the screen. Usually (on X) this has the side
-	  effect of opening the display.
+	    Puts the window on the screen. Usually (on X) this has the side
+	    effect of opening the display.
 
-	  If the window is already shown then it is restored and raised to the
-	  top.  This is really convenient because your program can call show()
-	  at any time, even if the window is already up.  It also means that
-	  show() serves the purpose of raise() in other toolkits.
+	    If the window is already shown then it is restored and raised to the
+	    top.  This is really convenient because your program can call show()
+	    at any time, even if the window is already up.  It also means that
+	    show() serves the purpose of raise() in other toolkits.
 
-	  Fl_Window::show(int argc, char **argv) is used for top-level
-	  windows and allows standard arguments to be parsed from the
-	  command-line.
+	    Fl_Window::show(int argc, char **argv) is used for top-level
+	    windows and allows standard arguments to be parsed from the
+	    command-line.
 
-	  \see Fl_Window::show(int argc, char **argv)
-	*/
+	    \note For some obscure reasons Fl_Window::show() resets the current
+	    group by calling Fl_Group::current(0). The comments in the code
+	    say "get rid of very common user bug: forgot end()". Although
+	    this is true it may have unwanted side effects if you show() an
+	    unrelated window (maybe for an error message or warning) while
+	    building a window or any other group widget.
+
+	    \todo Check if we can remove resetting the current group in a later
+	    FLTK version (after 1.3.x). This may break "already broken" programs
+	    though if they rely on this "feature".
+
+	    \see Fl_Window::show(int argc, char **argv)
+	  */
 	virtual void show();
 	/**
 	  Removes the window from the screen.  If the window is already hidden or

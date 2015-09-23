@@ -1383,7 +1383,7 @@ void Fl_Table::draw()
 				if ( row_header() ) {
 					// NOTE:
 					//     Careful with that lower corner; don't use tih; when eg.
-					//     table->box(FL_THIN_UPFRAME) and hscrollbar hidden,
+					//     table->box(FL_THIN_UP_FRAME) and hscrollbar hidden,
 					//     leaves a row of dead pixels.
 					//
 					fl_rectf(wix, tiy + table_h, row_header_width(),

@@ -236,7 +236,7 @@ public:
 				if (w1 > W) W = w1;
 				// calculate the maximum width of all shortcuts
 				if (m->shortcut_) {
-					// s is a pointerto the utf8 string for the entire shortcut
+					// s is a pointer to the UTF-8 string for the entire shortcut
 					// k points only to the key part (minus the modifier keys)
 					const char *k, *s = fl_shortcut_label(m->shortcut_, &k);
 					if (fl_utf_nb_char((const unsigned char*)k, (int) strlen(k))<=4) {

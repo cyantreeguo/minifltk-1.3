@@ -20,15 +20,13 @@
 #if HAVE_GL
 
 extern int fl_gl_load_plugin;
-#ifdef __APPLE__
-extern void gl_texture_reset();
-#endif
 
 #include "Fl.H"
 #include "x.H"
 #include "Fl_Gl_Choice.H"
 #ifdef __APPLE__
 #include <gl.h>
+#include <OpenGL/OpenGL.h>
 #endif
 #include "../Fl_Gl_Window.H"
 #include <stdlib.h>
@@ -103,20 +101,12 @@ void Fl_Gl_Window::show()
 
 int Fl_Gl_Window::pixel_w()
 {
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_7
 	return Fl_X::resolution_scaling_factor(this) * w();
-#else
-	return w();
-#endif
 }
 
 int Fl_Gl_Window::pixel_h()
 {
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_7
 	return Fl_X::resolution_scaling_factor(this) * h();
-#else
-	return h();
-#endif
 }
 
 #endif // __APPLE__
@@ -137,14 +127,29 @@ void Fl_Gl_Window::invalidate()
 #endif
 }
 
-/**
-  See const int Fl_Gl_Window::mode() const
-*/
 int Fl_Gl_Window::mode(int m, const int *a)
 {
 	if (m == mode_ && a == alist) return 0;
 #ifndef __APPLE__
 	int oldmode = mode_;
+#endif
+#if defined(__APPLE__) || defined(USE_X11)
+	if (a) { // when the mode is set using the a array of system-dependent values, and if asking for double buffer,
+		// the FL_DOUBLE flag must be set in the mode_ member variable
+		const int *aa = a;
+		while (*aa) {
+			if (*(aa++) ==
+#  if defined(__APPLE__)
+			    kCGLPFADoubleBuffer
+#  else
+			    GLX_DOUBLEBUFFER
+#  endif
+			   ) {
+				m |= FL_DOUBLE;
+				break;
+			}
+		}
+	}
 #endif // !__APPLE__
 #if !defined(WIN32) && !defined(__APPLE__)
 	Fl_Gl_Choice* oldg = g;
@@ -190,7 +195,7 @@ void Fl_Gl_Window::make_current()
 {
 //  puts("Fl_Gl_Window::make_current()");
 //  printf("make_current: context_=%p\n", context_);
-#if defined(__APPLE__) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_7
+#if defined(__APPLE__)
 	// detect if the window was moved between low and high resolution displays
 	if (Fl_X::i(this)->changed_resolution()) {
 		Fl_X::i(this)->changed_resolution(false);
@@ -203,11 +208,6 @@ void Fl_Gl_Window::make_current()
 		context_ = fl_create_gl_context(this, g);
 		valid(0);
 		context_valid(0);
-#ifdef __APPLE__
-		// resets the pile of string textures used to draw strings
-		// necessary when the context is renewed
-		gl_texture_reset();
-#endif
 	}
 	fl_set_gl_context(this, context_);
 
