@@ -708,6 +708,15 @@ void fl_open_display()
 
 	Display *d = XOpenDisplay(0);
 	if (!d) Fl::fatal("Can't open display: %s",XDisplayName(0));
+	
+	// Add by cyantree, for root-window ime
+	if (!XSupportsLocale()) {
+		//(void) fprintf(stderr, "%s: X does not support locale %s.", program_name, setlocale(LC_ALL, NULL));
+		//exit(1);
+	}
+	if (XSetLocaleModifiers("") == NULL) {
+		//(void) fprintf(stderr, "%s: Warning: cannot set locale modifiers.", argv[0]);
+	}
 
 	fl_open_display(d);
 }
