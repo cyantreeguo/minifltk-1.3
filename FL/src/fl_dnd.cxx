@@ -26,6 +26,8 @@
 #  include "os/linux/x_fl_dnd.cxx"
 #elif __FLTK_WINCE__
 #  include "os/wince/fl_dnd.cxx"
+#elif __FLTK_S60v32__
+#  include "os/s60v32/fl_dnd_s60.cxx"
 #else
 #error unsupported platform
 #endif

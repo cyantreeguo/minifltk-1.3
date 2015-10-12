@@ -818,6 +818,42 @@ int Fl_GDI_Printer_Graphics_Driver::draw_scaled(Fl_Image *img, int XP, int YP, i
 	return 1;
 }
 
+#elif defined(__S60_32__)
+void Fl_Gc_Graphics_Driver::draw(Fl_RGB_Image *img, int XP, int YP, int WP, int HP, int cx, int cy)
+{
+	int X, Y, W, H;
+	// Don't draw an empty image...
+	if (!img->d() || !img->array) {
+		img->draw_empty(XP, YP);
+		return;
+	}
+	if (start(img, XP, YP, WP, HP, img->w(), img->h(), cx, cy, X, Y, W, H)) {
+		return;
+	}
+	if (!img->id_) {
+		if (img->d() == 1 || img->d() == 3) {
+			img->id_ = fl_create_offscreen(img->w(), img->h());
+			fl_begin_offscreen((Fl_Offscreen)img->id_);
+			fl_draw_image(img->array, 0, 0, img->w(), img->h(), img->d(), img->ld());
+			fl_end_offscreen();
+		} else if (img->d() == 4 && fl_can_do_alpha_blending()) {
+		/*
+			img->id_ = create_offscreen_with_alpha(img->w(), img->h());
+			fl_begin_offscreen((Fl_Offscreen)img->id_);
+			fl_draw_image(img->array, 0, 0, img->w(), img->h(), img->d() | FL_IMAGE_WITH_ALPHA, img->ld());
+			fl_end_offscreen();
+			*/
+		}
+	}
+	if (img->id_) {
+		if (img->d()==2 || img->d()==4) {
+			//copy_offscreen_with_alpha(X, Y, W, H, img->id_, cx, cy);
+		} else {
+			//copy_offscreen(X, Y, W, H, img->id_, cx, cy);
+		}
+	}
+}
+
 #else
 void Fl_Xlib_Graphics_Driver::draw(Fl_RGB_Image *img, int XP, int YP, int WP, int HP, int cx, int cy)
 {

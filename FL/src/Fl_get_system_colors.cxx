@@ -99,7 +99,7 @@ static void set_selection_color(uchar r, uchar g, uchar b)
 	Fl::set_color(FL_SELECTION_COLOR,r,g,b);
 }
 
-#if defined(WIN32) || defined(__APPLE__)
+#if defined(WIN32) || defined(__APPLE__) || defined(__S60_32__)
 
 #  include <stdio.h>
 // simulation of XParseColor:
@@ -230,8 +230,14 @@ void Fl::get_system_colors()
 	else
 		set_selection_color(c.red, c.green, c.blue);
 #else
-set_selection_color(0x00, 0x00, 0x80);
+	set_selection_color(0x00, 0x00, 0x80);
 #endif
+}
+
+#elif defined(__S60_32__)
+// TODO: S60
+void Fl::get_system_colors()
+{
 }
 
 #else						// --- X11 ---

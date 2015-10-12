@@ -164,6 +164,8 @@
 
 #define HAVE_POLL 0
 
+#undef UNICODE
+
 #endif
 
 /*

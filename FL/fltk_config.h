@@ -10,6 +10,8 @@
 #include "fltk_config_linux.h"
 #elif __FLTK_WINCE__
 #include "fltk_config_wince.h"
+#elif __FLTK_S60v32__
+#include "fltk_config_s60v32.h"
 #else
 #error unsupported platform
 #endif

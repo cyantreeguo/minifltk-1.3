@@ -61,6 +61,9 @@ void fl_quartz_restore_line_style_()
 	CGContextSetLineJoin(fl_gc, fl_quartz_line_join_);
 	CGContextSetLineDash(fl_gc, 0, fl_quartz_line_pattern, fl_quartz_line_pattern_size);
 }
+#elif __FLTK_S60v32__
+float fl_s60_line_width_ = 1.0f;
+int fl_s60_line_style_ = 0;
 #endif
 
 void Fl_Graphics_Driver::line_style(int style, int width, char* dashes)
@@ -322,6 +325,31 @@ void Fl_Graphics_Driver::line_style(int style, int width, char* dashes)
 	}
 	fl_quartz_restore_line_style_();
 #endif
+#elif __FLTK_S60v32__
+	// DONE: S60
+	// TODO: S60, Custom dashes support
+	if (width == 0) width = 1;
+	if (style == 0) style = FL_SOLID;
+	fl_s60_line_width_ = width;
+	fl_s60_line_style_ = style;
+	Fl_X::WindowGc->SetPenSize(TSize(width, width));
+	switch (style & 0xFF) {
+	  case FL_SOLID:
+		  Fl_X::WindowGc->SetPenStyle(CGraphicsContext::ESolidPen);
+		  break;
+	  case FL_DASH:
+		  Fl_X::WindowGc->SetPenStyle(CGraphicsContext::EDashedPen);
+		  break;
+	  case FL_DOT:
+		  Fl_X::WindowGc->SetPenStyle(CGraphicsContext::EDottedPen);
+		  break;
+	  case FL_DASHDOT:
+		  Fl_X::WindowGc->SetPenStyle(CGraphicsContext::EDotDashPen);
+		  break;
+	  case FL_DASHDOTDOT:
+		  Fl_X::WindowGc->SetPenStyle(CGraphicsContext::EDotDotDashPen);
+		  break;
+	}
 #else
 # error unsupported platform
 #endif

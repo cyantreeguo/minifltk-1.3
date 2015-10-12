@@ -364,6 +364,8 @@ void fl_beep(int type)
 		XBell(fl_display, 50);
 		break;
 	}
+#elif __FLTK_S60v32__
+	// TODO: S60
 #else
 #error unsupported platform	
 #endif // WIN32

@@ -156,6 +156,40 @@ static Keyname table[] = {
 	{FL_Alt_R,	"Alt_R"},
 	{FL_Delete,	"\xe2\x8c\xa7"}  // x in a rectangle box
 };
+#elif defined(__S60_32__)// if not X
+static Keyname table[] = {
+	{' ', "Space"},
+	{FL_BackSpace, "Backspace"},
+	{FL_Tab,	"Tab"},
+	{0xff0b/*XK_Clear*/, "Clear"},
+	{FL_Enter,	"Enter"}, // X says "Enter"
+	{FL_Pause,	"Pause"},
+	{FL_Scroll_Lock, "Scroll_Lock"},
+	{FL_Escape,	"Escape"},
+	{FL_Home,	"Home"},
+	{FL_Left,	"Left"},
+	{FL_Up,	"Up"},
+	{FL_Right,	"Right"},
+	{FL_Down,	"Down"},
+	{FL_Page_Up,	"Page_Up"}, // X says "Prior"
+	{FL_Page_Down,"Page_Down"}, // X says "Next"
+	{FL_End,	"End"},
+	{FL_Print,	"Print"},
+	{FL_Insert,	"Insert"},
+	{FL_Menu,	"Menu"},
+	{FL_Num_Lock,	"Num_Lock"},
+	{FL_KP_Enter,	"KP_Enter"},
+	{FL_Shift_L,	"Shift_L"},
+	{FL_Shift_R,	"Shift_R"},
+	{FL_Control_L,"Control_L"},
+	{FL_Control_R,"Control_R"},
+	{FL_Caps_Lock,"Caps_Lock"},
+	{FL_Meta_L,	"Meta_L"},
+	{FL_Meta_R,	"Meta_R"},
+	{FL_Alt_L,	"Alt_L"},
+	{FL_Alt_R,	"Alt_R"},
+	{FL_Delete,	"Delete"}
+};
 #endif
 
 /**
@@ -235,7 +269,7 @@ const char* fl_shortcut_label(unsigned int shortcut, const char **eom)
 #endif // __APPLE__
 	if (eom) *eom = p;
 	unsigned int key = shortcut & FL_KEY_MASK;
-#if defined(WIN32) || defined(__APPLE__) // if not X
+#if defined(WIN32) || defined(__APPLE__) || defined(__S60_32__) // if not X
 	if (key >= FL_F && key <= FL_F_Last) {
 		*p++ = 'F';
 		if (key > FL_F+9) *p++ = (key-FL_F)/10+'0';

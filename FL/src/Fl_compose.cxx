@@ -32,7 +32,7 @@ int Fl_X::next_marked_length = 0;
 #endif
 #endif
 
-#if !defined(WIN32) && !defined(__APPLE__)
+#if __FLTK_LINUX__
 extern XIC fl_xim_ic;
 #endif
 
@@ -149,7 +149,7 @@ void Fl::insertion_point_location(int x, int y, int height)
 void Fl::compose_reset()
 {
 	Fl::compose_state = 0;
-#if !defined(WIN32) && !defined(__APPLE__)
+#if __FLTK_LINUX__
 	if (fl_xim_ic) XmbResetIC(fl_xim_ic);
 #endif
 }

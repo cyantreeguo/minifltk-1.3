@@ -22,6 +22,8 @@
 
 // This file must be #include'd in Fl.cxx and not compiled separately.
 
+#if __FLTK_WIN32__
+
 #ifndef FL_DOXYGEN
 #include "Fl.H"
 #include "fl_utf8.h"
@@ -3080,6 +3082,8 @@ void preparePrintFront(void)
 #endif // USE_PRINT_BUTTON
 
 #endif // FL_DOXYGEN
+
+#endif
 
 //
 // End of "$Id: Fl_win32.cxx 10159 2014-05-23 16:47:21Z manolo $".

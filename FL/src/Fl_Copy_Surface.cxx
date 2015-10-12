@@ -119,6 +119,7 @@ Fl_Copy_Surface::Fl_Copy_Surface(int w, int h) :  Fl_Surface_Device(NULL)
 	fl_color(FL_WHITE);
 	fl_rectf(0, 0, w, h);
 	present_surface->set_current();
+#elif __FLTK_S60v32__
 #else
 #error unsupported platform
 #endif
@@ -157,6 +158,7 @@ Fl_Copy_Surface::~Fl_Copy_Surface()
 	delete[] data;
 	fl_delete_offscreen(xid);
 	delete (Fl_Xlib_Surface_*)helper;
+#elif __FLTK_S60v32__	
 #else
 #error unsupported platform
 #endif
@@ -190,6 +192,7 @@ void Fl_Copy_Surface::set_current()
 	_ss = Fl_Surface_Device::surface();
 	Fl_Surface_Device::set_current();
 	fl_push_no_clip();
+#elif __FLTK_S60v32__
 #else
 #error unsupported platform
 #endif
@@ -235,6 +238,8 @@ void Fl_Copy_Surface::prepare_copy_pdf_and_tiff(int w, int h)
 
 #endif  // __APPLE__
 
+#if __FLTK_S60v32__
+#else
 #if !(defined(__APPLE__) || defined(WIN32) || defined(FL_DOXYGEN))
 /* graphics driver that translates all graphics coordinates before calling Xlib */
 class Fl_translated_Xlib_Graphics_Driver_ : public Fl_Xlib_Graphics_Driver
@@ -417,6 +422,7 @@ Fl_Xlib_Surface_::~Fl_Xlib_Surface_()
 
 const char *Fl_Xlib_Surface_::class_id = "Fl_Xlib_Surface_";
 
+#endif
 #endif
 
 //

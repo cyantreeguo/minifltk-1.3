@@ -33,7 +33,7 @@
 
 #include "fl_draw.H"
 #include "x.H"
-#ifdef WIN32
+#if defined(WIN32) || defined(__S60_32__)
 #  include "fltkmath.h"
 #endif
 #include "fltk_config.h"
@@ -102,6 +102,13 @@ void Fl_Graphics_Driver::arc(int x,int y,int w,int h,double a1,double a2)
   #if defined(USE_X11)
 	XDrawArc(fl_display, fl_window, fl_gc, x,y,w-1,h-1, int(a1*64),int((a2-a1)*64));
   #endif
+#elif __FLTK_S60v32__
+	// DONE: S60
+	int xa = x+w/2+int(w*cos(a1/180.0*M_PI));
+	int ya = y+h/2-int(h*sin(a1/180.0*M_PI));
+	int xb = x+w/2+int(w*cos(a2/180.0*M_PI));
+	int yb = y+h/2-int(h*sin(a2/180.0*M_PI));
+	Fl_X::WindowGc->DrawArc(TRect(x, y, x + w, y + h), TPoint(xa, ya), TPoint(xb, yb));
 #else
 #error unsupported platform
 #endif
@@ -190,6 +197,13 @@ void Fl_Graphics_Driver::pie(int x,int y,int w,int h,double a1,double a2)
 	XDrawArc(fl_display, fl_window, fl_gc, x,y,w-1,h-1, int(a1*64),int((a2-a1)*64));
 	XFillArc(fl_display, fl_window, fl_gc, x,y,w-1,h-1, int(a1*64),int((a2-a1)*64));
   #endif
+#elif __FLTK_S60v32__
+	// DONE: S60
+	int xa = x+w/2+int(w*cos(a1/180.0*M_PI));
+	int ya = y+h/2-int(h*sin(a1/180.0*M_PI));
+	int xb = x+w/2+int(w*cos(a2/180.0*M_PI));
+	int yb = y+h/2-int(h*sin(a2/180.0*M_PI));
+	Fl_X::WindowGc->DrawPie(TRect(x, y, x + w, y + h), TPoint(xa, ya), TPoint(xb, yb));
 #else
 #error unsupported platform
 #endif

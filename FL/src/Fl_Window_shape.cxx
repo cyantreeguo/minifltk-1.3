@@ -136,6 +136,10 @@ static HRGN bitmap2region(Fl_Image* image)
 	return hRgn;
 }
 
+#elif defined(__S60_32__)
+void Fl_Window::combine_mask()
+{
+}
 #else
 
 #ifndef FL_DOXYGEN

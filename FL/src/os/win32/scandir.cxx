@@ -16,6 +16,8 @@
  *     http://www.fltk.org/str.php
  */
 
+#if __FLTK_WIN32__
+
 #ifndef __CYGWIN__
 /* Emulation of posix scandir() call */
 #include "fl_utf8.h"
@@ -134,6 +136,8 @@ int fl_scandir(const char *dirname, struct dirent ***namelist,
 	*namelist = dir;
 	return nDir;
 }
+
+#endif
 
 #endif
 

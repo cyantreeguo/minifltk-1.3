@@ -50,6 +50,8 @@ void Fl::display(const char *d)
 	putenv(e);
 #elif __FLTK_WINCE__
 	(void)d;
+#elif __FLTK_S60v32__
+	(void)d;
 #else
 #error unsupported platform
 #endif

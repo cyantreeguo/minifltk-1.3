@@ -260,6 +260,10 @@ int Fl::event_inside(const Fl_Widget *o) /*const*/
 
 // implementation in Fl_cocoa.mm (was Fl_mac.cxx)
 
+#elif defined(__S60_32__)
+
+// implemented in Fl_s60.cxx
+
 #else
 */
 
@@ -575,6 +579,8 @@ double Fl::wait(double time_to_wait)
 	return fl_wait(time_to_wait);
 #elif __FLTK_WINCE__
 	return fl_wait(time_to_wait);
+#elif __FLTK_S60v32__
+	return fl_wait(time_to_wait);
 #elif __FLTK_MACOSX__
 	run_checks();
 	return fl_mac_flush_and_wait(time_to_wait);
@@ -804,7 +810,7 @@ int Fl::check()
 */
 int Fl::ready()
 {
-//#if ! defined( WIN32 )  &&  ! defined(__APPLE__)
+//#if ! defined( WIN32 )  &&  ! defined(__APPLE__) && !defined(__S60_32__)
 #if __FLTK_LINUX__
 	if (first_timeout) {
 		elapse_timeouts();
@@ -835,7 +841,11 @@ Fl_Window* fl_find(Window xid)
 
 	Fl_X *window;
 	for (Fl_X **pp = &Fl_X::first; (window = *pp); pp = &window->next)
+#if __FLTK_S60v32__
+		if (window->xid->WsHandle() == xid->WsHandle()) {
+#else
 		if (window->xid == xid) {
+#endif			
 			if (window != Fl_X::first && !Fl::modal()) {
 				// make this window be first to speed up searches
 				// this is not done if modal is true to avoid messing up modal stack
@@ -937,6 +947,8 @@ void Fl::flush()
 		CGContextFlush(fl_gc);
 #elif __FLTK_LINUX__
 	if (fl_display) XFlush(fl_display);
+#elif __FLTK_S60v32__
+	// TODO: S60
 #else
 #error unsupported platform
 #endif
@@ -1831,6 +1843,15 @@ void Fl_Window::hide()
 # endif
 	// this test makes sure ip->xid has not been destroyed already
 	if (ip->xid) XDestroyWindow(fl_display, ip->xid);
+#elif __FLTK_S60v32__
+	// TODO: S60
+	Fl_X::WsSession.Flush();
+	if (fl_window) ((CWindowGc*) Fl_X::WindowGc)->Deactivate();
+	fl_window = 0;
+	ip->xid->Close();
+	delete ip->xid;
+	ip->windowGroup->Close();
+	delete ip->windowGroup;
 #else
 #error unsupported platform
 #endif
@@ -1868,6 +1889,9 @@ int Fl_Window::handle(int ev)
 				i->map();
 #elif __FLTK_LINUX__
 				XMapWindow(fl_display, fl_xid(this)); // extra map calls are harmless
+#elif __FLTK_S60v32__
+				// TODO: S60
+				fl_xid(this)->SetVisible(true);				
 #else
 #error unsupported platform
 #endif
@@ -1897,6 +1921,9 @@ int Fl_Window::handle(int ev)
 				i->unmap();
 #elif __FLTK_LINUX__
 				XUnmapWindow(fl_display, fl_xid(this));
+#elif __FLTK_S60v32__
+				// TODO: S60
+				fl_xid(this)->SetVisible(false);					
 #else
 #error unsupported platform
 #endif
@@ -2059,6 +2086,11 @@ void Fl_Widget::damage(uchar fl)
 		}
 		damage_ |= fl;
 		Fl::damage(FL_DAMAGE_CHILD);
+#if __FLTK_S60v32__
+		// DONE: S60
+		i->xid->Invalidate();
+		Fl_X::WsSession.Flush();
+#endif		
 	}
 }
 
@@ -2132,6 +2164,8 @@ void Fl_Widget::damage(uchar fl, int X, int Y, int W, int H)
 			R.width = W;
 			R.height = H;
 			XUnionRectWithRegion(&R, i->region, i->region);
+#elif __FLTK_S60v32__
+			// TODO: S60
 #else
 #error unsupported platform
 #endif
@@ -2144,6 +2178,11 @@ void Fl_Widget::damage(uchar fl, int X, int Y, int W, int H)
 		wi->damage_ = fl;
 	}
 	Fl::damage(FL_DAMAGE_CHILD);
+#if __FLTK_S60v32__
+	// DONE: S60
+	i->xid->Invalidate();
+	Fl_X::WsSession.Flush();
+#endif	
 }
 void Fl_Window::flush()
 {
@@ -2161,6 +2200,8 @@ void Fl_Window::flush()
 #  include "os/wince/Fl.cxx"
 #elif __FLTK_LINUX__
 #  include "os/linux/Fl.cxx"
+#elif __FLTK_S60v32__
+#  include "os/s60v32/Fl_s60.cxx"
 #else
 //#elif defined(__APPLE__)
 #endif

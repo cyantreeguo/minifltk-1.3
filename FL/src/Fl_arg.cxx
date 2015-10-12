@@ -28,7 +28,7 @@
 #include <ctype.h>
 #include "flstring.h"
 
-#if defined(WIN32) || defined(__APPLE__)
+#if defined(WIN32) || defined(__APPLE__) || defined(__S60_32__)
 int XParseGeometry(const char*, int*, int*, unsigned int*, unsigned int*);
 #  define NoValue	0x0000
 #  define XValue  	0x0001
@@ -309,7 +309,7 @@ void Fl_Window::show(int argc, char **argv)
 
 	Fl::get_system_colors();
 
-#if !defined(WIN32) && !defined(__APPLE__)
+#if !defined(WIN32) && !defined(__APPLE__) && !defined(__S60_32__)
 	// Get defaults for drag-n-drop and focus...
 	const char *key = 0, *val;
 
@@ -374,7 +374,7 @@ void Fl_Window::show(int argc, char **argv)
 	// Show the window AFTER we have set the colors and scheme.
 	show();
 
-#if !defined(WIN32) && !defined(__APPLE__)
+#if !defined(WIN32) && !defined(__APPLE__) && !defined(__S60_32__)
 	// set the command string, used by state-saving window managers:
 	int j;
 	int n=0;
@@ -424,7 +424,7 @@ void Fl::args(int argc, char **argv)
 	if (Fl::args(argc,argv,i) < argc) Fl::error(helpmsg);
 }
 
-#if defined(WIN32) || defined(__APPLE__)
+#if defined(WIN32) || defined(__APPLE__) || defined(__S60_32__)
 
 /* the following function was stolen from the X sources as indicated. */
 

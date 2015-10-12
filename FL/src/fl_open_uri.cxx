@@ -60,7 +60,11 @@
 static char	*path_find(const char *program, char *filename, int filesize);
 #endif // !WIN32 && !__APPLE__
 #ifndef WIN32
+#if defined(__S60_32__)
+static int	run_program(const char *program, char **argv, char *msg, int msglen){}
+#else
 static int	run_program(const char *program, char **argv, char *msg, int msglen);
+#endif // __S60_32__
 #endif // !WIN32
 
 /** \addtogroup filenames
@@ -329,7 +333,7 @@ static char *path_find(const char *program, char *filename, int filesize)
 #endif // !WIN32 && !__APPLE__
 
 
-#ifndef WIN32
+#if !defined(WIN32) && !defined(__S60_32__)
 // Run the specified program, returning 1 on success and 0 on failure
 static int
 run_program(const char *program, char **argv, char *msg, int msglen)

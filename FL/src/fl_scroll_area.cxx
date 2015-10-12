@@ -168,6 +168,8 @@ void fl_scroll(int X, int Y, int W, int H, int dx, int dy,
 		if (!e.xgraphicsexpose.count) break;
 	}
 #endif
+#elif __FLTK_S60v32__
+	// TODO: S60
 #else
 #error unsupported platform
 #endif

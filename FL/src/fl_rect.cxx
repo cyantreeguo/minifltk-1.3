@@ -201,6 +201,12 @@ void Fl_Graphics_Driver::rect(int x, int y, int w, int h)
 	if (!clip_to_short(x, y, w, h))
 		XDrawRectangle(fl_display, fl_window, fl_gc, x, y, w-1, h-1);
 #endif
+#elif __FLTK_S60v32__
+	// DONE: S60
+	// TBrushStyle savedBrushStyle = Fl_X::WindowGc->GetBrushStyle();
+	Fl_X::WindowGc->SetBrushStyle(CGraphicsContext::ENullBrush);
+	Fl_X::WindowGc->DrawRect(TRect(x, y, x + w, y + h));
+	// Fl_X::WindowGc->SetBrushStyle(savedBrushStyle);
 #else
 #error unsupported platform
 #endif
@@ -232,6 +238,10 @@ void Fl_Graphics_Driver::rectf(int x, int y, int w, int h)
 #elif __FLTK_LINUX__
 	if (!clip_to_short(x, y, w, h))
 		XFillRectangle(fl_display, fl_window, fl_gc, x, y, w, h);
+#elif __FLTK_S60v32__
+	// DONE: S60
+	Fl_X::WindowGc->SetBrushStyle(CGraphicsContext::ESolidBrush);
+	Fl_X::WindowGc->DrawRect(TRect(x, y, x + w, y + h));
 #else
 #error unsupported platform
 #endif
@@ -275,6 +285,13 @@ void Fl_Graphics_Driver::xyline(int x, int y, int x1)
 	if (USINGQUARTZPRINTER || fl_quartz_line_width_ > 1.5f) CGContextSetShouldAntialias(fl_gc, false);
 #elif __FLTK_LINUX__
 	XDrawLine(fl_display, fl_window, fl_gc, clip_x(x), clip_x(y), clip_x(x1), clip_x(y));
+#elif __FLTK_S60v32__
+	// DONE: S60
+	Fl_X::WindowGc->DrawLine(TPoint(x, y), TPoint(x1 + 1, y));
+#elif __FLTK_ANDROID__
+#error unsupported platform
+#elif __FLTK_Dummy__
+#error unsupported platform
 #else
 #error unsupported platform
 #endif
@@ -323,6 +340,12 @@ void Fl_Graphics_Driver::xyline(int x, int y, int x1, int y2)
 	p[1].x = p[2].x = clip_x(x1);
 	p[2].y = clip_x(y2);
 	XDrawLines(fl_display, fl_window, fl_gc, p, 3, 0);
+#elif __FLTK_S60v32__
+	// DONE: S60
+	if (y2 < y) y2--;
+	else y2++;
+	Fl_X::WindowGc->DrawLine(TPoint(x, y), TPoint(x1, y));
+	Fl_X::WindowGc->DrawLine(TPoint(x1, y), TPoint(x1, y2));
 #else
 #error unsupported platform
 #endif
@@ -376,6 +399,13 @@ void Fl_Graphics_Driver::xyline(int x, int y, int x1, int y2, int x3)
 	p[2].y = p[3].y = clip_x(y2);
 	p[3].x = clip_x(x3);
 	XDrawLines(fl_display, fl_window, fl_gc, p, 4, 0);
+#elif __FLTK_S60v32__
+	// DONE: S60
+	if (x3 < x1) x3--;
+	else x3++;
+	Fl_X::WindowGc->DrawLine(TPoint(x, y), TPoint(x1, y));
+	Fl_X::WindowGc->DrawLine(TPoint(x1, y), TPoint(x1, y2));
+	Fl_X::WindowGc->DrawLine(TPoint(x1, y2), TPoint(x3, y2));
 #else
 #error unsupported platform
 #endif
@@ -415,6 +445,11 @@ void Fl_Graphics_Driver::yxline(int x, int y, int y1)
 	if (USINGQUARTZPRINTER || fl_quartz_line_width_ > 1.5f) CGContextSetShouldAntialias(fl_gc, false);
 #elif __FLTK_LINUX__
 	XDrawLine(fl_display, fl_window, fl_gc, clip_x(x), clip_x(y), clip_x(x), clip_x(y1));
+#elif __FLTK_S60v32__
+	// DONE: S60
+	if (y1 < y) y1--;
+	else y1++;
+	Fl_X::WindowGc->DrawLine(TPoint(x, y), TPoint(x, y1));
 #else
 #error unsupported platform
 #endif
@@ -463,6 +498,12 @@ void Fl_Graphics_Driver::yxline(int x, int y, int y1, int x2)
 	p[1].y = p[2].y = clip_x(y1);
 	p[2].x = clip_x(x2);
 	XDrawLines(fl_display, fl_window, fl_gc, p, 3, 0);
+#elif __FLTK_S60v32__
+	// DONE: S60
+	if (x2 > x) x2++;
+	else x2--;
+	Fl_X::WindowGc->DrawLine(TPoint(x, y), TPoint(x, y1));
+	Fl_X::WindowGc->DrawLine(TPoint(x, y1), TPoint(x2, y1));
 #else
 #error unsupported platform
 #endif
@@ -516,6 +557,13 @@ void Fl_Graphics_Driver::yxline(int x, int y, int y1, int x2, int y3)
 	p[2].x = p[3].x = clip_x(x2);
 	p[3].y = clip_x(y3);
 	XDrawLines(fl_display, fl_window, fl_gc, p, 4, 0);
+#elif __FLTK_S60v32__
+	// DONE: S60
+	if (y3 < y1) y3--;
+	else y3++;
+	Fl_X::WindowGc->DrawLine(TPoint(x, y), TPoint(x, y1));
+	Fl_X::WindowGc->DrawLine(TPoint(x, y1), TPoint(x2, y1));
+	Fl_X::WindowGc->DrawLine(TPoint(x2, y1), TPoint(x2, y3));
 #else
 #error unsupported platform
 #endif
@@ -549,6 +597,10 @@ void Fl_Graphics_Driver::line(int x, int y, int x1, int y1)
 	if (fl_quartz_line_width_ > 1.5f) CGContextSetShouldAntialias(fl_gc, false);
 #elif __FLTK_LINUX__
 	XDrawLine(fl_display, fl_window, fl_gc, x, y, x1, y1);
+#elif __FLTK_S60v32__
+	// DONE: S60
+	Fl_X::WindowGc->DrawLine(TPoint(x, y), TPoint(x1, y1));
+	Fl_X::WindowGc->Plot(TPoint(x1, y1));
 #else
 #error unsupported platform
 #endif
@@ -593,6 +645,11 @@ void Fl_Graphics_Driver::line(int x, int y, int x1, int y1, int x2, int y2)
 	p[2].x = x2;
 	p[2].y = y2;
 	XDrawLines(fl_display, fl_window, fl_gc, p, 3, 0);
+#elif __FLTK_S60v32__
+	// DONE: S60
+	Fl_X::WindowGc->DrawLine(TPoint(x, y), TPoint(x1, y1));
+	Fl_X::WindowGc->DrawLine(TPoint(x1, y1), TPoint(x2, y2));
+	Fl_X::WindowGc->Plot(TPoint(x2, y2));
 #else
 #error unsupported platform
 #endif
@@ -637,6 +694,11 @@ void Fl_Graphics_Driver::loop(int x, int y, int x1, int y1, int x2, int y2)
 	p[3].x = x;
 	p[3].y = y;
 	XDrawLines(fl_display, fl_window, fl_gc, p, 4, 0);
+#elif __FLTK_S60v32__
+	// DONE: S60
+	Fl_X::WindowGc->DrawLine(TPoint(x, y), TPoint(x1, y1));
+	Fl_X::WindowGc->DrawLine(TPoint(x1, y1), TPoint(x2, y2));
+	Fl_X::WindowGc->DrawLine(TPoint(x2, y2), TPoint(x, y));
 #else
 #error unsupported platform
 #endif
@@ -687,6 +749,12 @@ void Fl_Graphics_Driver::loop(int x, int y, int x1, int y1, int x2, int y2, int 
 	p[4].x = x;
 	p[4].y = y;
 	XDrawLines(fl_display, fl_window, fl_gc, p, 5, 0);
+#elif __FLTK_S60v32__
+	// DONE: S60
+	Fl_X::WindowGc->DrawLine(TPoint(x, y), TPoint(x1, y1));
+	Fl_X::WindowGc->DrawLine(TPoint(x1, y1), TPoint(x2, y2));
+	Fl_X::WindowGc->DrawLine(TPoint(x2, y2), TPoint(x3, y3));
+	Fl_X::WindowGc->DrawLine(TPoint(x3, y3), TPoint(x, y));
 #else
 #error unsupported platform
 #endif
@@ -728,6 +796,13 @@ void Fl_Graphics_Driver::polygon(int x, int y, int x1, int y1, int x2, int y2)
 	p[3].y = y;
 	XFillPolygon(fl_display, fl_window, fl_gc, p, 3, Convex, 0);
 	XDrawLines(fl_display, fl_window, fl_gc, p, 4, 0);
+#elif __FLTK_S60v32__
+	// DONE: S60
+	CArrayFixFlat<TPoint> pointList(3);
+	pointList.AppendL(TPoint(x, y));
+	pointList.AppendL(TPoint(x1, y1));
+	pointList.AppendL(TPoint(x2, y2));
+	Fl_X::WindowGc->DrawPolygon(&pointList);
 #else
 #error unsupported platform
 #endif
@@ -773,6 +848,14 @@ void Fl_Graphics_Driver::polygon(int x, int y, int x1, int y1, int x2, int y2, i
 	p[4].y = y;
 	XFillPolygon(fl_display, fl_window, fl_gc, p, 4, Convex, 0);
 	XDrawLines(fl_display, fl_window, fl_gc, p, 5, 0);
+#elif __FLTK_S60v32__
+	// DONE: S60
+	CArrayFixFlat<TPoint> pointList(4);
+	pointList.AppendL(TPoint(x, y));
+	pointList.AppendL(TPoint(x1, y1));
+	pointList.AppendL(TPoint(x2, y2));
+	pointList.AppendL(TPoint(x3, y3));
+	Fl_X::WindowGc->DrawPolygon(&pointList);	
 #else
 #error unsupported platform
 #endif
@@ -790,6 +873,9 @@ void Fl_Graphics_Driver::point(int x, int y)
 	CGContextFillRect(fl_gc, CGRectMake(x - 0.5, y - 0.5, 1, 1) );
 #elif __FLTK_LINUX__
 	XDrawPoint(fl_display, fl_window, fl_gc, clip_x(x), clip_x(y));
+#elif __FLTK_S60v32__
+	// DONE: S60
+	Fl_X::WindowGc->Plot(TPoint(x, y));
 #else
 #error unsupported platform
 #endif
@@ -811,6 +897,22 @@ Fl_Region XRectangleRegion(int x, int y, int w, int h)
 	Fl_Region r = XCreateRegion();
 	XUnionRectWithRegion(&R, r, r);
 	return r;
+}
+#endif
+
+#if __FLTK_S60v32__
+#define STACK_SIZE 10
+#define STACK_MAX (STACK_SIZE - 1)
+static Fl_Region rstack[STACK_SIZE];
+static int rstackptr=0;
+int fl_clip_state_number=0; // used by gl_begin.cxx to update GL clip
+void XDestroyRegion (Fl_Region r)
+{
+    // DONE: S60
+	for (int i = 0; i < STACK_SIZE; i++) {
+		if (rstack[i] == r) rstack[i] = NULL;
+	}
+	delete r;
 }
 #endif
 
@@ -843,6 +945,10 @@ void Fl_Graphics_Driver::restore_clip()
 #elif __FLTK_LINUX__
 	if (r) XSetRegion(fl_display, fl_gc, r);
 	else XSetClipMask(fl_display, fl_gc, 0);
+#elif __FLTK_S60v32__
+	// DONE: S60
+	if (r) Fl_X::WindowGc->SetClippingRegion(*r);
+	else Fl_X::WindowGc->CancelClippingRegion();
 #else
 #error unsupported platform
 #endif
@@ -883,6 +989,11 @@ void Fl_Graphics_Driver::push_clip(int x, int y, int w, int h)
 			XIntersectRegion(current, r, temp);
 			XDestroyRegion(r);
 			r = temp;
+#elif __FLTK_S60v32__
+			// DONE: S60
+			TRegionFix<STACK_SIZE> *tmp = new (ELeave) TRegionFix<STACK_SIZE>(TRect(x, y, x+w, y+h));
+			tmp->Intersect(*current);
+			r = tmp;
 #else
 #error unsupported platform
 #endif
@@ -898,10 +1009,20 @@ void Fl_Graphics_Driver::push_clip(int x, int y, int w, int h)
 		r = XRectangleRegion(0,0,0,0);
 #elif __FLTK_LINUX__
 		r = XCreateRegion();
+#elif __FLTK_S60v32__
+		// DONE: S60
+		r = new TRegionFix<STACK_SIZE> (TRect (0, 0, 0, 0));
 #else
 #error unsupported platform
 #endif
 	}
+#if __FLTK_S60v32__
+	// DONE: S60
+	if (rstackptr < STACK_MAX && rstack[rstackptr+1] != NULL) {
+		delete rstack[rstackptr+1];
+		rstack[rstackptr+1] = NULL;
+	}
+#endif	
 	if (rstackptr < region_stack_max) rstack[++rstackptr] = r;
 	else Fl::warning("fl_push_clip: clip stack overflow!\n");
 	fl_restore_clip();
@@ -910,6 +1031,13 @@ void Fl_Graphics_Driver::push_clip(int x, int y, int w, int h)
 // make there be no clip (used by fl_begin_offscreen() only!)
 void Fl_Graphics_Driver::push_no_clip()
 {
+#if __FLTK_S60v32__
+	// DONE: S60
+	if (rstackptr < STACK_MAX && rstack[rstackptr+1] != NULL) {
+		delete rstack[rstackptr+1];
+		rstack[rstackptr+1] = NULL;
+	}
+#endif
 	if (rstackptr < region_stack_max) rstack[++rstackptr] = 0;
 	else Fl::warning("fl_push_no_clip: clip stack overflow!\n");
 	fl_restore_clip();
@@ -980,6 +1108,9 @@ int Fl_Graphics_Driver::not_clipped(int x, int y, int w, int h)
 	// get rid of coordinates outside the 16-bit range the X calls take.
 	if (clip_to_short(x,y,w,h)) return 0;	// clipped
 	return XRectInRegion(r, x, y, w, h);
+#elif __FLTK_S60v32__
+	// DONE: S60
+	return r ? r->Intersects(TRect (x, y, x+w, y+h)) : 1;
 #else
 #error unsupported platform
 #endif
@@ -1118,6 +1249,21 @@ int Fl_Graphics_Driver::clip_box(int x, int y, int w, int h, int& X, int& Y, int
 	XDestroyRegion(temp);
 	XDestroyRegion(rr);
 	return 1;
+#elif __FLTK_S60v32__
+	// DONE: S60
+	TRegionFix<STACK_SIZE> tmp (TRect (x, y, x+w, y+h));
+	tmp.Intersect (*r);
+	if (tmp.IsEmpty()) {
+		W = H = 0;
+		return 2; // no intersection
+	}
+	// if (tmp == *r) return 0; // TODO: S60 Determine complete intersection?
+	TRect boundingRect = tmp.BoundingRect();
+	X = boundingRect.iTl.iX;
+	Y = boundingRect.iTl.iY;
+	W = boundingRect.Width();
+	H = boundingRect.Height();
+	return 1; // partial intersection
 #else
 #error unsupported platform
 #endif

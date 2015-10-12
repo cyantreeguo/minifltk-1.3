@@ -20,6 +20,8 @@
 // in.  Search other files for "WIN32" or filenames ending in _win32.cxx
 // for other system-specific code.
 
+#if __FLTK_WIN32__
+
 #include "Fl.H"
 #include "x.H"
 #include "Fl_Window.H"
@@ -560,6 +562,8 @@ int Fl::dnd()
 	if ( ret==DRAGDROP_S_DROP ) return 1; // or DD_S_CANCEL
 	return 0;
 }
+
+#endif
 
 //
 // End of "$Id: fl_dnd_win32.cxx 9677 2012-08-18 11:32:50Z AlbrechtS $".

@@ -33,6 +33,10 @@
 #    include <float.h>
 #  endif
 
+#if defined(__S60_32__)
+#    include <stdapis/math.h>
+#endif
+
 
 #  ifndef M_PI
 #    define M_PI            3.14159265358979323846

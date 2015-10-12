@@ -72,6 +72,8 @@ void Fl_Window::border(int b)
 #if defined(USE_X11)
 	if (shown()) Fl_X::i(this)->sendxjunk();
 #endif
+#elif __FLTK_S60v32__
+	//
 #else
 #error unsupported platform
 #endif

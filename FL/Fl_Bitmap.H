@@ -46,7 +46,7 @@ public:
 private:
 	int start(int XP, int YP, int WP, int HP, int &cx, int &cy,
 	          int &X, int &Y, int &W, int &H);
-#if defined(__APPLE__) || defined(WIN32)
+#if defined(__APPLE__) || defined(WIN32) || defined(__S60_32__)
 	/** for internal use */
 	void *id_;
 #else

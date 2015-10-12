@@ -27,6 +27,14 @@
 
 // 2014-07-06 cyantree, modify by SDL
 /*
+__FLTK_WIN32__
+__FLTK_LINUX__
+__FLTK_MACOSX__
+__FLTK_WINCE__
+__FLTK_IPHONEOS__
+__FLTK_ANDROID__
+__FLTK_S60v32__ // symbian s60 v3 fp2
+
 __FLTK_AIX__
 __FLTK_HAIKU__
 __FLTK_BSDI__
@@ -34,10 +42,6 @@ __FLTK_DREAMCAST__
 __FLTK_FREEBSD__
 __FLTK_HPUX__
 __FLTK_IRIX__
-__FLTK_LINUX__
-__FLTK_ANDROID__
-__FLTK_IPHONEOS__
-__FLTK_MACOSX__
 __FLTK_NETBSD__
 __FLTK_OPENBSD__
 __FLTK_OS2__
@@ -46,9 +50,9 @@ __FLTK_QNXNTO__
 __FLTK_RISCOS__
 __FLTK_SOLARIS__
 __FLTK_WINRT__
-__FLTK_WIN32__
-__FLTK_WINCE__
 __FLTK_PSP__
+
+__FLTK_Dummy__ // test, for port fltk to other operating system
 */
 
 #ifndef _FL_Platform_h
@@ -174,6 +178,12 @@ __FLTK_PSP__
 #if defined(__PSP__)
 #undef __FLTK_PSP__
 #define __FLTK_PSP__ 1
+#endif
+
+#if defined(__S60_32__)
+#undef __FLTK_WIN32__
+#undef __FLTK_S60v32__
+#define __FLTK_S60v32__   1
 #endif
 
 #endif /* _FL_Platform_h */

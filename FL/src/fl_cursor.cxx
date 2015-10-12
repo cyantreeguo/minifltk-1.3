@@ -27,7 +27,7 @@
 #include "Fl_Pixmap.H"
 #include "Fl_RGB_Image.H"
 #include "x.H"
-#if !defined(WIN32) && !defined(__APPLE__)
+#if __FLTK_LINUX__
 #  include <X11/cursorfont.h>
 #endif
 #include "fl_draw.H"
@@ -138,7 +138,10 @@ void Fl_Window::cursor(Fl_Cursor c)
 	if (!i)
 		return;
 
+#if __FLTK_S60v32__
+#else
 	ret = i->set_cursor(c);
+#endif
 	if (ret)
 		return;
 
@@ -176,7 +179,10 @@ void Fl_Window::cursor(const Fl_RGB_Image *image, int hotx, int hoty)
 	if (!i)
 		return;
 
+#if __FLTK_S60v32__
+#else
 	ret = i->set_cursor(image, hotx, hoty);
+#endif
 	if (ret)
 		return;
 
@@ -189,7 +195,12 @@ void Fl_Window::cursor(const Fl_RGB_Image *image, int hotx, int hoty)
 */
 void Fl_Window::cursor(Fl_Cursor c, Fl_Color, Fl_Color)
 {
+	//cursor(c);
+#if __FLTK_S60v32__
+	i->xid->SetPointerCursor(0);
+#else
 	cursor(c);
+#endif
 };
 
 /**

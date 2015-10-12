@@ -191,9 +191,11 @@ void Fl_Graphics_Driver::end_points()
 	if (fl_quartz_line_width_ > 1.5f) CGContextSetShouldAntialias(fl_gc, false);
   //#endif
 #elif __FLTK_LINUX__
-  #if defined(USE_X11)
 	if (n>1) XDrawPoints(fl_display, fl_window, fl_gc, p, n, 0);
-  #endif
+#elif __FLTK_S60v32__
+	for (int i = 0; i < n; i++) {
+		Fl_X::WindowGc->Plot(TPoint(p[i].x, p[i].y));
+	}
 #else
 #error unsupported platform
 #endif
@@ -234,6 +236,15 @@ void Fl_Graphics_Driver::end_line()
   #if defined(USE_X11)
 	if (n>1) XDrawLines(fl_display, fl_window, fl_gc, p, n, 0);
   #endif
+#elif __FLTK_S60v32__
+	// DONE: S60
+	// CArrayFixFlat<TPoint> points(n);
+	TPoint *points = new TPoint[n];
+	for (int i = 0; i < n; i++) {
+		points[i] = TPoint(p[i].x, p[i].y);
+	}
+	Fl_X::WindowGc->DrawPolyLine(points, n);
+	delete [] points;
 #else
 #error unsupported platform
 #endif
@@ -294,6 +305,15 @@ void Fl_Graphics_Driver::end_polygon()
   #if defined(USE_X11)
 	if (n>2) XFillPolygon(fl_display, fl_window, fl_gc, p, n, Convex, 0);
   #endif
+#elif __FLTK_S60v32__
+	// DONE: S60
+	// CArrayFixFlat<TPoint> points(n);
+	TPoint *points = new TPoint[n];
+	for (int i = 0; i < n; i++) {
+		points[i] = TPoint(p[i].x, p[i].y);
+	}
+	Fl_X::WindowGc->DrawPolygon(points, n);
+	delete [] points;
 #else
 #error unsupported platform
 #endif
@@ -376,6 +396,15 @@ void Fl_Graphics_Driver::end_complex_polygon()
   #if defined(USE_X11)
 	if (n>2) XFillPolygon(fl_display, fl_window, fl_gc, p, n, 0, 0);
   #endif
+#elif __FLTK_S60v32__
+	// DONE: S60
+	// CArrayFixFlat<TPoint> points(n);
+	TPoint *points = new TPoint[n];
+	for (int i = 0; i < n; i++) {
+		points[i] = TPoint(p[i].x, p[i].y);
+	}
+	Fl_X::WindowGc->DrawPolygon(points, n);
+	delete [] points;
 #else
 #error unsupported platform
 #endif
@@ -432,6 +461,15 @@ void Fl_Graphics_Driver::circle(double x, double y,double r)
 	(what == POLYGON ? XFillArc : XDrawArc)
 	(fl_display, fl_window, fl_gc, llx, lly, w, h, 0, 360*64);
   #endif
+#elif __FLTK_S60v32__
+	// DONE: S60
+	if (what == POLYGON) {
+		Fl_X::WindowGc->DrawEllipse(TRect(x - r, y - r, x + r, y + r));
+	} else {
+		Fl_X::WindowGc->SetBrushStyle(CFbsBitGc::ENullBrush);
+		Fl_X::WindowGc->DrawEllipse(TRect(x - r, y - r, x + r, y + r));
+		Fl_X::WindowGc->SetBrushStyle(CFbsBitGc::ESolidBrush);
+	}
 #else
 #error unsupported platform
 #endif

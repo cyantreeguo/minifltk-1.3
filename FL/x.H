@@ -48,6 +48,8 @@
 #include "x_linux.h"
 #elif __FLTK_WINCE__
 #include "x_wince.H"
+#elif __FLTK_S60v32__
+#include "x_s60v32.H"
 #else
 #error unsupported platform
 #endif

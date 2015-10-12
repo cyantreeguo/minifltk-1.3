@@ -15,6 +15,8 @@
 //
 //     http://www.fltk.org/str.php
 //
+#if __FLTK_LINUX__
+
 #ifndef FL_DOXYGEN
 
 Fl_Font_Descriptor::Fl_Font_Descriptor(const char* name)
@@ -362,6 +364,7 @@ void Fl_Xlib_Graphics_Driver::rtl_draw(const char* c, int n, int x, int y)
 	if (fl_gc) XUtf8DrawRtlString(fl_display, fl_window, font_descriptor()->font, fl_gc, x, y, c, n);
 }
 #endif // FL_DOXYGEN
+#endif
 //
 // End of "$Id: fl_font_x.cxx 8864 2011-07-19 04:49:30Z greg.ercolano $".
 //

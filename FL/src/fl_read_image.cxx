@@ -35,6 +35,8 @@
 #  include "os/wince/fl_read_image.cxx"
 #elif __FLTK_LINUX__
 #  include "os/linux/fl_read_image.cxx"
+#elif __FLTK_S60v32__
+#  include "os/s60v32/fl_read_image_s60.cxx"
 #else
 #error unsupported platform
 #endif

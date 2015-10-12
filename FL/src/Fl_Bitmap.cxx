@@ -288,6 +288,17 @@ void fl_delete_bitmask(Fl_Bitmask bm)
 {
 	fl_delete_offscreen((Fl_Offscreen)bm);
 }
+#elif __FLTK_S60v32__
+// TODO: S60
+Fl_Bitmask fl_create_bitmask(int w, int h, const uchar *data)
+{
+	// TODO: S60
+}
+
+void fl_delete_bitmask(Fl_Bitmask bm)
+{
+	fl_delete_offscreen((Fl_Offscreen)bm);
+}
 #else
 #error unsupported platform
 #endif
@@ -613,6 +624,8 @@ void Fl_Xlib_Graphics_Driver::draw(Fl_Bitmap *bm, int XP, int YP, int WP, int HP
 	XFillRectangle(fl_display, fl_window, fl_gc, X, Y, W, H);
 	XSetFillStyle(fl_display, fl_gc, FillSolid);
 }
+#elif __FLTK_S60v32__
+	// TODO: S60
 #else
 #error unsupported platform
 #endif

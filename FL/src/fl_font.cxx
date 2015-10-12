@@ -63,6 +63,8 @@ XFontStruct *fl_X_core_font()
 }
 #elif __FLTK_WINCE__
 #  include "os/wince/fl_font.cxx"
+#elif __FLTK_S60v32__
+#  include "os/s60v32/fl_font_s60.cxx"
 #else
 #error unsupported platform
 #endif

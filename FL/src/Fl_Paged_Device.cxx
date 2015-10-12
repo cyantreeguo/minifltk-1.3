@@ -23,6 +23,9 @@
 #include "Fl.H"
 #include "fl_draw.H"
 
+#if __FLTK_S60v32__
+#else
+
 const char *Fl_Paged_Device::class_id = "Fl_Paged_Device";
 
 
@@ -297,6 +300,8 @@ const Fl_Paged_Device::page_format Fl_Paged_Device::page_formats[NO_PAGE_FORMATS
 	{ 792, 1224, "Tabloid"},
 	{ 297,  684, "Env10"} // envelope
 };
+
+#endif
 
 //
 // End of "$Id: Fl_Paged_Device.cxx 10116 2014-03-05 12:55:34Z manolo $".

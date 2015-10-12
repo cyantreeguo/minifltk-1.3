@@ -118,8 +118,12 @@ int Fl_Pixmap::prepare(int XP, int YP, int WP, int HP, int &cx, int &cy,
 		return 1;
 	}
 	if (!id_) {
-#ifdef __APPLE__
+#if __FLTK_MACOSX__
 		id_ = Fl_Quartz_Graphics_Driver::create_offscreen_with_alpha(w(), h());
+#elif __FLTK_IPHONEOS__
+		id_ = Fl_Quartz_Graphics_Driver::create_offscreen_with_alpha(w(), h());
+#elif __FLTK_S60v32__
+		//id_ = Fl_Gc_Graphics_Driver::create_offscreen_with_alpha(w(), h());
 #else
 		id_ = fl_create_offscreen(w(), h());
 #endif
@@ -255,6 +259,14 @@ void Fl_GDI_Printer_Graphics_Driver::draw(Fl_Pixmap *pxm, int XP, int YP, int WP
 	//} else {
 	//	copy_offscreen(X, Y, W, H, (Fl_Offscreen)pxm->id_, cx, cy);
 	//}
+}
+
+#elif __FLTK_S60v32__
+void Fl_Gc_Graphics_Driver::draw(Fl_Pixmap *pxm, int XP, int YP, int WP, int HP, int cx, int cy)
+{
+	int X, Y, W, H;
+	if (pxm->prepare(XP, YP, WP, HP, cx, cy, X, Y, W, H)) return;
+	// do nothing here?
 }
 
 #else // Xlib

@@ -34,6 +34,8 @@
 #  include "os/wince/fl_color.cxx"
 #elif __FLTK_LINUX__
 #  include "os/linux/fl_color.cxx"
+#elif __FLTK_S60v32__
+#  include "os/linux/fl_color.cxx"
 #else
 #error unsupported platform
 #endif // end of X-specific code

@@ -45,6 +45,9 @@ void Fl::own_colormap() {}
 // MacOS X always provides a TrueColor interface...
 
 void Fl::own_colormap() {}
+#elif defined (__S60_32__)
+// TODO: S60
+void Fl::own_colormap() {}
 #else
 // X version
 

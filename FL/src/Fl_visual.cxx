@@ -75,6 +75,14 @@ int Fl::visual(int flags)
 	return 1;
 }
 
+#elif defined(__S60_32__)
+// TODO: S60
+int Fl::visual(int flags) 
+{
+	(void)flags;
+	return 1;
+}
+
 #else
 
 #if USE_XDBE

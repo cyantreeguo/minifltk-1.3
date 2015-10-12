@@ -101,6 +101,9 @@ struct dirent {
 struct dirent {
 	char d_name[1];
 };
+#elif defined(__S60_32__)
+#    include <stdapis/sys/types.h>
+#    include <stdapis/dirent.h>
 #  else
 /*
  * WARNING: on some systems (very few nowadays?) <dirent.h> may not exist.

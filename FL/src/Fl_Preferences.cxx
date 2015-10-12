@@ -63,6 +63,12 @@
 #  if HAVE_DLFCN_H
 #    include <dlfcn.h>
 #  endif
+#elif __FLTK_S60v32__
+#  include <unistd.h>
+#  include "fltk_config.h"
+#  if HAVE_DLFCN_H
+#    include <dlfcn.h>
+#  endif
 #else
 #error unsupported platform
 #endif
@@ -457,7 +463,11 @@ Fl_Preferences &Fl_Preferences::operator=(const Fl_Preferences &rhs)
  */
 Fl_Preferences::~Fl_Preferences()
 {
+#if __FLTK_S60v32__
+	// do nothing
+#else
 	if (node && !node->parent()) delete rootNode;
+#endif
 	// DO NOT delete nodes! The root node will do that after writing the preferences
 	// zero all pointer to avoid memory errors, even though
 	// Valgrind does not complain (Cygwin does though)

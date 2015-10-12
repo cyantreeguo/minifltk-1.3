@@ -32,7 +32,9 @@
 #endif
 #endif
 
-#if !__FLTK_IPHONEOS__
+#if __FLTK_IPHONEOS__
+#elif __FLTK_S60v32__
+#else
 
 const char *Fl_PostScript_Graphics_Driver::class_id = "Fl_PostScript_Graphics_Driver";
 const char *Fl_PostScript_File_Device::class_id = "Fl_PostScript_File_Device";

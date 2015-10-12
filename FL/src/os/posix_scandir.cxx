@@ -98,7 +98,10 @@ readentry(DIR *dirp, struct dirent **entryp, size_t *len)
 			}
 		} else {
 			/* Entry found, allocate local buffer */
+#if defined(__S60_32__)
+#else
 			*len = offsetof(struct dirent, d_name) + strlen(e->d_name) + (size_t) 1;
+#endif			
 			*entryp = (struct dirent *) malloc(*len);
 			if (NULL != *entryp) {
 				memcpy((void *) *entryp, (void *) e, *len);

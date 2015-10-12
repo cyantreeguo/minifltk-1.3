@@ -66,6 +66,7 @@ private:
 	Fl_Surface_Device *previous;
 	Window pre_window;
 	GC gc;
+#elif __FLTK_S60v32__
 #else
 #error unsupported platform	
 #endif

@@ -503,6 +503,7 @@ public:
 	void copy_offscreen(int x, int y, int w, int h, Fl_Offscreen pixmap, int srcx, int srcy);
 };
 #endif
+
 #if defined(WIN32) || defined(FL_DOXYGEN)
 /**
  \brief The MSWindows-specific graphics class.
@@ -557,7 +558,9 @@ public:
 	int draw_scaled(Fl_Image *img, int XP, int YP, int WP, int HP);
 };
 #endif
-#if !(defined(__APPLE__) || defined(WIN32))
+
+#if __FLTK_LINUX__
+//#if !(defined(__APPLE__) || defined(WIN32))
 /**
  \brief The Xlib-specific graphics class.
  *
@@ -592,6 +595,39 @@ public:
 #if ! defined(FL_DOXYGEN)
 	void copy_offscreen_with_alpha(int x, int y, int w, int h, Fl_Offscreen pixmap, int srcx, int srcy);
 #endif
+};
+#endif
+
+#if __FLTK_S60v32__
+class FL_EXPORT Fl_Gc_Graphics_Driver : public Fl_Graphics_Driver
+{
+public:
+	static const char *class_id;
+	const char *class_name() {
+		return class_id;
+	};
+	void color(Fl_Color c);
+	void color(uchar r, uchar g, uchar b);
+	void draw(const char* str, int n, int x, int y);
+	void draw(int angle, const char *str, int n, int x, int y);
+	void rtl_draw(const char* str, int n, int x, int y);
+	void font(Fl_Font face, Fl_Fontsize size);
+	void draw(Fl_Pixmap *pxm, int XP, int YP, int WP, int HP, int cx, int cy);
+	void draw(Fl_Bitmap *pxm, int XP, int YP, int WP, int HP, int cx, int cy);
+	void draw(Fl_RGB_Image *img, int XP, int YP, int WP, int HP, int cx, int cy);
+	void draw_image(const uchar* buf, int X,int Y,int W,int H, int D=3, int L=0);
+	void draw_image(Fl_Draw_Image_Cb cb, void* data, int X,int Y,int W,int H, int D=3);
+	void draw_image_mono(const uchar* buf, int X,int Y,int W,int H, int D=1, int L=0);
+	void draw_image_mono(Fl_Draw_Image_Cb cb, void* data, int X,int Y,int W,int H, int D=1);
+	double width(const char *str, int n);
+	double width(unsigned int c);
+	void text_extents(const char*, int n, int& dx, int& dy, int& w, int& h);
+	int height();
+	int descent();
+	void copy_offscreen(int x, int y, int w, int h, Fl_Offscreen pixmap, int srcx, int srcy);
+//#if ! defined(FL_DOXYGEN)
+	void copy_offscreen_with_alpha(int x, int y, int w, int h, Fl_Offscreen pixmap, int srcx, int srcy);
+//#endif
 };
 #endif
 

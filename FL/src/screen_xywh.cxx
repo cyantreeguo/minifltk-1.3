@@ -21,6 +21,10 @@
 #include "x.H"
 #include "fltk_config.h"
 
+#if __FLTK_S60v32__
+#include "aknutils.h"
+#endif
+
 #define MAX_SCREENS 16
 
 // Number of screens returned by multi monitor aware API; -1 before init
@@ -329,6 +333,11 @@ static void screen_init()
 	screens[0].bottom = GetSystemMetrics(SM_CYSCREEN);
 	work_area[0] = screens[0];
 }
+#elif __FLTK_S60v32__
+static void screen_init()
+{
+
+}
 #else
 #error unsupported platform
 #endif // WIN32
@@ -405,6 +414,12 @@ void Fl::screen_work_area(int &X, int &Y, int &W, int &H, int n)
 	} else { // for other screens, work area is full screen,
 		screen_xywh(X, Y, W, H, n);
 	}
+#elif __FLTK_S60v32__
+	//Fl_X::screen_work_area(X, Y, W, H, n);
+	X = Fl::x();
+	Y = Fl::y();
+	W = Fl::w();
+	H = Fl::h();
 #else
 #error unsupported platform
 #endif
@@ -467,6 +482,14 @@ void Fl::screen_xywh(int &X, int &Y, int &W, int &H, int n)
 		W = screens[n].width;
 		H = screens[n].height;
 	}
+#elif __FLTK_S60v32__
+	X = 0;
+	Y = 0;
+	TRect rect;
+	//获取当前屏幕的区域并放入TRect 中   EScreen代表全屏可更换其他
+	AknLayoutUtils::LayoutMetricsRect(AknLayoutUtils::EScreen, rect);
+	W = rect.Width();
+	H = rect.Height();
 #else
 #error unsupported platform	
 #endif // WIN32
@@ -577,6 +600,8 @@ void Fl::screen_dpi(float &h, float &v, int n)
 		h = dpi[n][0];
 		v = dpi[n][1];
 	}
+#elif __FLTK_S60v32__
+	
 #else
 #error unsupported platform
 #endif	

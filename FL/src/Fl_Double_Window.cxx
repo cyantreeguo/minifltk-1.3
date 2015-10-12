@@ -106,14 +106,16 @@ void fl_copy_offscreen(int x, int y, int w, int h, Fl_Offscreen pixmap, int srcx
 	if (fl_graphics_driver->class_name() == Fl_GDI_Graphics_Driver::class_id ||
 	    fl_graphics_driver->class_name() == Fl_GDI_Printer_Graphics_Driver::class_id) {
 #else
-if (fl_graphics_driver->class_name() == Fl_Display_Device::display_device()->driver()->class_name()) {
+	if (fl_graphics_driver->class_name() == Fl_Display_Device::display_device()->driver()->class_name()) {
 #endif
 #ifdef USE_X11
 		((Fl_Xlib_Graphics_Driver*)fl_graphics_driver)->copy_offscreen(x, y, w, h, pixmap, srcx, srcy);
 #elif defined(WIN32)
-((Fl_GDI_Graphics_Driver*)fl_graphics_driver)->copy_offscreen(x, y, w, h, pixmap, srcx, srcy);
+		((Fl_GDI_Graphics_Driver*)fl_graphics_driver)->copy_offscreen(x, y, w, h, pixmap, srcx, srcy);
 #elif defined(__APPLE__)
-((Fl_Quartz_Graphics_Driver*)fl_graphics_driver)->copy_offscreen(x, y, w, h, pixmap, srcx, srcy);
+		((Fl_Quartz_Graphics_Driver*)fl_graphics_driver)->copy_offscreen(x, y, w, h, pixmap, srcx, srcy);
+#elif defined(__S60_32__)
+		((Fl_Gc_Graphics_Driver*)fl_graphics_driver)->copy_offscreen(x, y, w, h, pixmap, srcx, srcy);
 #endif
 	} else { // when copy is not to the display
 		fl_graphics_driver->copy_offscreen(x, y, w, h, pixmap, srcx, srcy);
@@ -629,6 +631,53 @@ void fl_end_offscreen()
 
 /** @} */
 
+#elif __FLTK_S60v32__
+// TODO: S60
+const int stack_max = 16;
+static int stack_ix = 0;
+static CBitmapContext* stack_gc[stack_max];
+// static Window stack_window[stack_max];
+
+void fl_begin_offscreen(Fl_Offscreen ctx) 
+{
+	// TODO: S60
+	if (stack_ix<stack_max) {
+		stack_gc[stack_ix] = Fl_X::WindowGc;
+		// stack_window[stack_ix] = fl_window;
+	}
+	stack_ix++;
+
+	Fl_X::WindowGc = ctx->bmpGc;
+	// fl_window = 0;
+	fl_push_no_clip();
+	// CGContextSaveGState(fl_gc);
+	// Fl_X::q_fill_context();
+}
+
+void fl_end_offscreen()
+{
+	// TODO: S60
+	// Fl_X::q_release_context();
+	fl_pop_clip();
+	if (stack_ix>0) stack_ix--;
+	if (stack_ix<stack_max) {
+		Fl_X::WindowGc = stack_gc[stack_ix];
+		// fl_window = stack_window[stack_ix];
+	}
+}
+
+void Fl_Gc_Graphics_Driver::copy_offscreen(int x,int y,int w,int h,Fl_Offscreen osrc,int srcx,int srcy)
+{
+	// TODO: S60
+	Fl_X::WindowGc->BitBlt(TPoint(x,y), osrc->bmp, TRect(srcx, srcy, srcx+w, srcy+h));
+}
+
+void Fl_Gc_Graphics_Driver::copy_offscreen_with_alpha(int x, int y, int w, int h, Fl_Offscreen osrc,int srcx,int srcy)
+{
+	// TODO: S60
+	Fl_X::WindowGc->BitBlt(TPoint(x,y), osrc->bmp, TRect(srcx, srcy, srcx+w, srcy+h));
+}
+
 #else
 # error unsupported platform
 #endif
@@ -681,6 +730,10 @@ void Fl_Double_Window::flush(int eraseoverlay)
 #elif __FLTK_LINUX__
 			myi->other_xid = fl_create_offscreen(w(), h());
 		clear_damage(FL_DAMAGE_ALL);
+#elif __FLTK_S60v32__
+	// DONE: S60
+    myi->other_xid = fl_create_offscreen(w(), h());
+    clear_damage(FL_DAMAGE_ALL);
 #else
 # error unsupported platform
 #endif
@@ -738,6 +791,18 @@ void Fl_Double_Window::flush(int eraseoverlay)
 			} else {
 				draw();
 			}
+#elif defined(__S60_32__)
+    // DONE: S60
+    if (myi->other_xid)
+    	{
+    	fl_begin_offscreen(myi->other_xid);
+    	fl_clip_region(0);
+    	draw();
+    	fl_end_offscreen();
+    	} else
+    		{
+    		draw();
+    		}			
 #else // X:
 			fl_window = myi->other_xid;
 			draw();

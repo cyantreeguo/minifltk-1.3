@@ -32,6 +32,8 @@ void Fl_Window::iconize()
 		i->collapse();
 #elif __FLTK_LINUX__
 		XIconifyWindow(fl_display, i->xid, fl_screen);
+#elif __FLTK_S60v32__
+		//
 #endif
 	}
 }

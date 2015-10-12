@@ -90,6 +90,18 @@ unsigned short XUtf8IsNonSpacing(unsigned int ucs);
 # include <fcntl.h>
 # include <unistd.h>
 
+#elif __FLTK_S60v32__
+// TODO: S60
+# include <sys/types.h>
+# include <sys/stat.h>
+# include <fcntl.h>
+# include <unistd.h>
+
+extern "C" {
+  int XUtf8Tolower(int ucs);
+  unsigned short XUtf8IsNonSpacing(unsigned int ucs);
+};
+
 #else
 # include <Xutf8.h>
 # include <sys/types.h>
@@ -630,10 +642,13 @@ int fl_execvp(const char *file, char *const *argv)
 	return -1;		// STR #3040
 # endif
 
+#elif defined (__S60_32__)
+	// TODO: S60
+	return -1;
+
 #else			// other platforms
 	return execvp(file, argv);
 #endif
-
 }
 
 /** Cross-platform function to set a files mode() with a UTF-8 encoded

@@ -36,6 +36,8 @@
 #else
 #  include "os/linux/x_fl_set_fonts.cxx"
 #endif // WIN32
+#elif __FLTK_S60v32__
+#  include "os/s60v32/fl_set_fonts_s60.cxx"
 #else
 #error unsupported platform
 #endif

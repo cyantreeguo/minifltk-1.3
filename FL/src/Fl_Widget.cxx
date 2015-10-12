@@ -263,13 +263,15 @@ void Fl_Widget::draw_focus(Fl_Boxtype B, int X, int Y, int W, int H) const
 	fl_line_style(FL_SOLID);
 #elif __FLTK_IPHONEOS__
 	fl_line_style(FL_DOT);
-	fl_rect(X + Fl::box_dx(B), Y + Fl::box_dy(B),
-	        W - Fl::box_dw(B) - 1, H - Fl::box_dh(B) - 1);
+	fl_rect(X + Fl::box_dx(B), Y + Fl::box_dy(B), W - Fl::box_dw(B) - 1, H - Fl::box_dh(B) - 1);
 	fl_line_style(FL_SOLID);
 #elif __FLTK_LINUX__
 	fl_line_style(FL_DOT);
-	fl_rect(X + Fl::box_dx(B), Y + Fl::box_dy(B),
-	        W - Fl::box_dw(B) - 1, H - Fl::box_dh(B) - 1);
+	fl_rect(X + Fl::box_dx(B), Y + Fl::box_dy(B), W - Fl::box_dw(B) - 1, H - Fl::box_dh(B) - 1);
+	fl_line_style(FL_SOLID);
+#elif __FLTK_S60v32__
+	fl_line_style(FL_DOT);
+	fl_rect(X + Fl::box_dx(B), Y + Fl::box_dy(B), W - Fl::box_dw(B) - 1, H - Fl::box_dh(B) - 1);
 	fl_line_style(FL_SOLID);
 #else
 #error unsupported platform

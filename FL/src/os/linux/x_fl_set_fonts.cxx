@@ -48,6 +48,8 @@
 // (right now 0, FL_BOLD, or FL_ITALIC), or into -1 indicating that
 // the word should be put into the name:
 
+#if __FLTK_LINUX__
+
 static int attribute(int n, const char *p)
 {
 	// don't put blank things into name:
@@ -367,6 +369,8 @@ int Fl::get_font_sizes(Fl_Font fnum, int*& sizep)
 	sizep = sizes;
 	return numsizes;
 }
+
+#endif
 
 //
 // End of "$Id: fl_set_fonts_x.cxx 8864 2011-07-19 04:49:30Z greg.ercolano $".

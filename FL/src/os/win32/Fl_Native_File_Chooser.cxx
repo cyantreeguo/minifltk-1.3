@@ -21,6 +21,8 @@
 //     http://www.codeproject.com/dialog/selectfolder.asp
 //
 
+#if __FLTK_WIN32__
+
 #ifndef FL_DOXYGEN		// PREVENT DOXYGEN'S USE OF THIS FILE
 
 #include "Enumerations.H"
@@ -1004,6 +1006,7 @@ static LPCWSTR utf8towchar(const char *in)
 
 #endif /*!FL_DOXYGEN*/
 
+#endif
 //
 // End of "$Id: Fl_Native_File_Chooser_WIN32.cxx 10138 2014-05-01 09:00:30Z ianmacarthur $".
 //

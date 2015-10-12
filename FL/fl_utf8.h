@@ -86,6 +86,8 @@
 #    undef chdir
 #    define chdir _chdir
 #  endif
+#elif __FLTK_S60v32__
+  // TODO: S60
 #else
 #error unsupported platform
 #endif

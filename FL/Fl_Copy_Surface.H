@@ -89,6 +89,8 @@ private:
 	Fl_Offscreen xid;
 	Window oldwindow;
 	Fl_Surface_Device *_ss;
+#elif __FLTK_S60v32__
+	// FIXIT:
 #else
 #error unsupported platform
 #endif

@@ -36,6 +36,9 @@
 typedef struct _XftFont XftFont;
 #endif
 #include "Xutf8.h"
+#elif __FLTK_S60v32__
+#include "Xutf8.h"
+#include "Enumerations.H"
 #else
 #error unsupported platform
 #endif
@@ -100,6 +103,9 @@ public:
 	XUtf8FontStruct* font;	// X UTF-8 font information
 	FL_EXPORT Fl_Font_Descriptor(const char* xfontname);
 #  endif
+#elif __FLTK_S60v32__
+	// TODO: S60
+	Fl_Font_Descriptor(const char* xfontname);
 #else
 #error unsupported platform
 #endif
@@ -111,7 +117,7 @@ public:
 #endif // __APPLE_QUARTZ__
 #  endif // HAVE_GL
 
-	FL_EXPORT ~Fl_Font_Descriptor();
+	~Fl_Font_Descriptor();
 
 #endif // FL_DOXYGEN
 };
@@ -128,7 +134,7 @@ struct Fl_Fontdesc {
 #endif
 };
 
-extern FL_EXPORT Fl_Fontdesc *fl_fonts; // the table
+extern Fl_Fontdesc *fl_fonts; // the table
 
 #if __FLTK_WIN32__
 // functions for parsing X font names:
