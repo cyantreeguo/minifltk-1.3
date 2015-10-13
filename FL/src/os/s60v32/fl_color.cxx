@@ -15,8 +15,10 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA.
 
-#include <FL/Fl.H>
-#include <FL/x.H>
+#include "fltk_config.h"
+#include "Fl.H"
+#include "x.H"
+#include "fl_draw.H"
 
 static unsigned fl_cmap[256] = {
 #include "fl_cmap.h" // this is a file produced by "cmap.cxx":
@@ -24,25 +26,38 @@ static unsigned fl_cmap[256] = {
 
 Fl_Color fl_color_;
 
-void fl_color(Fl_Color i)
-	{
+static void fl_color_s60(Fl_Color i)
+{
 	// DONE: S60
 	fl_color_ = i;
 	TRgb color;
-	if ((i & 0xFFFFFF00) != 0) // RGB part specified
-		{
+	if ((i & 0xFFFFFF00) != 0) { // RGB part specified
 		color = TRgb((i >> 8), 255);
-		} else
-			{
-			color = TRgb(fl_cmap[i & 0xFF] >> 8, 255);
-			}
-	
-	Fl_X::WindowGc->SetBrushColor(color);
-	Fl_X::WindowGc->SetPenColor(color);
+	} else {
+		color = TRgb(fl_cmap[i & 0xFF] >> 8, 255);
 	}
 
+	Fl_X::WindowGc->SetBrushColor(color);
+	Fl_X::WindowGc->SetPenColor(color);
+}
+
+void Fl_Gc_Graphics_Driver::color(Fl_Color i)
+{
+	fl_color_s60(i);
+}
+
+void Fl_Gc_Graphics_Driver::color(uchar r,uchar g,uchar b)
+{
+	Fl_Graphics_Driver::color( fl_rgb_color(r, g, b) );
+}
+
 void Fl::set_color(Fl_Color c, unsigned int rgb)
-	{
+{
 	// DONE: S60
 	fl_cmap[c] = rgb;
-	}
+}
+
+char fl_can_do_alpha_blending()
+{
+	return 0;
+}

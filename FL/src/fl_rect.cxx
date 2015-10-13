@@ -901,6 +901,7 @@ Fl_Region XRectangleRegion(int x, int y, int w, int h)
 #endif
 
 #if __FLTK_S60v32__
+/*
 #define STACK_SIZE 10
 #define STACK_MAX (STACK_SIZE - 1)
 static Fl_Region rstack[STACK_SIZE];
@@ -913,6 +914,11 @@ void XDestroyRegion (Fl_Region r)
 		if (rstack[i] == r) rstack[i] = NULL;
 	}
 	delete r;
+}
+*/
+void XDestroyRegion (Fl_Region r)
+{
+	if ( r != NULL ) delete r;
 }
 #endif
 
@@ -991,7 +997,9 @@ void Fl_Graphics_Driver::push_clip(int x, int y, int w, int h)
 			r = temp;
 #elif __FLTK_S60v32__
 			// DONE: S60
-			TRegionFix<STACK_SIZE> *tmp = new (ELeave) TRegionFix<STACK_SIZE>(TRect(x, y, x+w, y+h));
+			//TRegionFix<STACK_SIZE> *tmp = new (ELeave) TRegionFix<STACK_SIZE>(TRect(x, y, x+w, y+h));
+			TRegion *tmp = new (ELeave)RRegion(TRect(x, y, x+w, y+h));
+			//tmp->AddRect(TRect(x, y, x+w, y+h));
 			tmp->Intersect(*current);
 			r = tmp;
 #else
@@ -1011,11 +1019,13 @@ void Fl_Graphics_Driver::push_clip(int x, int y, int w, int h)
 		r = XCreateRegion();
 #elif __FLTK_S60v32__
 		// DONE: S60
-		r = new TRegionFix<STACK_SIZE> (TRect (0, 0, 0, 0));
+		//r = new TRegionFix<STACK_SIZE> (TRect (0, 0, 0, 0));
+		r = new RRegion(TRect (0, 0, 0, 0));
 #else
 #error unsupported platform
 #endif
 	}
+/*
 #if __FLTK_S60v32__
 	// DONE: S60
 	if (rstackptr < STACK_MAX && rstack[rstackptr+1] != NULL) {
@@ -1023,6 +1033,7 @@ void Fl_Graphics_Driver::push_clip(int x, int y, int w, int h)
 		rstack[rstackptr+1] = NULL;
 	}
 #endif	
+*/
 	if (rstackptr < region_stack_max) rstack[++rstackptr] = r;
 	else Fl::warning("fl_push_clip: clip stack overflow!\n");
 	fl_restore_clip();
@@ -1031,6 +1042,7 @@ void Fl_Graphics_Driver::push_clip(int x, int y, int w, int h)
 // make there be no clip (used by fl_begin_offscreen() only!)
 void Fl_Graphics_Driver::push_no_clip()
 {
+/*
 #if __FLTK_S60v32__
 	// DONE: S60
 	if (rstackptr < STACK_MAX && rstack[rstackptr+1] != NULL) {
@@ -1038,6 +1050,7 @@ void Fl_Graphics_Driver::push_no_clip()
 		rstack[rstackptr+1] = NULL;
 	}
 #endif
+*/
 	if (rstackptr < region_stack_max) rstack[++rstackptr] = 0;
 	else Fl::warning("fl_push_no_clip: clip stack overflow!\n");
 	fl_restore_clip();
@@ -1251,7 +1264,8 @@ int Fl_Graphics_Driver::clip_box(int x, int y, int w, int h, int& X, int& Y, int
 	return 1;
 #elif __FLTK_S60v32__
 	// DONE: S60
-	TRegionFix<STACK_SIZE> tmp (TRect (x, y, x+w, y+h));
+	//TRegionFix<STACK_SIZE> tmp (TRect (x, y, x+w, y+h));
+	RRegion tmp (TRect (x, y, x+w, y+h));
 	tmp.Intersect (*r);
 	if (tmp.IsEmpty()) {
 		W = H = 0;

@@ -1,4 +1,14 @@
-﻿2014-10-13 cyantree
+﻿2015-10-12 cyantree
+移植symbian初步完成
+编译方法：
+1.加入avkon.lib
+2.在mmap中去除/FL/src/os，但是要加上/FL/src/os/s60v32/fl_select.cxx，暂时没有做合并
+已知问题：
+1.输入法
+2.键盘操作似乎有问题
+
+===================
+2014-10-13 cyantree
 ios下隐藏状态栏：
 首先设置key：Status bar is initially hidden    为YES
 然后设置key：View controller-based status bar appearance  为NO

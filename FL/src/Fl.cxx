@@ -2201,7 +2201,7 @@ void Fl_Window::flush()
 #elif __FLTK_LINUX__
 #  include "os/linux/Fl.cxx"
 #elif __FLTK_S60v32__
-#  include "os/s60v32/Fl_s60.cxx"
+#  include "os/s60v32/Fl.cxx"
 #else
 //#elif defined(__APPLE__)
 #endif

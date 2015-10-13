@@ -15,8 +15,8 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA.
 
-#include <FL/Fl.H>
-#include <FL/x.H>
+#include "Fl.H"
+#include "x.H"
 
 extern char fl_key_vector[32]; // in Fl_x.cxx
 

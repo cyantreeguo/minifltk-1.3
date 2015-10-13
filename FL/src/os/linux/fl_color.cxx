@@ -5,6 +5,8 @@
 // being used to index arrays.  So I always copy them to an integer
 // before use.
 
+#if __FLTK_LINUX__
+
 #  include "src/Fl_XColor.H"
 #  include "Fl.H"
 #  include "x.H"
@@ -343,3 +345,5 @@ void Fl::set_color(Fl_Color i, unsigned c)
 		fl_cmap[i] = c;
 	}
 }
+
+#endif

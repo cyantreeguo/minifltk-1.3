@@ -16,20 +16,19 @@
 // USA.
 
 #include "Fl_Font.H"
-#include <FL/x.H>
+#include <x.H>
 #include <utf.h>
 #include <string.h>
 
 int fl_font_;
 int fl_fontsize_;
 
-void fl_font(int font, int fontsize)
-	{
+static void fl_font_s60(int font, int fontsize)
+{
 	// TODO: S60
 	fl_font_ = font;
 	fl_fontsize_ = fontsize;
-	if (fl_fonts != NULL && Fl_X::WsScreenDevice != NULL)
-		{		
+	if (fl_fonts != NULL && Fl_X::WsScreenDevice != NULL) {
 		int fontattr = font % 4;
 		font /= 4;
 		TBuf16<128> fontname_;
@@ -37,71 +36,103 @@ void fl_font(int font, int fontsize)
 		CnvUtfConverter::ConvertToUnicodeFromUtf8(fontname_, TPtr8((unsigned char*) fl_fonts[font].fontname, strlen(fl_fonts[font].fontname)));
 		TFontSpec fontSpec(fontname_, fontsize);
 		TFontStyle fontStyle(
-				(fontattr == FL_ITALIC || fontattr == FL_BOLD_ITALIC) ? EPostureItalic : EPostureUpright,
-				(fontattr == FL_BOLD || fontattr == FL_BOLD_ITALIC) ? EStrokeWeightBold : EStrokeWeightNormal,
-				EPrintPosNormal);
+		        (fontattr == FL_ITALIC || fontattr == FL_BOLD_ITALIC) ? EPostureItalic : EPostureUpright,
+		        (fontattr == FL_BOLD || fontattr == FL_BOLD_ITALIC) ? EStrokeWeightBold : EStrokeWeightNormal,
+		        EPrintPosNormal);
 		fontSpec.iFontStyle = fontStyle;
 		Fl_X::WsScreenDevice->GetNearestFontInPixels(Fl_X::Font, fontSpec);
 		/* if (err != KErrNone)
 			{
 			fontSpec.iFontStyle=TFontStyle();
 			} */
-		}
-	if (fl_window != NULL)
-		{
-		Fl_X::WindowGc->UseFont(Fl_X::Font);
-		}
 	}
+	if (fl_window != NULL) {
+		Fl_X::WindowGc->UseFont(Fl_X::Font);
+	}
+}
 
-int fl_height()
-	{
+void Fl_Gc_Graphics_Driver::font(Fl_Font fnum, Fl_Fontsize size)
+{
+	fl_font_s60(fnum, size);
+}
+
+static int fl_height_s60()
+{
 	// DONE: S60
 	return Fl_X::Font->HeightInPixels();
-	}
+}
 
-int fl_descent()
-	{
+int Fl_Gc_Graphics_Driver::height()
+{
+	return fl_height_s60();
+}
+
+static int fl_descent_s60()
+{
 	return Fl_X::Font->DescentInPixels();
-	}
+}
 
-double fl_width(char const *str, int len)
-	{
+int Fl_Gc_Graphics_Driver::descent()
+{
+	return fl_descent_s60();
+}
+
+static double fl_width_s60(char const *str, int len)
+{
 	// DONE: S60
 	// if (len == 0) len = strlen(str);
 	TPtrC8 ptr8 ((const unsigned char*) str, len);
 	HBufC *buf = NULL;
 	TRAPD(error, buf = CnvUtfConverter::ConvertToUnicodeFromUtf8L(ptr8));
 	double w = 0;
-	if (buf)
-		{
+	if (buf) {
 		w = Fl_X::Font->TextWidthInPixels(buf->Des());
 		delete buf;
-		}
-	return w;
 	}
+	return w;
+}
 
-double fl_width(unsigned int c)
-	{
+double Fl_Gc_Graphics_Driver::width(const char* c, int n)
+{
+	return fl_width_s60(c, n);
+}
+
+static double fl_width_s60(unsigned int c)
+{
 	unsigned short c16 = c;
 	TPtrC ptr16 (&c16, 1);
 	return Fl_X::Font->TextWidthInPixels(ptr16);
-	}
+}
 
-void fl_text_extents(const char *c, int n, int &dx, int &dy, int &w, int &h)
-	{
+double Fl_Gc_Graphics_Driver::width(unsigned int c)
+{
+	return fl_width_s60(c);
+}
+
+static void fl_text_extents_s60(const char *c, int n, int &dx, int &dy, int &w, int &h)
+{
 	// TODO: S60
-	}
+}
 
-void fl_draw(char const *str, int len, int x, int y)
-	{
+void Fl_Gc_Graphics_Driver::text_extents(const char *c, int n, int &dx, int &dy, int &w, int &h)
+{
+	fl_text_extents_s60(c, n, dx, dy, w, h);
+}
+
+static void fl_draw_s60(char const *str, int len, int x, int y)
+{
 	// DONE: S60
 	// if (len == 0) len = strlen(str);
 	TPtrC8 ptr8 ((const unsigned char*) str, len);
 	HBufC *buf = NULL;
 	TRAPD(error, buf = CnvUtfConverter::ConvertToUnicodeFromUtf8L(ptr8));
-	if (buf)
-		{
+	if (buf) {
 		Fl_X::WindowGc->DrawText (buf->Des(), TPoint(x,y));
 		delete buf;
-		}
 	}
+}
+
+void Fl_Gc_Graphics_Driver::draw(const char* str, int n, int x, int y)
+{
+	fl_draw_s60(str, n, x, y);
+}
