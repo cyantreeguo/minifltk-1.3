@@ -45,6 +45,10 @@ const char *Fl_Xlib_Graphics_Driver::class_id = "Fl_Xlib_Graphics_Driver";
 const char *Fl_Gc_Graphics_Driver::class_id       = "Fl_Gc_Driver";
 #endif
 
+#if __FLTK_ANDROID__
+const char *Fl_Android_Graphics_Driver::class_id       = "Fl_Android_Driver";
+#endif
+
 /** \brief Make this surface the current drawing surface.
  This surface will receive all future graphics requests. */
 void Fl_Surface_Device::set_current(void)

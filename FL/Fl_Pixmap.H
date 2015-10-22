@@ -48,6 +48,7 @@ class FL_EXPORT Fl_Pixmap : public Fl_Image
 	friend class Fl_GDI_Printer_Graphics_Driver;
 	friend class Fl_Xlib_Graphics_Driver;
 	friend class Fl_Gc_Graphics_Driver;
+	friend class Fl_Android_Graphics_Driver;
 	void copy_data();
 	void delete_data();
 	void set_data(const char * const *p);
@@ -75,6 +76,9 @@ private:
 	unsigned id_; // for internal use
 	unsigned mask_; // for internal use (mask bitmap)
 #elif __FLTK_S60v32__
+	void *id_; // for internal use
+	void *mask_; // for internal use (mask bitmap)
+#elif __FLTK_ANDROID__
 	void *id_; // for internal use
 	void *mask_; // for internal use (mask bitmap)
 #else

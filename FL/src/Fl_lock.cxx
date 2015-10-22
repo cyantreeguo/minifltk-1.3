@@ -189,6 +189,8 @@ int Fl::awake(Fl_Awake_Handler func, void *data)
 
     See also: \ref advanced_multithreading
 */
+#include "Fl_Platform.h"
+    
 #if __FLTK_WIN32__
 #  include <windows.h>
 #  include <process.h>

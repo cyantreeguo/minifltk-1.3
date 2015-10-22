@@ -366,6 +366,8 @@ void fl_beep(int type)
 	}
 #elif __FLTK_S60v32__
 	// TODO: S60
+#elif __FLTK_ANDROID__
+	// FIXIT:	
 #else
 #error unsupported platform	
 #endif // WIN32

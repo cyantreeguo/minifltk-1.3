@@ -56,7 +56,7 @@
     FLTK suceeded in turing them on.  Your program will still work even if
     this returns false (it just won't look as good).
 */
-#ifdef WIN32
+#if __FLTK_WIN32__ || __FLTK_WINCE__
 int Fl::visual(int flags)
 {
 	fl_GetDC(0);
@@ -66,8 +66,8 @@ int Fl::visual(int flags)
 	if ((flags & FL_RGB8) && GetDeviceCaps(fl_gc,BITSPIXEL)<24) return 0;
 	return 1;
 }
-#elif defined(__APPLE__)
 
+#elif __FLTK_MACOSX__ || __FLTK_IPHONEOS__
 // \todo Mac : need to implement Visual flags
 int Fl::visual(int flags)
 {
@@ -75,8 +75,15 @@ int Fl::visual(int flags)
 	return 1;
 }
 
-#elif defined(__S60_32__)
+#elif __FLTK_S60v32__
 // TODO: S60
+int Fl::visual(int flags) 
+{
+	(void)flags;
+	return 1;
+}
+
+#elif __FLTK_ANDROID__
 int Fl::visual(int flags) 
 {
 	(void)flags;

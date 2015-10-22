@@ -338,6 +338,11 @@ static void screen_init()
 {
 
 }
+#elif __FLTK_ANDROID__
+static void screen_init()
+{
+
+}
 #else
 #error unsupported platform
 #endif // WIN32
@@ -420,6 +425,11 @@ void Fl::screen_work_area(int &X, int &Y, int &W, int &H, int n)
 	Y = Fl::y();
 	W = Fl::w();
 	H = Fl::h();
+#elif __FLTK_ANDROID__
+	X = Fl::x();
+	Y = Fl::y();
+	W = Fl::w();
+	H = Fl::h();
 #else
 #error unsupported platform
 #endif
@@ -490,6 +500,11 @@ void Fl::screen_xywh(int &X, int &Y, int &W, int &H, int n)
 	AknLayoutUtils::LayoutMetricsRect(AknLayoutUtils::EScreen, rect);
 	W = rect.Width();
 	H = rect.Height();
+#elif __FLTK_ANDROID__
+	X = 0;
+	Y = 0;
+	W = 800;
+	H = 400;
 #else
 #error unsupported platform	
 #endif // WIN32
@@ -601,6 +616,8 @@ void Fl::screen_dpi(float &h, float &v, int n)
 		v = dpi[n][1];
 	}
 #elif __FLTK_S60v32__
+
+#elif __FLTK_ANDROID__
 	
 #else
 #error unsupported platform

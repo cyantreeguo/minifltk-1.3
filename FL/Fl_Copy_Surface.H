@@ -38,7 +38,7 @@
  will be recorded in the clipboard. It's possible to draw widgets (using Fl_Copy_Surface::draw()
  ) or to use any of the \ref fl_drawings or the \ref fl_attributes.
  Finally, delete the Fl_Copy_Surface object to load the clipboard with the graphical data.
- <br> Fl_GL_Window 's can be copied to the clipboard as well.
+ <br> Fl_GL_Window 's can be copied to the clipboard as well. 
  <br> Usage example:
  \code
  Fl_Widget *g = ...; // a widget you want to copy to the clipboard
@@ -51,11 +51,11 @@
  \endcode
  Platform details:
  \li MSWindows: Transparent RGB images copy without transparency.
- The graphical data is copied to the clipboard as an 'enhanced metafile'.
- \li Mac OS: The graphical data is copied to the clipboard (a.k.a. pasteboard) in two 'flavors': 
+ The graphical data are copied to the clipboard as an 'enhanced metafile'.
+ \li Mac OS: The graphical data are copied to the clipboard (a.k.a. pasteboard) in two 'flavors':
  1) in vectorial form as PDF data; 2) in bitmap form as a TIFF image. 
  Applications to which the clipboard content is pasted can use the flavor that suits them best.
- \li X11: the graphical data is copied to the clipboard as an image in BMP format.
+ \li X11: the graphical data are copied to the clipboard as an image in BMP format.
 */
 class FL_EXPORT Fl_Copy_Surface : public Fl_Surface_Device
 {
@@ -90,6 +90,8 @@ private:
 	Window oldwindow;
 	Fl_Surface_Device *_ss;
 #elif __FLTK_S60v32__
+	// FIXIT:
+#elif __FLTK_ANDROID__
 	// FIXIT:
 #else
 #error unsupported platform

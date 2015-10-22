@@ -227,6 +227,7 @@ class FL_EXPORT Fl_RGB_Image : public Fl_Image
 	friend class Fl_GDI_Printer_Graphics_Driver;
 	friend class Fl_Xlib_Graphics_Driver;
 	friend class Fl_Gc_Graphics_Driver;
+	friend class Fl_Android_Graphics_Driver;
 	static size_t max_size_;
 public:
 
@@ -251,6 +252,9 @@ private:
 	void *id_; // for internal use
 	void *mask_; // for internal use (mask bitmap)
 #elif __FLTK_S60v32__
+	void *id_; // for internal use
+	void *mask_; // for internal use (mask bitmap)
+#elif __FLTK_ANDROID__
 	void *id_; // for internal use
 	void *mask_; // for internal use (mask bitmap)
 #else

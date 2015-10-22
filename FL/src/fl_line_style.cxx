@@ -350,6 +350,7 @@ void Fl_Graphics_Driver::line_style(int style, int width, char* dashes)
 		  Fl_X::WindowGc->SetPenStyle(CGraphicsContext::EDotDotDashPen);
 		  break;
 	}
+#elif __FLTK_ANDROID__
 #else
 # error unsupported platform
 #endif

@@ -26,7 +26,10 @@
 #include "Fl.H"
 #include "Fl_Pixmap.H"
 #include "Fl_Bitmap.H"
-#if !__FLTK_IPHONEOS__
+
+#if __FLTK_IPHONEOS__
+#elif __FLTK_ANDROID__
+#else
 
 //
 // Implementation of the /ASCII85Encode PostScript filter

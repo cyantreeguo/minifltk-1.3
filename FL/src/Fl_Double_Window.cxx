@@ -678,6 +678,15 @@ void Fl_Gc_Graphics_Driver::copy_offscreen_with_alpha(int x, int y, int w, int h
 	Fl_X::WindowGc->BitBlt(TPoint(x,y), osrc->bmp, TRect(srcx, srcy, srcx+w, srcy+h));
 }
 
+#elif __FLTK_ANDROID__
+void Fl_Android_Graphics_Driver::copy_offscreen(int x,int y,int w,int h,Fl_Offscreen osrc,int srcx,int srcy)
+{
+}
+
+void Fl_Android_Graphics_Driver::copy_offscreen_with_alpha(int x, int y, int w, int h, Fl_Offscreen osrc,int srcx,int srcy)
+{
+}
+
 #else
 # error unsupported platform
 #endif
@@ -734,6 +743,7 @@ void Fl_Double_Window::flush(int eraseoverlay)
 	// DONE: S60
     myi->other_xid = fl_create_offscreen(w(), h());
     clear_damage(FL_DAMAGE_ALL);
+#elif __FLTK_ANDROID__    
 #else
 # error unsupported platform
 #endif
@@ -770,7 +780,7 @@ void Fl_Double_Window::flush(int eraseoverlay)
 		if (damage() & ~FL_DAMAGE_EXPOSE) {
 			fl_clip_region(myi->region);
 			myi->region = 0;
-#ifdef WIN32
+#if __FLTK_WIN32__
 			HDC _sgc = fl_gc;
 			fl_gc = fl_makeDC(myi->other_xid);
 			int save = SaveDC(fl_gc);
@@ -782,7 +792,19 @@ void Fl_Double_Window::flush(int eraseoverlay)
 			//# if defined(FLTK_USE_CAIRO)
 			//if Fl::cairo_autolink_context() Fl::cairo_make_current(this); // capture gc changes automatically to update the cairo context adequately
 			//# endif
-#elif defined(__APPLE__)
+#elif __FLTK_WINCE__
+			HDC _sgc = fl_gc;
+			fl_gc = fl_makeDC(myi->other_xid);
+			int save = SaveDC(fl_gc);
+			fl_restore_clip(); // duplicate region into new gc
+			draw();
+			RestoreDC(fl_gc, save);
+			DeleteDC(fl_gc);
+			fl_gc = _sgc;
+			//# if defined(FLTK_USE_CAIRO)
+			//if Fl::cairo_autolink_context() Fl::cairo_make_current(this); // capture gc changes automatically to update the cairo context adequately
+			//# endif
+#elif __FLTK_MACOSX__
 			if ( myi->other_xid ) {
 				fl_begin_offscreen( myi->other_xid );
 				fl_clip_region( 0 );
@@ -791,7 +813,16 @@ void Fl_Double_Window::flush(int eraseoverlay)
 			} else {
 				draw();
 			}
-#elif defined(__S60_32__)
+#elif __FLTK_IPHONEOS__
+			if ( myi->other_xid ) {
+				fl_begin_offscreen( myi->other_xid );
+				fl_clip_region( 0 );
+				draw();
+				fl_end_offscreen();
+			} else {
+				draw();
+			}			
+#elif __FLTK_S60v32__
     // DONE: S60
     if (myi->other_xid)
     	{
@@ -803,6 +834,18 @@ void Fl_Double_Window::flush(int eraseoverlay)
     		{
     		draw();
     		}			
+#elif __FLTK_ANDROID__
+    // DONE: S60
+    if (myi->other_xid)
+    	{
+    	fl_begin_offscreen(myi->other_xid);
+    	fl_clip_region(0);
+    	draw();
+    	fl_end_offscreen();
+    	} else
+    		{
+    		draw();
+    		}			    	
 #else // X:
 			fl_window = myi->other_xid;
 			draw();

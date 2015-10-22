@@ -207,6 +207,7 @@ void Fl_Graphics_Driver::rect(int x, int y, int w, int h)
 	Fl_X::WindowGc->SetBrushStyle(CGraphicsContext::ENullBrush);
 	Fl_X::WindowGc->DrawRect(TRect(x, y, x + w, y + h));
 	// Fl_X::WindowGc->SetBrushStyle(savedBrushStyle);
+#elif __FLTK_ANDROID__
 #else
 #error unsupported platform
 #endif
@@ -242,6 +243,7 @@ void Fl_Graphics_Driver::rectf(int x, int y, int w, int h)
 	// DONE: S60
 	Fl_X::WindowGc->SetBrushStyle(CGraphicsContext::ESolidBrush);
 	Fl_X::WindowGc->DrawRect(TRect(x, y, x + w, y + h));
+#elif __FLTK_ANDROID__
 #else
 #error unsupported platform
 #endif
@@ -289,7 +291,6 @@ void Fl_Graphics_Driver::xyline(int x, int y, int x1)
 	// DONE: S60
 	Fl_X::WindowGc->DrawLine(TPoint(x, y), TPoint(x1 + 1, y));
 #elif __FLTK_ANDROID__
-#error unsupported platform
 #elif __FLTK_Dummy__
 #error unsupported platform
 #else
@@ -346,6 +347,7 @@ void Fl_Graphics_Driver::xyline(int x, int y, int x1, int y2)
 	else y2++;
 	Fl_X::WindowGc->DrawLine(TPoint(x, y), TPoint(x1, y));
 	Fl_X::WindowGc->DrawLine(TPoint(x1, y), TPoint(x1, y2));
+#elif __FLTK_ANDROID__	
 #else
 #error unsupported platform
 #endif
@@ -406,6 +408,7 @@ void Fl_Graphics_Driver::xyline(int x, int y, int x1, int y2, int x3)
 	Fl_X::WindowGc->DrawLine(TPoint(x, y), TPoint(x1, y));
 	Fl_X::WindowGc->DrawLine(TPoint(x1, y), TPoint(x1, y2));
 	Fl_X::WindowGc->DrawLine(TPoint(x1, y2), TPoint(x3, y2));
+#elif __FLTK_ANDROID__	
 #else
 #error unsupported platform
 #endif
@@ -450,6 +453,7 @@ void Fl_Graphics_Driver::yxline(int x, int y, int y1)
 	if (y1 < y) y1--;
 	else y1++;
 	Fl_X::WindowGc->DrawLine(TPoint(x, y), TPoint(x, y1));
+#elif __FLTK_ANDROID__	
 #else
 #error unsupported platform
 #endif
@@ -504,6 +508,7 @@ void Fl_Graphics_Driver::yxline(int x, int y, int y1, int x2)
 	else x2--;
 	Fl_X::WindowGc->DrawLine(TPoint(x, y), TPoint(x, y1));
 	Fl_X::WindowGc->DrawLine(TPoint(x, y1), TPoint(x2, y1));
+#elif __FLTK_ANDROID__	
 #else
 #error unsupported platform
 #endif
@@ -564,6 +569,7 @@ void Fl_Graphics_Driver::yxline(int x, int y, int y1, int x2, int y3)
 	Fl_X::WindowGc->DrawLine(TPoint(x, y), TPoint(x, y1));
 	Fl_X::WindowGc->DrawLine(TPoint(x, y1), TPoint(x2, y1));
 	Fl_X::WindowGc->DrawLine(TPoint(x2, y1), TPoint(x2, y3));
+#elif __FLTK_ANDROID__	
 #else
 #error unsupported platform
 #endif
@@ -601,6 +607,7 @@ void Fl_Graphics_Driver::line(int x, int y, int x1, int y1)
 	// DONE: S60
 	Fl_X::WindowGc->DrawLine(TPoint(x, y), TPoint(x1, y1));
 	Fl_X::WindowGc->Plot(TPoint(x1, y1));
+#elif __FLTK_ANDROID__	
 #else
 #error unsupported platform
 #endif
@@ -650,6 +657,7 @@ void Fl_Graphics_Driver::line(int x, int y, int x1, int y1, int x2, int y2)
 	Fl_X::WindowGc->DrawLine(TPoint(x, y), TPoint(x1, y1));
 	Fl_X::WindowGc->DrawLine(TPoint(x1, y1), TPoint(x2, y2));
 	Fl_X::WindowGc->Plot(TPoint(x2, y2));
+#elif __FLTK_ANDROID__	
 #else
 #error unsupported platform
 #endif
@@ -699,6 +707,7 @@ void Fl_Graphics_Driver::loop(int x, int y, int x1, int y1, int x2, int y2)
 	Fl_X::WindowGc->DrawLine(TPoint(x, y), TPoint(x1, y1));
 	Fl_X::WindowGc->DrawLine(TPoint(x1, y1), TPoint(x2, y2));
 	Fl_X::WindowGc->DrawLine(TPoint(x2, y2), TPoint(x, y));
+#elif __FLTK_ANDROID__	
 #else
 #error unsupported platform
 #endif
@@ -755,6 +764,7 @@ void Fl_Graphics_Driver::loop(int x, int y, int x1, int y1, int x2, int y2, int 
 	Fl_X::WindowGc->DrawLine(TPoint(x1, y1), TPoint(x2, y2));
 	Fl_X::WindowGc->DrawLine(TPoint(x2, y2), TPoint(x3, y3));
 	Fl_X::WindowGc->DrawLine(TPoint(x3, y3), TPoint(x, y));
+#elif __FLTK_ANDROID__
 #else
 #error unsupported platform
 #endif
@@ -803,6 +813,7 @@ void Fl_Graphics_Driver::polygon(int x, int y, int x1, int y1, int x2, int y2)
 	pointList.AppendL(TPoint(x1, y1));
 	pointList.AppendL(TPoint(x2, y2));
 	Fl_X::WindowGc->DrawPolygon(&pointList);
+#elif __FLTK_ANDROID__
 #else
 #error unsupported platform
 #endif
@@ -855,7 +866,8 @@ void Fl_Graphics_Driver::polygon(int x, int y, int x1, int y1, int x2, int y2, i
 	pointList.AppendL(TPoint(x1, y1));
 	pointList.AppendL(TPoint(x2, y2));
 	pointList.AppendL(TPoint(x3, y3));
-	Fl_X::WindowGc->DrawPolygon(&pointList);	
+	Fl_X::WindowGc->DrawPolygon(&pointList);
+#elif __FLTK_ANDROID__
 #else
 #error unsupported platform
 #endif
@@ -876,6 +888,7 @@ void Fl_Graphics_Driver::point(int x, int y)
 #elif __FLTK_S60v32__
 	// DONE: S60
 	Fl_X::WindowGc->Plot(TPoint(x, y));
+#elif __FLTK_ANDROID__
 #else
 #error unsupported platform
 #endif
@@ -955,6 +968,7 @@ void Fl_Graphics_Driver::restore_clip()
 	// DONE: S60
 	if (r) Fl_X::WindowGc->SetClippingRegion(*r);
 	else Fl_X::WindowGc->CancelClippingRegion();
+#elif __FLTK_ANDROID__
 #else
 #error unsupported platform
 #endif
@@ -1002,6 +1016,7 @@ void Fl_Graphics_Driver::push_clip(int x, int y, int w, int h)
 			//tmp->AddRect(TRect(x, y, x+w, y+h));
 			tmp->Intersect(*current);
 			r = tmp;
+#elif __FLTK_ANDROID__
 #else
 #error unsupported platform
 #endif
@@ -1021,6 +1036,7 @@ void Fl_Graphics_Driver::push_clip(int x, int y, int w, int h)
 		// DONE: S60
 		//r = new TRegionFix<STACK_SIZE> (TRect (0, 0, 0, 0));
 		r = new RRegion(TRect (0, 0, 0, 0));
+#elif __FLTK_ANDROID__
 #else
 #error unsupported platform
 #endif
@@ -1124,6 +1140,7 @@ int Fl_Graphics_Driver::not_clipped(int x, int y, int w, int h)
 #elif __FLTK_S60v32__
 	// DONE: S60
 	return r ? r->Intersects(TRect (x, y, x+w, y+h)) : 1;
+#elif __FLTK_ANDROID__
 #else
 #error unsupported platform
 #endif
@@ -1278,6 +1295,8 @@ int Fl_Graphics_Driver::clip_box(int x, int y, int w, int h, int& X, int& Y, int
 	W = boundingRect.Width();
 	H = boundingRect.Height();
 	return 1; // partial intersection
+#elif __FLTK_ANDROID__
+	return 1;
 #else
 #error unsupported platform
 #endif

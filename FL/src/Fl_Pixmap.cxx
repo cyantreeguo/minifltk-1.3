@@ -124,15 +124,21 @@ int Fl_Pixmap::prepare(int XP, int YP, int WP, int HP, int &cx, int &cy,
 		id_ = Fl_Quartz_Graphics_Driver::create_offscreen_with_alpha(w(), h());
 #elif __FLTK_S60v32__
 		//id_ = Fl_Gc_Graphics_Driver::create_offscreen_with_alpha(w(), h());
+#elif __FLTK_ANDROID__
+
 #else
 		id_ = fl_create_offscreen(w(), h());
 #endif
+
 		fl_begin_offscreen((Fl_Offscreen)id_);
+
 #ifndef __APPLE__
 		uchar *bitmap = 0;
 		fl_mask_bitmap = &bitmap;
 #endif
+
 		fl_draw_pixmap(data(), 0, 0, FL_BLACK);
+		
 #ifndef __APPLE__
 #if defined(WIN32)
 		extern UINT win_pixmap_bg_color; // computed by fl_draw_pixmap()
@@ -263,6 +269,14 @@ void Fl_GDI_Printer_Graphics_Driver::draw(Fl_Pixmap *pxm, int XP, int YP, int WP
 
 #elif __FLTK_S60v32__
 void Fl_Gc_Graphics_Driver::draw(Fl_Pixmap *pxm, int XP, int YP, int WP, int HP, int cx, int cy)
+{
+	int X, Y, W, H;
+	if (pxm->prepare(XP, YP, WP, HP, cx, cy, X, Y, W, H)) return;
+	// do nothing here?
+}
+
+#elif __FLTK_ANDROID__
+void Fl_Android_Graphics_Driver::draw(Fl_Pixmap *pxm, int XP, int YP, int WP, int HP, int cx, int cy)
 {
 	int X, Y, W, H;
 	if (pxm->prepare(XP, YP, WP, HP, cx, cy, X, Y, W, H)) return;

@@ -30,6 +30,8 @@
 #  include "os/wince/fl_get_key.cxx"
 #elif __FLTK_S60v32__
 #  include "os/s60v32/fl_get_key_s60.cxx"
+#elif __FLTK_ANDROID__
+#  include "os/android/fl_get_key.cxx"
 #else
 #error unsupported platform
 #endif

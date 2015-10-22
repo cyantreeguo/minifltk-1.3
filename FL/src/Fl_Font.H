@@ -39,6 +39,9 @@ typedef struct _XftFont XftFont;
 #elif __FLTK_S60v32__
 #include "Xutf8.h"
 #include "Enumerations.H"
+#elif __FLTK_ANDROID__
+#include "Xutf8.h"
+#include "Enumerations.H"
 #else
 #error unsupported platform
 #endif
@@ -105,6 +108,8 @@ public:
 #  endif
 #elif __FLTK_S60v32__
 	// TODO: S60
+	Fl_Font_Descriptor(const char* xfontname);
+#elif __FLTK_ANDROID__
 	Fl_Font_Descriptor(const char* xfontname);
 #else
 #error unsupported platform

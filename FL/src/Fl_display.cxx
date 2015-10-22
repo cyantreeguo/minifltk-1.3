@@ -52,6 +52,8 @@ void Fl::display(const char *d)
 	(void)d;
 #elif __FLTK_S60v32__
 	(void)d;
+#elif __FLTK_ANDROID__
+	(void)d;
 #else
 #error unsupported platform
 #endif

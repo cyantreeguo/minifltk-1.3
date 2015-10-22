@@ -24,6 +24,7 @@
 #include "fl_draw.H"
 
 #if __FLTK_S60v32__
+#elif __FLTK_ANDROID__
 #else
 
 const char *Fl_Paged_Device::class_id = "Fl_Paged_Device";

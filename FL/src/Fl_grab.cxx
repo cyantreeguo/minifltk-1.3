@@ -54,14 +54,16 @@ void Fl::grab(Fl_Window* win)
 #endif
 	if (win) {
 		if (!grab_) {
-#ifdef WIN32
+#if __FLTK_WIN32__ || __FLTK_WINCE__
 			SetActiveWindow(fl_capture = fl_xid(first_window()));
 			SetCapture(fl_capture);
-#elif defined(__APPLE__)
+#elif __FLTK_MACOSX__ || __FLTK_IPHONEOS__
 			fl_capture = Fl_X::i(first_window())->xid;
 			Fl_X::i(first_window())->set_key_window();
-#elif defined(__S60_32__)
-			// TODO: S60			
+#elif __FLTK_S60v32__
+			// TODO: S60
+#elif __FLTK_ANDROID__
+
 #else
 			Window xid = fullscreen_win ? fl_xid(fullscreen_win) : fl_xid(first_window());
 			XGrabPointer(fl_display,
@@ -85,13 +87,15 @@ void Fl::grab(Fl_Window* win)
 		grab_ = win;
 	} else {
 		if (grab_) {
-#ifdef WIN32
+#if __FLTK_WIN32__ || __FLTK_WINCE__
 			fl_capture = 0;
 			ReleaseCapture();
-#elif defined(__APPLE__)
+#elif __FLTK_MACOSX__ || __FLTK_IPHONEOS__
 			fl_capture = 0;
-#elif defined(__S60_32__)
-			// TODO: S60			
+#elif __FLTK_S60v32__
+			// TODO: S60
+#elif __FLTK_ANDROID__
+			
 #else
 			// We must keep the grab in the non-EWMH fullscreen case
 			if (!fullscreen_win || Fl_X::ewmh_supported()) {

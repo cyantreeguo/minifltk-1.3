@@ -38,6 +38,8 @@
 #endif // WIN32
 #elif __FLTK_S60v32__
 #  include "os/s60v32/fl_set_fonts_s60.cxx"
+#elif __FLTK_ANDROID__
+#  include "os/android/fl_set_fonts.cxx"
 #else
 #error unsupported platform
 #endif

@@ -40,6 +40,18 @@ int XParseGeometry(const char*, int*, int*, unsigned int*, unsigned int*);
 #  define YNegative 	0x0020
 #endif
 
+#if __FLTK_ANDROID__
+int XParseGeometry(const char*, int*, int*, unsigned int*, unsigned int*);
+#  define NoValue	0x0000
+#  define XValue  	0x0001
+#  define YValue	0x0002
+#  define WidthValue  	0x0004
+#  define HeightValue  	0x0008
+#  define AllValues 	0x000F
+#  define XNegative 	0x0010
+#  define YNegative 	0x0020
+#endif
+
 static int fl_match(const char *a, const char *s, int atleast = 1)
 {
 	const char *b = s;
@@ -199,7 +211,6 @@ int Fl::arg(int argc, char **argv, int &i)
 		return 0;	// all the rest need an argument, so if missing it is an error
 
 	if (fl_match(s, "geometry")) {
-
 		int flags, gx, gy;
 		unsigned int gw, gh;
 		flags = XParseGeometry(v, &gx, &gy, &gw, &gh);
@@ -309,7 +320,7 @@ void Fl_Window::show(int argc, char **argv)
 
 	Fl::get_system_colors();
 
-#if !defined(WIN32) && !defined(__APPLE__) && !defined(__S60_32__)
+#if __FLTK_LINUX__
 	// Get defaults for drag-n-drop and focus...
 	const char *key = 0, *val;
 
@@ -374,7 +385,7 @@ void Fl_Window::show(int argc, char **argv)
 	// Show the window AFTER we have set the colors and scheme.
 	show();
 
-#if !defined(WIN32) && !defined(__APPLE__) && !defined(__S60_32__)
+#if __FLTK_LINUX__
 	// set the command string, used by state-saving window managers:
 	int j;
 	int n=0;
@@ -424,7 +435,8 @@ void Fl::args(int argc, char **argv)
 	if (Fl::args(argc,argv,i) < argc) Fl::error(helpmsg);
 }
 
-#if defined(WIN32) || defined(__APPLE__) || defined(__S60_32__)
+//#if defined(WIN32) || defined(__APPLE__) || defined(__S60_32__)
+#if __FLTK_WIN32__ || __FLTK_WINCE__ || __FLTK_MACOSX__ || __FLTK_IPHONEOS__ || __FLTK_S60v32__ || __FLTK_ANDROID__
 
 /* the following function was stolen from the X sources as indicated. */
 

@@ -69,6 +69,12 @@
 #  if HAVE_DLFCN_H
 #    include <dlfcn.h>
 #  endif
+#elif __FLTK_ANDROID__
+#  include <unistd.h>
+#  include "fltk_config.h"
+#  if HAVE_DLFCN_H
+#    include <dlfcn.h>
+#  endif
 #else
 #error unsupported platform
 #endif

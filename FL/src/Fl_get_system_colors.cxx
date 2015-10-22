@@ -99,8 +99,21 @@ static void set_selection_color(uchar r, uchar g, uchar b)
 	Fl::set_color(FL_SELECTION_COLOR,r,g,b);
 }
 
-#if defined(WIN32) || defined(__APPLE__) || defined(__S60_32__)
+#if __FLTK_LINUX__
+// Wrapper around XParseColor...
+int fl_parse_color(const char* p, uchar& r, uchar& g, uchar& b)
+{
+	XColor x;
+	if (!fl_display) fl_open_display();
+	if (XParseColor(fl_display, fl_colormap, p, &x)) {
+		r = (uchar)(x.red>>8);
+		g = (uchar)(x.green>>8);
+		b = (uchar)(x.blue>>8);
+		return 1;
+	} else return 0;
+}
 
+#else
 #  include <stdio.h>
 // simulation of XParseColor:
 int fl_parse_color(const char* p, uchar& r, uchar& g, uchar& b)
@@ -149,20 +162,7 @@ int fl_parse_color(const char* p, uchar& r, uchar& g, uchar& b)
 	b = (uchar)B;
 	return 1;
 }
-#else
-// Wrapper around XParseColor...
-int fl_parse_color(const char* p, uchar& r, uchar& g, uchar& b)
-{
-	XColor x;
-	if (!fl_display) fl_open_display();
-	if (XParseColor(fl_display, fl_colormap, p, &x)) {
-		r = (uchar)(x.red>>8);
-		g = (uchar)(x.green>>8);
-		b = (uchar)(x.blue>>8);
-		return 1;
-	} else return 0;
-}
-#endif // WIN32 || __APPLE__
+#endif
 
 
 /** \fn Fl::get_system_colors()
@@ -178,7 +178,7 @@ int fl_parse_color(const char* p, uchar& r, uchar& g, uchar& b)
     style to other X programs" switch in their control panel.
 */
 
-#if defined(WIN32)				// --- WIN32 ---
+#if __FLTK_WIN32__ || __FLTK_WINCE__
 
 static void
 getsyscolor(int what, const char* arg, void (*func)(uchar,uchar,uchar))
@@ -203,7 +203,7 @@ void Fl::get_system_colors()
 	getsyscolor(COLOR_HIGHLIGHT,	0,     set_selection_color);
 }
 
-#elif defined(__APPLE__)			// --- APPLE ---
+#elif __FLTK_MACOSX__ || __FLTK_IPHONEOS__
 
 // MacOS X currently supports two color schemes - Blue and Graphite.
 // Since we aren't emulating the Aqua interface (even if Apple would
@@ -234,8 +234,13 @@ void Fl::get_system_colors()
 #endif
 }
 
-#elif defined(__S60_32__)
+#elif __FLTK_S60v32__
 // TODO: S60
+void Fl::get_system_colors()
+{
+}
+
+#elif __FLTK_ANDROID__
 void Fl::get_system_colors()
 {
 }

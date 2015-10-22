@@ -63,7 +63,7 @@ void Fl::set_font(Fl_Font fnum, const char* name)
 			s->name = name;
 			return;
 		}
-#if !defined(WIN32) && !defined(__APPLE__) && !defined(__S60_32__)
+#if __FLTK_LINUX__
 		if (s->xlist && s->n >= 0) XFreeFontNames(s->xlist);
 #endif
 		for (Fl_Font_Descriptor* f = s->first; f;) {

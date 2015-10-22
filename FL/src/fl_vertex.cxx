@@ -196,6 +196,7 @@ void Fl_Graphics_Driver::end_points()
 	for (int i = 0; i < n; i++) {
 		Fl_X::WindowGc->Plot(TPoint(p[i].x, p[i].y));
 	}
+#elif __FLTK_ANDROID__
 #else
 #error unsupported platform
 #endif
@@ -245,6 +246,7 @@ void Fl_Graphics_Driver::end_line()
 	}
 	Fl_X::WindowGc->DrawPolyLine(points, n);
 	delete [] points;
+#elif __FLTK_ANDROID__	
 #else
 #error unsupported platform
 #endif
@@ -314,6 +316,7 @@ void Fl_Graphics_Driver::end_polygon()
 	}
 	Fl_X::WindowGc->DrawPolygon(points, n);
 	delete [] points;
+#elif __FLTK_ANDROID__
 #else
 #error unsupported platform
 #endif
@@ -405,6 +408,7 @@ void Fl_Graphics_Driver::end_complex_polygon()
 	}
 	Fl_X::WindowGc->DrawPolygon(points, n);
 	delete [] points;
+#elif __FLTK_ANDROID__
 #else
 #error unsupported platform
 #endif
@@ -470,6 +474,7 @@ void Fl_Graphics_Driver::circle(double x, double y,double r)
 		Fl_X::WindowGc->DrawEllipse(TRect(x - r, y - r, x + r, y + r));
 		Fl_X::WindowGc->SetBrushStyle(CFbsBitGc::ESolidBrush);
 	}
+#elif __FLTK_ANDROID__
 #else
 #error unsupported platform
 #endif

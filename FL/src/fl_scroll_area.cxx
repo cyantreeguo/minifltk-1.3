@@ -170,6 +170,7 @@ void fl_scroll(int X, int Y, int W, int H, int dx, int dy,
 #endif
 #elif __FLTK_S60v32__
 	// TODO: S60
+#elif __FLTK_ANDROID__
 #else
 #error unsupported platform
 #endif

@@ -139,6 +139,7 @@ void Fl_Window::cursor(Fl_Cursor c)
 		return;
 
 #if __FLTK_S60v32__
+#elif __FLTK_ANDROID__
 #else
 	ret = i->set_cursor(c);
 #endif
@@ -180,6 +181,7 @@ void Fl_Window::cursor(const Fl_RGB_Image *image, int hotx, int hoty)
 		return;
 
 #if __FLTK_S60v32__
+#elif __FLTK_ANDROID__
 #else
 	ret = i->set_cursor(image, hotx, hoty);
 #endif
@@ -198,6 +200,7 @@ void Fl_Window::cursor(Fl_Cursor c, Fl_Color, Fl_Color)
 	//cursor(c);
 #if __FLTK_S60v32__
 	i->xid->SetPointerCursor(0);
+#elif __FLTK_ANDROID__
 #else
 	cursor(c);
 #endif

@@ -28,6 +28,8 @@
 #  include "os/wince/fl_dnd.cxx"
 #elif __FLTK_S60v32__
 #  include "os/s60v32/fl_dnd_s60.cxx"
+#elif __FLTK_ANDROID__
+#  include "os/android/fl_dnd.cxx"
 #else
 #error unsupported platform
 #endif

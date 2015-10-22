@@ -299,6 +299,18 @@ void fl_delete_bitmask(Fl_Bitmask bm)
 {
 	fl_delete_offscreen((Fl_Offscreen)bm);
 }
+
+#elif __FLTK_ANDROID__
+Fl_Bitmask fl_create_bitmask(int w, int h, const uchar *data)
+{
+	// TODO: S60
+}
+
+void fl_delete_bitmask(Fl_Bitmask bm)
+{
+	//fl_delete_offscreen((Fl_Offscreen)bm);
+}
+
 #else
 #error unsupported platform
 #endif
@@ -440,8 +452,10 @@ int Fl_Bitmap::start(int XP, int YP, int WP, int HP, int &cx, int &cy,
 	}
 	if (cy+H > h()) H = h()-cy;
 	if (H <= 0) return 1;
-#if defined(WIN32)
+#if __FLTK_WIN32__
 	if (!id_) id_ = fl_create_bitmap(w(), h(), array);
+#elif __FLTK_ANDROID__
+	//if (!id_) id_ = fl_create_bitmap(w(), h(), array);
 #else
 	if (!id_) id_ = fl_create_bitmask(w(), h(), array);
 #endif
@@ -626,6 +640,7 @@ void Fl_Xlib_Graphics_Driver::draw(Fl_Bitmap *bm, int XP, int YP, int WP, int HP
 }
 #elif __FLTK_S60v32__
 	// TODO: S60
+#elif __FLTK_ANDROID__
 #else
 #error unsupported platform
 #endif

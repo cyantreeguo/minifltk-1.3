@@ -39,6 +39,7 @@
 #elif __FLTK_LINUX__
 #include "Fl_PostScript.H"
 #elif __FLTK_S60v32__
+#elif __FLTK_ANDROID__
 #else
 #error unsupported platform
 #endif

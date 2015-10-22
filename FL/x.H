@@ -50,6 +50,8 @@
 #include "x_wince.H"
 #elif __FLTK_S60v32__
 #include "x_s60v32.H"
+#elif __FLTK_ANDROID__
+#include "x_android.H"
 #else
 #error unsupported platform
 #endif

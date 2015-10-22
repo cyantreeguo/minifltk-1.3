@@ -88,6 +88,13 @@
 #  endif
 #elif __FLTK_S60v32__
   // TODO: S60
+
+#elif __FLTK_ANDROID__
+#  include <sys/types.h>
+#  include <sys/stat.h>
+#  include <locale.h>
+#  define xchar unsigned short
+
 #else
 #error unsupported platform
 #endif

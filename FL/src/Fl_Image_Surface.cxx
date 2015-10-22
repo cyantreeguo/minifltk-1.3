@@ -30,7 +30,7 @@ Fl_Image_Surface::Fl_Image_Surface(int w, int h) : Fl_Surface_Device(NULL)
 {
 	width = w;
 	height = h;
-#if !(defined(__APPLE__) || defined(WIN32) || defined(__S60_32__))
+#if __FLTK_LINUX__
 	gc = 0;
 	if (!fl_gc) { // allows use of this class before any window is shown
 		fl_open_display();
@@ -55,6 +55,7 @@ Fl_Image_Surface::Fl_Image_Surface(int w, int h) : Fl_Surface_Device(NULL)
 	helper = new Fl_Xlib_Surface_();
 	driver(helper->driver());
 #elif __FLTK_S60v32__
+#elif __FLTK_ANDROID__
 #else
 #error unsupported platform
 #endif
@@ -78,6 +79,7 @@ Fl_Image_Surface::~Fl_Image_Surface()
 	}
 	delete (Fl_Xlib_Surface_*)helper;
 #elif __FLTK_S60v32__
+#elif __FLTK_ANDROID__
 #else
 #error unsupported platform
 #endif
@@ -112,6 +114,7 @@ Fl_RGB_Image* Fl_Image_Surface::image()
 	fl_window = pre_window;
 	previous->set_current();
 #elif __FLTK_S60v32__
+#elif __FLTK_ANDROID__
 #else
 #error unsupported platform
 #endif
@@ -151,6 +154,7 @@ void Fl_Image_Surface::set_current()
 	fl_push_no_clip();
 #elif __FLTK_WINCE__
 #elif __FLTK_S60v32__
+#elif __FLTK_ANDROID__
 #else
 	pre_window = fl_window;
 	fl_window = offscreen;

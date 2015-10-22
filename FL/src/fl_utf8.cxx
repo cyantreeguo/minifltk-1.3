@@ -102,6 +102,18 @@ extern "C" {
   unsigned short XUtf8IsNonSpacing(unsigned int ucs);
 };
 
+#elif __FLTK_ANDROID__
+// TODO: S60
+# include <sys/types.h>
+# include <sys/stat.h>
+# include <fcntl.h>
+# include <unistd.h>
+
+extern "C" {
+  int XUtf8Tolower(int ucs);
+  unsigned short XUtf8IsNonSpacing(unsigned int ucs);
+};
+
 #else
 # include <Xutf8.h>
 # include <sys/types.h>

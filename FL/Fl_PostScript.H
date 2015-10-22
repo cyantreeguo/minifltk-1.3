@@ -28,7 +28,9 @@
 #include <stdarg.h>
 
 #include "Fl_Platform.h"
-#if !__FLTK_IPHONEOS__
+#if __FLTK_IPHONEOS__
+#elif __FLTK_ANDROID__
+#else
 
 /* Signature of Fl_PostScript::close_command() functions passed as parameters. */
 extern "C" {

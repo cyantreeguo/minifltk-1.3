@@ -109,6 +109,8 @@ void Fl_Graphics_Driver::arc(int x,int y,int w,int h,double a1,double a2)
 	int xb = x+w/2+int(w*cos(a2/180.0*M_PI));
 	int yb = y+h/2-int(h*sin(a2/180.0*M_PI));
 	Fl_X::WindowGc->DrawArc(TRect(x, y, x + w, y + h), TPoint(xa, ya), TPoint(xb, yb));
+#elif __FLTK_ANDROID__
+	// FIXIT
 #else
 #error unsupported platform
 #endif
@@ -204,6 +206,8 @@ void Fl_Graphics_Driver::pie(int x,int y,int w,int h,double a1,double a2)
 	int xb = x+w/2+int(w*cos(a2/180.0*M_PI));
 	int yb = y+h/2-int(h*sin(a2/180.0*M_PI));
 	Fl_X::WindowGc->DrawPie(TRect(x, y, x + w, y + h), TPoint(xa, ya), TPoint(xb, yb));
+#elif __FLTK_ANDROID__
+	// FIXIT	
 #else
 #error unsupported platform
 #endif

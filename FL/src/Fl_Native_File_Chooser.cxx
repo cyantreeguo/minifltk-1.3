@@ -58,6 +58,10 @@
 #include "os/s60v32/Fl_Native_File_Chooser.cxx"
 #endif
 
+#if __FLTK_ANDROID__
+#include "os/android/Fl_Native_File_Chooser.cxx"
+#endif
+
 const char *Fl_Native_File_Chooser::file_exists_message = "File exists. Are you sure you want to overwrite?";
 
 //

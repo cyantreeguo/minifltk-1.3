@@ -36,7 +36,7 @@
 #endif
 
 
-#if defined(__APPLE__)
+#if __FLTK_MACOSX__ || __FLTK_IPHONEOS__
 
 static void MyProviderReleaseData (void *info, const void *data, size_t size)
 {
@@ -52,7 +52,7 @@ static inline uchar swap_byte(const uchar b)
 	return (swapped[b & 0xF] << 4) | swapped[b >> 4];
 }
 
-#elif defined(WIN32)
+#elif __FLTK_WIN32__ || __FLTK_WINCE__
 
 static inline BYTE bit(int x)
 {
@@ -136,10 +136,16 @@ static HRGN bitmap2region(Fl_Image* image)
 	return hRgn;
 }
 
-#elif defined(__S60_32__)
+#elif __FLTK_S60v32__
 void Fl_Window::combine_mask()
 {
 }
+
+#elif __FLTK_ANDROID__
+void Fl_Window::combine_mask()
+{
+}
+
 #else
 
 #ifndef FL_DOXYGEN

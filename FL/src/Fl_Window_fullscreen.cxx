@@ -74,6 +74,7 @@ void Fl_Window::border(int b)
 #endif
 #elif __FLTK_S60v32__
 	//
+#elif __FLTK_ANDROID__
 #else
 #error unsupported platform
 #endif

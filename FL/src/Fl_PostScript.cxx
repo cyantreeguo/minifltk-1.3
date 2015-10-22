@@ -34,6 +34,7 @@
 
 #if __FLTK_IPHONEOS__
 #elif __FLTK_S60v32__
+#elif __FLTK_ANDROID__
 #else
 
 const char *Fl_PostScript_Graphics_Driver::class_id = "Fl_PostScript_Graphics_Driver";

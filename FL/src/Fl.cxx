@@ -676,6 +676,9 @@ double Fl::wait(double time_to_wait)
 			time_to_wait = 0.0;
 		return fl_wait(time_to_wait);
 	}
+
+#elif __FLTK_ANDROID__
+	// FIXIT:
 #else
 #error unsupported platform
 #endif
@@ -949,6 +952,8 @@ void Fl::flush()
 	if (fl_display) XFlush(fl_display);
 #elif __FLTK_S60v32__
 	// TODO: S60
+#elif __FLTK_ANDROID__
+	// FIXIT:
 #else
 #error unsupported platform
 #endif
@@ -1281,7 +1286,7 @@ void fl_fix_focus()
 	}
 }
 
-#if !(defined(WIN32) || defined(__APPLE__))
+#if __FLTK_LINUX__
 extern Fl_Widget *fl_selection_requestor; // from Fl_x.cxx
 #endif
 
@@ -1300,7 +1305,7 @@ void fl_throw_focus(Fl_Widget *o)
 #endif // DEBUG
 
 	if (o->contains(Fl::pushed())) Fl::pushed_ = 0;
-#if !(defined(WIN32) || defined(__APPLE__))
+#if __FLTK_LINUX__
 	if (o->contains(fl_selection_requestor)) fl_selection_requestor = 0;
 #endif
 	if (o->contains(Fl::belowmouse())) Fl::belowmouse_ = 0;
@@ -1852,6 +1857,8 @@ void Fl_Window::hide()
 	delete ip->xid;
 	ip->windowGroup->Close();
 	delete ip->windowGroup;
+#elif __FLTK_ANDROID__
+	// FIXIT:
 #else
 #error unsupported platform
 #endif
@@ -1891,7 +1898,9 @@ int Fl_Window::handle(int ev)
 				XMapWindow(fl_display, fl_xid(this)); // extra map calls are harmless
 #elif __FLTK_S60v32__
 				// TODO: S60
-				fl_xid(this)->SetVisible(true);				
+				fl_xid(this)->SetVisible(true);
+#elif __FLTK_ANDROID__
+	// FIXIT:				
 #else
 #error unsupported platform
 #endif
@@ -1923,7 +1932,9 @@ int Fl_Window::handle(int ev)
 				XUnmapWindow(fl_display, fl_xid(this));
 #elif __FLTK_S60v32__
 				// TODO: S60
-				fl_xid(this)->SetVisible(false);					
+				fl_xid(this)->SetVisible(false);
+#elif __FLTK_ANDROID__
+	// FIXIT:				
 #else
 #error unsupported platform
 #endif
@@ -2166,6 +2177,8 @@ void Fl_Widget::damage(uchar fl, int X, int Y, int W, int H)
 			XUnionRectWithRegion(&R, i->region, i->region);
 #elif __FLTK_S60v32__
 			// TODO: S60
+#elif __FLTK_ANDROID__
+	// FIXIT:
 #else
 #error unsupported platform
 #endif
@@ -2202,8 +2215,10 @@ void Fl_Window::flush()
 #  include "os/linux/Fl.cxx"
 #elif __FLTK_S60v32__
 #  include "os/s60v32/Fl.cxx"
+#elif __FLTK_ANDROID__
+#  include "os/android/Fl.cxx"
 #else
-//#elif defined(__APPLE__)
+#error unsupported platform
 #endif
 
 
