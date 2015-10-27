@@ -24,7 +24,7 @@
 // (sort of) emulation of Glut's bitmap drawing functions, using FL's
 // font stuff.  Not all the fonts match!
 
-#include "config.h"
+#include "fltk_config.h"
 #if HAVE_GL
 #  include "../glut.H"
 

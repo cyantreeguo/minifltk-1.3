@@ -28,7 +28,7 @@
 // be erased when the buffers are swapped (when double buffer hardware
 // is being used)
 
-#include "config.h"
+#include "fltk_config.h"
 #if HAVE_GL
 
 #include "Fl.H"
