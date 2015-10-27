@@ -46,6 +46,7 @@
 // Include necessary header files...
 //
 
+#include "fltk_config.h"
 #include "Fl_Help_View.H"
 #include "Fl_Window.H"
 #include "Fl_Pixmap.H"

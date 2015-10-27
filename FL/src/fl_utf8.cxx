@@ -62,10 +62,10 @@ extern "C" {
 #   include <sys/types.h>
 # include <sys/stat.h>
 
-extern "C" {
+//extern "C" {
 	int XUtf8Tolower(int ucs);
 	unsigned short XUtf8IsNonSpacing(unsigned int ucs);
-}
+//}
 
 #elif __FLTK_IPHONEOS__
 # include <stdio.h>

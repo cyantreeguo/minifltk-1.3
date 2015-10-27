@@ -164,7 +164,12 @@
 
 #define HAVE_POLL 0
 
+#ifndef _CRT_SECURE_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS // Disable deprecation warning in VS2005+
+#endif
+
 #undef UNICODE
+#undef _UNICODE                 // Use multibyte encoding on Windows
 
 #endif
 

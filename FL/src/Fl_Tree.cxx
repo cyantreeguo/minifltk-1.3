@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "fltk_config.h"
 #include "Fl_Tree.H"
 #include "Fl_Preferences.H"
 

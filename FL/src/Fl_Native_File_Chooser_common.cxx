@@ -17,6 +17,7 @@
 //
 
 #include <string.h>
+#include "fltk_config.h"
 #include "Enumerations.H"
 
 // COPY A STRING WITH 'new'

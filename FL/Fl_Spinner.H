@@ -20,7 +20,7 @@
    Fl_Spinner widget . */
 
 #ifndef Fl_Spinner_H
-#  define Fl_Spinner_H
+#define Fl_Spinner_H
 
 //
 // Include necessary headers...
@@ -96,7 +96,7 @@ private:
 		sb->set_changed();
 		sb->do_callback();
 	}
-	void		update() {
+	void update() {
 		char s[255];		// Value string
 
 		if (format_[0]=='%'&&format_[1]=='.'&&format_[2]=='*') {  // precision argument

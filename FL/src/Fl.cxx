@@ -2221,6 +2221,8 @@ void Fl_Window::flush()
 #  include "os/s60v32/Fl.cxx"
 #elif __FLTK_ANDROID__
 #  include "os/android/Fl.cxx"
+#elif __FLTK_MACOSX__
+#elif __FLTK_IPHONEOS__
 #else
 #error unsupported platform
 #endif

@@ -33,7 +33,7 @@
 // Include necessary header files...
 //
 
-#include "Fl_Platform.h"
+#include "fltk_config.h"
 
 #include <stdio.h>
 #include <stdlib.h>

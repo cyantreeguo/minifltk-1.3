@@ -27,6 +27,8 @@
 # include "Fl_Cairo.H"
 #endif
 
+#include "fltk_config.h"
+
 #  include "fl_utf8.h"
 #  include "Enumerations.H"
 #  ifndef Fl_Object
@@ -1504,7 +1506,7 @@ public:
 
 };
 
-#include "Fl_Platform.h"
+//#include "Fl_Platform.h"
 
 #if __FLTK_IPHONEOS__
 #define main    IOS_main

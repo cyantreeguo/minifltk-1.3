@@ -335,7 +335,7 @@ void gl_color(Fl_Color i)
 			// be improved by fixing the colormap set in Fl_Gl_Overlay.cxx
 			int size = 1<<fl_overlay_depth;
 			if (!i) glIndexi(size-2);
-			else if (i >= size-2) glIndexi(size-1);
+			else if ((int)i >= size-2) glIndexi(size-1);
 			else glIndexi(i);
 		} else {
 			glIndexi(i ? i : FL_GRAY_RAMP);

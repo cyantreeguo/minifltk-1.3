@@ -417,7 +417,7 @@ Fl_Image *Fl_RGB_Image::copy(int W, int H)
 			float oldy = dy * yscale;
 			if (oldy >= h())
 				oldy = h() - 1;
-			const float yfract = oldy - (unsigned) oldy;
+			const float yfract = (float)(oldy - (unsigned) oldy);
 
 			for (dx = 0; dx < W; dx++) {
 				new_ptr = new_array + dy * W * d() + dx * d();
@@ -425,9 +425,9 @@ Fl_Image *Fl_RGB_Image::copy(int W, int H)
 				float oldx = dx * xscale;
 				if (oldx >= w())
 					oldx = w() - 1;
-				const float xfract = oldx - (unsigned) oldx;
+				const float xfract = (float)(oldx - (unsigned) oldx);
 
-				const unsigned leftx = oldx;
+				const unsigned leftx = (unsigned)oldx;
 				const unsigned lefty = oldy;
 				const unsigned rightx = oldx + 1 >= w() ? oldx : oldx + 1;
 				const unsigned righty = oldy;

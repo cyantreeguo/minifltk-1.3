@@ -21,6 +21,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "fltk_config.h"
 #include "fl_utf8.h"
 #include "flstring.h"
 #include <limits.h>

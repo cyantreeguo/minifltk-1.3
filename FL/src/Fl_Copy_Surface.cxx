@@ -88,14 +88,14 @@ Fl_Copy_Surface::Fl_Copy_Surface(int w, int h) :  Fl_Surface_Device(NULL)
 	int vmm = GetDeviceCaps(hdc, VERTSIZE);
 	int vdots = GetDeviceCaps(hdc, VERTRES);
 	ReleaseDC(NULL, hdc);
-	float factorw =  (100. * hmm) / hdots;
-	float factorh =  (100. * vmm) / vdots + 0.5;
+	float factorw =  (float)((100. * hmm) / hdots);
+	float factorh =  (float)((100. * vmm) / vdots + 0.5);
 
 	RECT rect;
 	rect.left = 0;
 	rect.top = 0;
-	rect.right = w * factorw;
-	rect.bottom = h * factorh;
+	rect.right = (int)(w * factorw);
+	rect.bottom = (int)(h * factorh);
 	gc = CreateEnhMetaFile (NULL, NULL, &rect, NULL);
 	if (gc != NULL) {
 		SetTextAlign(gc, TA_BASELINE|TA_LEFT);

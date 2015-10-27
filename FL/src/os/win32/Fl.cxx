@@ -925,10 +925,10 @@ void Fl::paste(Fl_Widget &receiver, int clipboard, const char *type)
 				int vmm = GetDeviceCaps(hdc, VERTSIZE);
 				int vdots = GetDeviceCaps(hdc, VERTRES);
 				ReleaseDC(NULL, hdc);
-				float factorw =  (100. * hmm) / hdots;
-				float factorh =  (100. * vmm) / vdots + 0.5;
-				width /= factorw;
-				height /= factorh; // convert to screen pixel unit
+				float factorw =  (float)((100. * hmm) / hdots);
+				float factorh =  (float)((100. * vmm) / vdots + 0.5);
+				width /= (int)factorw;
+				height /= (int)factorh; // convert to screen pixel unit
 				RECT rect = {0, 0, width, height};
 				Fl_Offscreen off = fl_create_offscreen(width, height);
 				fl_begin_offscreen(off);

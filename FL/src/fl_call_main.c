@@ -36,7 +36,7 @@
  * but at present we have not identified a function or API in
  * Microsoft(r) Windows(r) that allows for it.
  */
-#include "Fl_Platform.h"
+#include "fltk_config.h"
 
 #if __FLTK_WIN32__
 #  include <windows.h>

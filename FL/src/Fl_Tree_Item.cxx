@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "fltk_config.h"
 #include "Fl_Widget.H"
 #include "Fl_Tree_Item.H"
 #include "Fl_Tree_Prefs.H"

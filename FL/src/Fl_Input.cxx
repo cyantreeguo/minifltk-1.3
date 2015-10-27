@@ -24,7 +24,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+
 #include "Fl.H"
+#include "fltk_config.h"
 #include "Fl_Window.H"
 #include "Fl_Input.H"
 #include "fl_draw.H"

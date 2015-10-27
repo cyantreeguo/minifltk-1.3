@@ -16,6 +16,8 @@
  *     http://www.fltk.org/str.php
  */
 
+#include "fltk_config.h"
+
 #if __FLTK_WIN32__
 
 #ifndef __CYGWIN__

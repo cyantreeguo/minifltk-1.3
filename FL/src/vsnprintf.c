@@ -18,6 +18,7 @@
 
 #include <stdio.h>
 #include "flstring.h"
+#include "fltk_config.h"
 
 #ifdef HAVE_SYS_STDTYPES_H
 #  include <sys/stdtypes.h>
