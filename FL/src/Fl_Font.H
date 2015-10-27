@@ -133,7 +133,8 @@ struct Fl_Fontdesc {
 	const char *name;
 	char fontname[128];	// "Pretty" font name
 	Fl_Font_Descriptor *first;	// linked list of sizes of this style
-#if !__FLTK_WIN32__
+#if __FLTK_WIN32__
+#else
 	char **xlist;		// matched X font names
 	int n;		// size of xlist, negative = don't free xlist!
 #endif
@@ -142,6 +143,7 @@ struct Fl_Fontdesc {
 extern Fl_Fontdesc *fl_fonts; // the table
 
 #if __FLTK_WIN32__
+#else
 // functions for parsing X font names:
 FL_EXPORT const char* fl_font_word(const char *p, int n);
 FL_EXPORT char *fl_find_fontsize(char *name);

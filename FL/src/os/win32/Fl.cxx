@@ -542,7 +542,7 @@ int fl_wait(double time_to_wait)
 		DispatchMessageW(&fl_msg);
 	}
 
-// The following conditional test:
+	// The following conditional test:
 	//    (Fl::awake_ring_head_ != Fl::awake_ring_tail_)
 	// is a workaround / fix for STR #3143. This works, but a better solution
 	// would be to understand why the PostThreadMessage() messages are not

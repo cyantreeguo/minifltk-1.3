@@ -458,7 +458,6 @@ public:
 	/** \brief The destructor */
 	virtual ~Fl_Graphics_Driver() {
 		if (p) free(p);
-		if ( font_descriptor_ ) free(font_descriptor_);
 	}
 };
 

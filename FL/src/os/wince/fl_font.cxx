@@ -16,6 +16,8 @@
 //     http://www.fltk.org/str.php
 //
 
+#if __FLTK_WINCE__
+
 #include "Fl_Printer.H"
 
 #include "wince_compate.h"
@@ -498,6 +500,9 @@ void Fl_GDI_Graphics_Driver::rtl_draw(const char* c, int n, int x, int y)
 	SetTextColor(fl_gc, oldColor);
 }
 #endif
+
+#endif
+
 //
 // End of "$Id: fl_font_win32.cxx 10137 2014-04-30 20:03:12Z manolo $".
 //

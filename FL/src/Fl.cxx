@@ -486,9 +486,9 @@ static void run_checks()
 
 //#if !defined(WIN32) && !defined(__APPLE__)
 #if __FLTK_LINUX__
-static unsigned char in_idle;
+static char in_idle;
 #elif __FLTK_IPHONEOS__
-static unsigned char in_idle;
+static char in_idle;
 #endif
 
 ////////////////////////////////////////////////////////////////
@@ -848,7 +848,7 @@ Fl_Window* fl_find(Window xid)
 		if (window->xid->WsHandle() == xid->WsHandle()) {
 #else
 		if (window->xid == xid) {
-#endif			
+#endif
 			if (window != Fl_X::first && !Fl::modal()) {
 				// make this window be first to speed up searches
 				// this is not done if modal is true to avoid messing up modal stack
@@ -1815,11 +1815,15 @@ void Fl_Window::hide()
 	}
 	XDestroyWindow(fl_display, ip->xid);
 	// end of fix for STR#3079
-	for (int ii = 0; ii < count; ii++) {
-		doit[ii]->hide();
-		doit[ii]->show();
+	if (count) {
+		int ii;
+		for (ii = 0; ii < count; ii++)  doit[ii]->hide();
+		for (ii = 0; ii < count; ii++)  {
+			if (ii != 0) doit[0]->show(); // Fix for STR#3165
+			doit[ii]->show();
+		}
+		delete[] doit;
 	}
-	if (count) delete[] doit;
 #elif __FLTK_WINCE__
 	// this little trickery seems to avoid the popup window stacking problem
 	HWND p = GetForegroundWindow();
@@ -1900,7 +1904,7 @@ int Fl_Window::handle(int ev)
 				// TODO: S60
 				fl_xid(this)->SetVisible(true);
 #elif __FLTK_ANDROID__
-	// FIXIT:				
+				// FIXIT:
 #else
 #error unsupported platform
 #endif
@@ -1934,7 +1938,7 @@ int Fl_Window::handle(int ev)
 				// TODO: S60
 				fl_xid(this)->SetVisible(false);
 #elif __FLTK_ANDROID__
-	// FIXIT:				
+				// FIXIT:
 #else
 #error unsupported platform
 #endif
@@ -2101,7 +2105,7 @@ void Fl_Widget::damage(uchar fl)
 		// DONE: S60
 		i->xid->Invalidate();
 		Fl_X::WsSession.Flush();
-#endif		
+#endif
 	}
 }
 
@@ -2178,7 +2182,7 @@ void Fl_Widget::damage(uchar fl, int X, int Y, int W, int H)
 #elif __FLTK_S60v32__
 			// TODO: S60
 #elif __FLTK_ANDROID__
-	// FIXIT:
+			// FIXIT:
 #else
 #error unsupported platform
 #endif
@@ -2195,7 +2199,7 @@ void Fl_Widget::damage(uchar fl, int X, int Y, int W, int H)
 	// DONE: S60
 	i->xid->Invalidate();
 	Fl_X::WsSession.Flush();
-#endif	
+#endif
 }
 void Fl_Window::flush()
 {

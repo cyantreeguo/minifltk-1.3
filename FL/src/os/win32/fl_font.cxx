@@ -16,6 +16,8 @@
 //     http://www.fltk.org/str.php
 //
 
+#if __FLTK_WIN32__
+
 #include "Fl_Printer.H"
 
 static int fl_angle_ = 0;
@@ -39,6 +41,7 @@ Fl_Font_Descriptor::Fl_Font_Descriptor(const char* name, Fl_Fontsize fsize)
 	default:
 		name--;
 	}
+	
 	fid = CreateFontA(
 	              -fsize, // negative makes it use "char size"
 	              0,	            // logical average character width
@@ -167,7 +170,6 @@ int Fl_GDI_Graphics_Driver::descent()
 // Unicode string buffer
 static unsigned short *wstr = NULL;
 static int wstr_len    = 0;
-
 
 double Fl_GDI_Graphics_Driver::width(const char* c, int n)
 {
@@ -468,6 +470,9 @@ void Fl_GDI_Graphics_Driver::rtl_draw(const char* c, int n, int x, int y)
 }
 
 #endif
+
+#endif
+
 //
 // End of "$Id: fl_font_win32.cxx 10137 2014-04-30 20:03:12Z manolo $".
 //
