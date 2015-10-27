@@ -30,9 +30,11 @@ static unsigned make_current_counts = 0; // if > 0, then Fl_Window::make_current
 static Fl_X *fl_x_to_redraw = NULL;
 static BOOL through_drawRect = NO;
 
+/*
 static Fl_Quartz_Graphics_Driver fl_quartz_driver;
 static Fl_Display_Device fl_quartz_display(&fl_quartz_driver);
 Fl_Display_Device *Fl_Display_Device::_display = &fl_quartz_display; // the platform display
+*/
 
 // these pointers are set by the Fl::lock() function:
 static void nothing() { }
