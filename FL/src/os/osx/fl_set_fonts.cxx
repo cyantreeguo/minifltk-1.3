@@ -156,7 +156,7 @@ Fl_Font Fl::set_fonts(const char* xstarname)
 		return (Fl_Font)fl_free_font;
 	} else {
 #endif
-#if ! __LP64__
+#if (!__LP64__) && MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_11
 		ItemCount oFontCount, oCountAgain;
 		ATSUFontID *oFontIDs;
 		// How many fonts?

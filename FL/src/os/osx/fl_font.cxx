@@ -31,6 +31,8 @@ static CFMutableDictionaryRef attributes = NULL;
 #endif
 
 const int Fl_X::CoreText_threshold = 100500; // this represents Mac OS 10.5
+// condition when the ATSU API is available at compile time
+#define HAS_ATSU (!__LP64__) && MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_11
 
 Fl_Font_Descriptor::Fl_Font_Descriptor(const char* name, Fl_Fontsize Size)
 {
@@ -90,7 +92,7 @@ Fl_Font_Descriptor::Fl_Font_Descriptor(const char* name, Fl_Fontsize Size)
 		}
 	} else {
 #endif
-#if ! __LP64__
+#if HAS_ATSU
 		OSStatus err;
 		// fill our structure with a few default values
 		ascent = Size*3/4.;
@@ -145,7 +147,7 @@ Fl_Font_Descriptor::Fl_Font_Descriptor(const char* name, Fl_Fontsize Size)
 		// cause ATSU to find a suitable font to render any chars the current font can't do...
 		ATSUSetTransientFontMatching (layout, true);
 # endif
-#endif//__LP64__
+#endif//HAS_ATSU
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_5
 	}
 #endif
@@ -393,7 +395,7 @@ static double fl_mac_width(const UniChar* txt, int n, Fl_Font_Descriptor *fl_fon
 		return retval;
 	} else {
 #endif
-#if ! __LP64__
+#if HAS_ATSU
 		OSStatus err;
 		Fixed bBefore, bAfter, bAscent, bDescent;
 		ATSUTextLayout layout;
@@ -472,7 +474,7 @@ void Fl_Quartz_Graphics_Driver::text_extents(const char *str8, int n, int &dx, i
 		h = rect.size.height + 0.5;
 	} else {
 #endif
-#if ! __LP64__
+#if HAS_ATSU
 		OSStatus err;
 		ATSUTextLayout layout;
 		ByteCount iSize;
@@ -541,7 +543,7 @@ static void fl_mac_draw(const char *str, int n, float x, float y, Fl_Graphics_Dr
 		CFRelease(ctline);
 	} else {
 #endif
-#if ! __LP64__
+#if HAS_ATSU
 		OSStatus err;
 		// now collect our ATSU resources
 		ATSUTextLayout layout = driver->font_descriptor()->layout;
