@@ -644,11 +644,11 @@ void Fl::remove_timeout(Fl_Timeout_Handler cb, void *data)
 			   contentRect: (NSRect)rect
 				 styleMask: (NSUInteger)windowStyle;
 - (Fl_Window *)getFl_Window;
-- (void)recursivelyDisplay;
-- (void)recursivelyRepositionSubwindows;
+- (void)recursivelySendToSubwindows:(SEL)sel;
 - (void)setSubwindowFrame;
+- (void)checkSubwindowFrame;
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_7
-- (NSPoint)convertBaseToScreen: (NSPoint)aPoint;
+- (NSPoint)convertBaseToScreen:(NSPoint)aPoint;
 #endif
 @end
 
@@ -714,24 +714,28 @@ void Fl::remove_timeout(Fl_Timeout_Handler cb, void *data)
   }
 }
 
-- (void)recursivelyRepositionSubwindows
+- (void)recursivelySendToSubwindows:(SEL)sel
 {
-  if ([self parentWindow]) [self setSubwindowFrame];
+  [self performSelector:sel];
   NSEnumerator *enumerator = [[self childWindows] objectEnumerator];
   id child;
   while ((child = [enumerator nextObject]) != nil) {
-    [child recursivelyRepositionSubwindows];
+    [child recursivelySendToSubwindows:sel];
   }
 }
 
 - (void)setSubwindowFrame { // maps a subwindow at its correct position/size
   Fl_Window *parent = w->window();
+  if (!parent) return;
   FLWindow *pxid = fl_xid(parent);
   if (!pxid) return;
-  NSRect rp = [pxid frame];
-  // subwindow coordinates are in screen units from bottom just like all windows
-  rp.origin = NSMakePoint(rp.origin.x + w->x(), rp.origin.y + parent->h() - w->y() - w->h());
-  rp.size = NSMakeSize(w->w(), w->h());
+  int bx = w->x(); int by = w->y();
+  while (parent) {
+    bx += parent->x();
+    by += parent->y();
+    parent = parent->window();
+  }
+  NSRect rp = NSMakeRect(bx, main_screen_height - (by + w->h()), w->w(), w->h());
   if (!NSEqualRects(rp, [self frame])) {
     [self setFrame:rp display:YES];
   }
@@ -741,6 +745,33 @@ void Fl::remove_timeout(Fl_Timeout_Handler cb, void *data)
   }
 }
 
+- (void)checkSubwindowFrame {
+  if (![self parentWindow]) return;
+  // make sure this subwindow doesn't leak out of its parent window
+  Fl_Window *from = w, *parent;
+  CGRect full = CGRectMake(0, 0, w->w(), w->h()); // full subwindow area
+  CGRect srect = full; // will become new subwindow clip
+  int fromx = 0, fromy = 0;
+  while ((parent = from->window()) != NULL) { // loop over all parent windows
+    fromx -= from->x(); // parent origin in subwindow's coordinates
+    fromy -= from->y();
+    CGRect prect = CGRectMake(fromx, fromy, parent->w(), parent->h());
+    srect = CGRectIntersection(prect, srect); // area of subwindow inside its parent
+    from = parent;
+  }
+  CGRect *r = Fl_X::i(w)->subRect();
+  CGRect current_clip = (r ? *r : full); // current subwindow clip
+  if (!CGRectEqualToRect(srect, current_clip)) { // if new clip differs from current clip
+    delete r;
+    [[Fl_X::i(w)->xid contentView] setNeedsDisplay:YES]; // subwindow needs redrawn
+    if (CGRectEqualToRect(srect, full)) r = NULL;
+    else {
+      r = new CGRect(srect);
+      if (r->size.width == 0 && r->size.height == 0) r->origin.x = r->origin.y = 0;
+    }
+    Fl_X::i(w)->subRect(r);
+  }
+}
 @end
 
 @interface FLApplication : NSObject{}
@@ -1299,7 +1330,7 @@ static FLWindowDelegate *flwindowdelegate_instance = nil;
 		if (parent && window->as_gl_window()) parent->redraw();
 	}
 	resize_from_system = NULL;
-	if ([[nsw childWindows] count]) [nsw recursivelyRepositionSubwindows];
+	if ([[nsw childWindows] count]) [nsw recursivelySendToSubwindows:@selector(setSubwindowFrame)];
 	fl_unlock_function();
 }
 - (void)windowDidResize: (NSNotification *)notif
@@ -1321,6 +1352,10 @@ static FLWindowDelegate *flwindowdelegate_instance = nil;
 	if (window->as_gl_window()) Fl_X::i(window)->in_windowDidResize(true);
 	update_e_xy_and_e_xy_root(nsw);
 	window->resize((int)pt2.x, (int)pt2.y, (int)r.size.width, (int)r.size.height);
+	if ([[nsw childWindows] count]) {
+		[nsw recursivelySendToSubwindows:@selector(setSubwindowFrame)];
+		[nsw recursivelySendToSubwindows:@selector(checkSubwindowFrame)];
+	}
 	if (window->as_gl_window()) Fl_X::i(window)->in_windowDidResize(false);
 	fl_unlock_function();
 }
@@ -3059,7 +3094,7 @@ void Fl_X::make(Fl_Window *w)
   if (fl_show_iconic) {
     fl_show_iconic = 0;
     w->handle(FL_SHOW); // create subwindows if any
-    [cw recursivelyDisplay]; // draw the window and its subwindows before its icon is computed
+    [cw recursivelySendToSubwindows:@selector(display)];  // draw the window and its subwindows before its icon is computed
     [cw miniaturize:nil];
   } else if (w->parent()) { // a subwindow
     [cw setIgnoresMouseEvents:YES]; // needs OS X 10.2
@@ -3225,6 +3260,7 @@ void Fl_Window::resize(int X, int Y, int W, int H)
 			}
 			NSRect r = NSMakeRect(bx, main_screen_height - (by + H), W, H + (border() ? bt : 0));
 			[fl_xid(this) setFrame: r display: YES];
+			[fl_xid(this) recursivelySendToSubwindows:@selector(checkSubwindowFrame)];
 		} else {
 			bx = X; by = Y;
 			parent = window();
@@ -3235,6 +3271,7 @@ void Fl_Window::resize(int X, int Y, int W, int H)
 			}
 			NSPoint pt = NSMakePoint(bx, main_screen_height - (by + H));
 			[fl_xid(this) setFrameOrigin: pt]; // set cocoa coords to FLTK position
+			[fl_xid(this) recursivelySendToSubwindows:@selector(checkSubwindowFrame)];
 		}
 	} else {
 		resize_from_system = 0;
@@ -3245,31 +3282,6 @@ void Fl_Window::resize(int X, int Y, int W, int H)
 			}
 		} else {
 			x(X); y(Y);
-		}
-	}
-	if (this->parent() && shown()) {
-		// make sure this subwindow doesn't leak out of its parent window
-		Fl_Window *from = this;
-		CGRect full = CGRectMake(0, 0, w(), h()); // full subwindow area
-		CGRect srect = full; // will become new subwindow clip
-		int fromx = 0, fromy = 0;
-		while ((parent = from->window()) != NULL) { // loop over all parent windows
-			fromx -= from->x(); // parent origin in subwindow's coordinates
-			fromy -= from->y();
-			CGRect prect = CGRectMake(fromx, fromy, parent->w(), parent->h());
-			srect = CGRectIntersection(prect, srect); // area of subwindow inside its parent
-			from = parent;
-		}
-		CGRect *r = i->subRect();
-		CGRect current_clip = (r ? *r : full); // current subwindow clip
-		if (!CGRectEqualToRect(srect, current_clip)) { // if new clip differs from current clip
-			delete r;
-			[[i->xid contentView] setNeedsDisplay: YES]; // subwindow needs redrawn
-			if (CGRectEqualToRect(srect, full)) r = NULL;
-			else {
-				r = new CGRect(srect);
-			}
-			i->subRect(r);
 		}
 	}
 }
@@ -4126,11 +4138,18 @@ static void write_bitmap_inside(NSBitmapImageRep *to, int to_width, NSBitmapImag
 {
 	const uchar *from_data = [from bitmapData];
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_4
-  if (fl_mac_os_version >= 100400 && ([to bitmapFormat] & NSAlphaFirstBitmapFormat) && !([from bitmapFormat] & NSAlphaFirstBitmapFormat) ) { // 10.4
-    // "to" is ARGB and "from" is RGBA --> convert "from" to ARGB
-    // it is enough to read "from" starting one byte earlier, because A is always 0xFF:
-    // RGBARGBA becomes (A)RGBARGB
-    from_data--;
+  if (fl_mac_os_version >= 100400) { // 10.4 required by the bitmapFormat message
+    if (([to bitmapFormat] & NSAlphaFirstBitmapFormat) && !([from bitmapFormat] & NSAlphaFirstBitmapFormat) ) {
+      // "to" is ARGB and "from" is RGBA --> convert "from" to ARGB
+      // it is enough to read "from" starting one byte earlier, because A is always 0xFF:
+      // RGBARGBA becomes (A)RGBARGB
+      from_data--;
+    } else if ( !([to bitmapFormat] & NSAlphaFirstBitmapFormat) && ([from bitmapFormat] & NSAlphaFirstBitmapFormat) ) {
+      // "from" is ARGB and "to" is RGBA --> convert "from" to RGBA
+      // it is enough to offset reading by one byte because A is always 0xFF
+      // so ARGBARGB becomes RGBARGB(A) as needed
+      from_data++;
+    }
   }
 #endif
   int to_w = (int)[to pixelsWide]; // pixel width of "to"
@@ -4145,23 +4164,26 @@ static void write_bitmap_inside(NSBitmapImageRep *to, int to_width, NSBitmapImag
   to_y = factor*to_y;
   // perform the copy
   uchar *tobytes = [to bitmapData] + to_y * to_w * to_depth + to_x * to_depth;
-  uchar *first = tobytes;
   const uchar *frombytes = from_data;
   for (int i = 0; i < from_h; i++) {
-    if (depth == 0) {
-      if (i > 0 || from_data >= [from bitmapData]) memcpy(tobytes, frombytes, from_w * from_depth);
-      else memcpy(tobytes+1, frombytes+1, from_w * from_depth-1); // avoid reading before [from bitmapData]
+    if (depth == 0) { // depth is always 0 in case of RGBA <-> ARGB conversion
+      if (i == 0 && from_data < [from bitmapData]) {
+        memcpy(tobytes+1, frombytes+1, from_w * from_depth-1); // avoid reading before [from bitmapData]
+        *tobytes = 0xFF; // set the very first A byte
+      } else if (i == from_h - 1 && from_data > [from bitmapData]) {
+        memcpy(tobytes, frombytes, from_w * from_depth - 1); // avoid reading after end of [from bitmapData]
+        *(tobytes + from_w * from_depth - 1) = 0xFF; // set the very last A byte
+      } else {
+        memcpy(tobytes, frombytes, from_w * from_depth);
+      }
     } else {
       for (int j = 0; j < from_w; j++) {
-        // avoid reading before [from bitmapData]
-        if (j==0 && i==0 && from_data < [from bitmapData]) memcpy(tobytes+1, frombytes+1, depth-1);
-        else memcpy(tobytes + j * to_depth, frombytes + j * from_depth, depth);
+        memcpy(tobytes + j * to_depth, frombytes + j * from_depth, depth);
       }
     }
     tobytes += to_w * to_depth;
     frombytes += from_w * from_depth;
   }
-  if (from_data == [from bitmapData] - 1) *first = 0xFF; // set the very first A byte
 }
 
 
