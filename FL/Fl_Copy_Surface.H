@@ -70,7 +70,7 @@ private:
 	HDC oldgc;
 	HDC gc;
 #elif __FLTK_MACOSX__
-	Fl_CFMutableDataRef pdfdata;
+	CFMutableDataRef pdfdata;
 	CGContextRef oldgc;
 	CGContextRef gc;
 	void prepare_copy_pdf_and_tiff(int w, int h);

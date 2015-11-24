@@ -1,8 +1,8 @@
-SRCPATH = ./minifltk-1.3/src/
-FLTK = -I./minifltk-1.3 -I/usr/include/freetype2 -lXft  -lfontconfig -lXinerama -lpthread -ldl -lm  -lX11 -lXext \
+SRCPATH = ./FL/src/
+FLTK = -I./FL -I. -I/usr/include/freetype2 -lXft  -lfontconfig -lXinerama -lpthread -ldl -lm  -lX11 -lXext \
 	$(SRCPATH)*.c $(SRCPATH)*.cxx
 
-GLPATH = ./minifltk-1.3/extra_gl/src/
+GLPATH = ./FL/extra_gl/src/
 FLTK_GL = -lGL -lGLU \
 		$(GLPATH)*.cxx
 all:

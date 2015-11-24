@@ -44,7 +44,7 @@ typedef struct OpaquePMPrintSettings*   PMPrintSettings;
 typedef struct OpaquePMPageFormat*      PMPageFormat;
 typedef struct OpaquePMPrintSession*    PMPrintSession;
 typedef struct CGImage* CGImageRef;
-typedef void *Fl_CFMutableDataRef; // used in Fl_Copy_Surface.H
+typedef struct __CFData* CFMutableDataRef; // used in Fl_Copy_Surface.H
 typedef CGContextRef Fl_Offscreen;
 
 #else // this part must be compiled when building the FLTK libraries
@@ -100,7 +100,6 @@ class NSOpenGLContext;
 #endif // __OBJC__
 
 typedef CGContextRef Fl_Offscreen;
-typedef CFMutableDataRef Fl_CFMutableDataRef;
 #if MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_4
 typedef CGImageAlphaInfo CGBitmapInfo;
 #endif
@@ -232,6 +231,7 @@ public:
 	static Fl_Fontdesc* calc_fl_fonts(void); // computes the fl_fonts global variable
 	static int dnd(int use_selection); // call Fl_X::dnd(1) to support text dragging
 	static int calc_mac_os_version(void); // computes the fl_mac_os_version global variable
+	static void clip_to_rounded_corners(CGContextRef gc, int w, int h);
 private:
 #if FLTK_ABI_VERSION >= 10304
 	CGRect* subRect_;           // makes sure subwindow remains inside its parent window

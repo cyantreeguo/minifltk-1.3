@@ -647,6 +647,7 @@ void Fl::remove_timeout(Fl_Timeout_Handler cb, void *data)
 - (void)recursivelySendToSubwindows:(SEL)sel;
 - (void)setSubwindowFrame;
 - (void)checkSubwindowFrame;
+- (NSRect)constrainFrameRect:(NSRect)frameRect toScreen:(NSScreen *)screen;
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_7
 - (NSPoint)convertBaseToScreen:(NSPoint)aPoint;
 #endif
@@ -720,7 +721,7 @@ void Fl::remove_timeout(Fl_Timeout_Handler cb, void *data)
   NSEnumerator *enumerator = [[self childWindows] objectEnumerator];
   id child;
   while ((child = [enumerator nextObject]) != nil) {
-    [child recursivelySendToSubwindows:sel];
+    if ([child isKindOfClass:[FLWindow class]]) [child recursivelySendToSubwindows:sel];
   }
 }
 
@@ -771,6 +772,17 @@ void Fl::remove_timeout(Fl_Timeout_Handler cb, void *data)
     }
     Fl_X::i(w)->subRect(r);
   }
+}
+
+/* With Mac OS 10.11 the green window button makes window fullscreen (covers system menu bar and dock).
+ When there are subwindows, they are by default constrained not to cover the menu bar
+ (this is arguably a Mac OS bug).
+ Overriding the constrainFrameRect:toScreen: method removes this constraint.
+ */
+- (NSRect)constrainFrameRect:(NSRect)frameRect toScreen:(NSScreen *)screen
+{
+  if ([self parentWindow]) return frameRect; // do not constrain subwindows
+  return [super constrainFrameRect:frameRect toScreen:screen]; // will prevent a window from going above the menu bar
 }
 @end
 
@@ -1330,7 +1342,8 @@ static FLWindowDelegate *flwindowdelegate_instance = nil;
 		if (parent && window->as_gl_window()) parent->redraw();
 	}
 	resize_from_system = NULL;
-	if ([[nsw childWindows] count]) [nsw recursivelySendToSubwindows:@selector(setSubwindowFrame)];
+	[nsw recursivelySendToSubwindows:@selector(setSubwindowFrame)];
+	[nsw checkSubwindowFrame];
 	fl_unlock_function();
 }
 - (void)windowDidResize: (NSNotification *)notif
@@ -1340,7 +1353,7 @@ static FLWindowDelegate *flwindowdelegate_instance = nil;
 	Fl_Window *window = [nsw getFl_Window];
 	NSRect r; NSPoint pt2;
 	r = [[nsw contentView] frame];
-	pt2 = [nsw convertBaseToScreen: NSMakePoint(0, [[nsw contentView] frame].size.height)];
+	pt2 = [nsw convertBaseToScreen:NSMakePoint(0, r.size.height)];
 	pt2.y = main_screen_height - pt2.y;
 	Fl_Window *parent = window->window();
 	while (parent) {
@@ -1352,10 +1365,8 @@ static FLWindowDelegate *flwindowdelegate_instance = nil;
 	if (window->as_gl_window()) Fl_X::i(window)->in_windowDidResize(true);
 	update_e_xy_and_e_xy_root(nsw);
 	window->resize((int)pt2.x, (int)pt2.y, (int)r.size.width, (int)r.size.height);
-	if ([[nsw childWindows] count]) {
-		[nsw recursivelySendToSubwindows:@selector(setSubwindowFrame)];
-		[nsw recursivelySendToSubwindows:@selector(checkSubwindowFrame)];
-	}
+	[nsw recursivelySendToSubwindows:@selector(setSubwindowFrame)];
+	[nsw recursivelySendToSubwindows:@selector(checkSubwindowFrame)];
 	if (window->as_gl_window()) Fl_X::i(window)->in_windowDidResize(false);
 	fl_unlock_function();
 }
@@ -3260,7 +3271,6 @@ void Fl_Window::resize(int X, int Y, int W, int H)
 			}
 			NSRect r = NSMakeRect(bx, main_screen_height - (by + H), W, H + (border() ? bt : 0));
 			[fl_xid(this) setFrame: r display: YES];
-			[fl_xid(this) recursivelySendToSubwindows:@selector(checkSubwindowFrame)];
 		} else {
 			bx = X; by = Y;
 			parent = window();
@@ -3271,7 +3281,6 @@ void Fl_Window::resize(int X, int Y, int W, int H)
 			}
 			NSPoint pt = NSMakePoint(bx, main_screen_height - (by + H));
 			[fl_xid(this) setFrameOrigin: pt]; // set cocoa coords to FLTK position
-			[fl_xid(this) recursivelySendToSubwindows:@selector(checkSubwindowFrame)];
 		}
 	} else {
 		resize_from_system = 0;
@@ -4404,20 +4413,17 @@ int Fl_Window::decorated_h()
 	return h() + bt + by;
 }
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6
-// clip the graphics context to round top angles, as in window title bars
-static void apply_titlebar_clipping(CGContextRef gc, int w, int h)
-{
-	const CGFloat radius = 4;
-	CGContextMoveToPoint(gc, 0, 0);
-	CGContextAddLineToPoint(gc, 0, h - radius);
-	CGContextAddArcToPoint(gc, 0, h,  radius, h, radius);
-	CGContextAddLineToPoint(gc, w - radius, h);
-	CGContextAddArcToPoint(gc, w, h, w, h - radius, radius);
-	CGContextAddLineToPoint(gc, w, 0);
-	CGContextClip(gc);
+// clip the graphics context to rounded corners
+void Fl_X::clip_to_rounded_corners(CGContextRef gc, int w, int h) {
+  const CGFloat radius = 5;
+  CGContextMoveToPoint(gc, 0, 0);
+  CGContextAddLineToPoint(gc, 0, h - radius);
+  CGContextAddArcToPoint(gc, 0, h,  radius, h, radius);
+  CGContextAddLineToPoint(gc, w - radius, h);
+  CGContextAddArcToPoint(gc, w, h, w, h - radius, radius);
+  CGContextAddLineToPoint(gc, w, 0);
+  CGContextClip(gc);
 }
-#endif
 
 void Fl_Paged_Device::print_window(Fl_Window *win, int x_offset, int y_offset)
 {
@@ -4437,7 +4443,7 @@ void Fl_Paged_Device::print_window(Fl_Window *win, int x_offset, int y_offset)
 				CGContextSaveGState(fl_gc);
 				CGContextTranslateCTM(fl_gc, x_offset - 0.5, y_offset + bt - 0.5);
 				CGContextScaleCTM(fl_gc, 1, -1);
-				apply_titlebar_clipping(fl_gc, win->w(), bt);
+				Fl_X::clip_to_rounded_corners(fl_gc, win->w(), bt);
 				[layer renderInContext: fl_gc]; // 10.5 // print all title bar
 				CGContextRestoreGState(fl_gc);
 			} else { // to PostScript
@@ -4445,7 +4451,7 @@ void Fl_Paged_Device::print_window(Fl_Window *win, int x_offset, int y_offset)
 				CGContextRef gc = CGBitmapContextCreate(NULL, win->w(), bt, 8, 0, cspace, kCGImageAlphaPremultipliedLast);
 				CGColorSpaceRelease(cspace);
 				CGContextClearRect(gc, CGRectMake(0, 0, win->w(), bt));
-				apply_titlebar_clipping(gc, win->w(), bt);
+				Fl_X::clip_to_rounded_corners(gc, win->w(), bt);
 				[layer renderInContext: gc]; // 10.5 // draw all title bar to bitmap
 				Fl_RGB_Image *image = new Fl_RGB_Image((const uchar *)CGBitmapContextGetData(gc), win->w(), bt, 4,
 													   CGBitmapContextGetBytesPerRow(gc)); // 10.2
