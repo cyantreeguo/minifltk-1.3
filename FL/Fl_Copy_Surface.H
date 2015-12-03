@@ -105,6 +105,7 @@ public:
 	~Fl_Copy_Surface();
 	void set_current();
 	void draw(Fl_Widget* widget, int delta_x = 0, int delta_y = 0);
+	void draw_decorated_window(Fl_Window* win, int delta_x = 0, int delta_y = 0);
 	/** Returns the pixel width of the copy surface */
 	int w() {
 		return width;

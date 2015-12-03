@@ -201,7 +201,6 @@ public:
 	static void q_begin_image(CGRect&, int x, int y, int w, int h);
 	static void q_end_image();
 	// Cocoa additions
-	static int resolution_scaling_factor(Fl_Window*);
 	static NSOpenGLPixelFormat *mode_to_NSOpenGLPixelFormat(int mode, const int*); // computes NSOpenGLPixelFormat from Gl window's mode
 	static NSOpenGLContext* create_GLcontext_for_window(NSOpenGLPixelFormat *pixelformat, NSOpenGLContext *shared_ctx, Fl_Window *window);
 	static void GLcontext_update(NSOpenGLContext*);
@@ -301,6 +300,7 @@ extern int fl_mac_os_version;
  */
 extern class Fl_Sys_Menu_Bar *fl_sys_menu_bar;
 
+struct Fl_Menu_Item;
 
 class Fl_Mac_App_Menu
 {
@@ -322,6 +322,7 @@ public:
 	static const char *show;
 	/** Localizable text for the "Quit xxx" application menu item */
 	static const char *quit;
+	static void custom_application_menu_items(const Fl_Menu_Item *m);
 };
 
 /** @} */

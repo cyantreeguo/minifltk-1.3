@@ -1362,12 +1362,12 @@ static FLWindowDelegate *flwindowdelegate_instance = nil;
 		parent = parent->window();
 	}
 	resize_from_system = window;
-	if (window->as_gl_window()) Fl_X::i(window)->in_windowDidResize(true);
+	if (window->as_gl_window() && Fl_X::i(window)) Fl_X::i(window)->in_windowDidResize(true);
 	update_e_xy_and_e_xy_root(nsw);
 	window->resize((int)pt2.x, (int)pt2.y, (int)r.size.width, (int)r.size.height);
 	[nsw recursivelySendToSubwindows:@selector(setSubwindowFrame)];
 	[nsw recursivelySendToSubwindows:@selector(checkSubwindowFrame)];
-	if (window->as_gl_window()) Fl_X::i(window)->in_windowDidResize(false);
+	if (window->as_gl_window() && Fl_X::i(window)) Fl_X::i(window)->in_windowDidResize(false);
 	fl_unlock_function();
 }
 - (void)windowDidResignKey: (NSNotification *)notif
@@ -2753,13 +2753,6 @@ static FLTextInputContext *fltextinputcontext_instance = nil;
 }
 @end
 
-
-// For Fl_Gl_Window on retina display, returns 2, otherwise 1
-int Fl_X::resolution_scaling_factor(Fl_Window *win)
-{
-	return (fl_mac_os_version >= 100700 && win->as_gl_window() && Fl::use_high_res_GL() && win->i->mapped_to_retina()) ? 2 : 1;
-}
-
 NSOpenGLPixelFormat* Fl_X::mode_to_NSOpenGLPixelFormat(int m, const int *alistp)
 {
 	NSOpenGLPixelFormatAttribute attribs[32];
@@ -2851,9 +2844,18 @@ NSOpenGLPixelFormat* Fl_X::mode_to_NSOpenGLPixelFormat(int m, const int *alistp)
 NSOpenGLContext* Fl_X::create_GLcontext_for_window(NSOpenGLPixelFormat *pixelformat,
 												   NSOpenGLContext *shared_ctx, Fl_Window *window)
 {
-	NSOpenGLContext *context = [[NSOpenGLContext alloc] initWithFormat: pixelformat shareContext: shared_ctx];
-	if (context) [context setView: [fl_xid(window) contentView]];
-	return context;
+	NSOpenGLContext *context = [[NSOpenGLContext alloc] initWithFormat:pixelformat shareContext:shared_ctx];
+  if (context) {
+    NSView *view = [fl_xid(window) contentView];
+    if (fl_mac_os_version >= 100700 && Fl::use_high_res_GL()) {
+      //replaces  [view setWantsBestResolutionOpenGLSurface:YES]  without compiler warning
+      typedef void (*bestResolutionIMP)(id, SEL, BOOL);
+      static bestResolutionIMP addr = (bestResolutionIMP)[NSView instanceMethodForSelector:@selector(setWantsBestResolutionOpenGLSurface:)];
+      addr(view, @selector(setWantsBestResolutionOpenGLSurface:), YES);
+    }
+    [context setView:view];
+  }
+  return context;
 }
 
 void Fl_X::GLcontext_update(NSOpenGLContext *ctxt)
@@ -3061,12 +3063,6 @@ void Fl_X::make(Fl_Window *w)
       Fl_X::first = x;
     }
     FLView *myview = [[FLView alloc] initWithFrame:crect];
-    if (w->as_gl_window() && fl_mac_os_version >= 100700 && Fl::use_high_res_GL()) {
-      //replaces  [myview setWantsBestResolutionOpenGLSurface:YES]  without compiler warning
-      typedef void (*bestResolutionIMP)(id, SEL, BOOL);
-      static bestResolutionIMP addr = (bestResolutionIMP)[NSView instanceMethodForSelector:@selector(setWantsBestResolutionOpenGLSurface:)];
-      addr(myview, @selector(setWantsBestResolutionOpenGLSurface:), YES);
-    }
     [cw setContentView:myview];
     [myview release];
     [cw setLevel:winlevel];
@@ -3895,6 +3891,43 @@ int Fl_X::set_cursor(const Fl_RGB_Image *image, int hotx, int hoty)
 	[NSApp terminate: sender];
 }
 @end
+
+void Fl_Copy_Surface::draw_decorated_window(Fl_Window* win, int delta_x, int delta_y)
+{
+  int bx, by, bt;
+  get_window_frame_sizes(bx, by, bt);
+  draw(win, 0, bt); // draw the window content
+  if (win->border()) {
+    // draw the window title bar
+    CGContextSaveGState(gc);
+    CGContextTranslateCTM(gc, 0, bt);
+    CGContextScaleCTM(gc, 1, -1);
+    Fl_X::clip_to_rounded_corners(gc, win->w(), bt);
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6
+    CALayer *layer = fl_mac_os_version >= 101000 ?
+    [[[fl_xid(win) standardWindowButton:NSWindowCloseButton] superview] layer] : nil; // 10.5
+    if (layer) {
+      CGColorSpaceRef cspace = CGColorSpaceCreateDeviceRGB();
+      // for unknown reason, rendering the layer to the Fl_Copy_Surface pdf graphics context does not work;
+      // we use an auxiliary bitmap context
+      CGContextRef auxgc = CGBitmapContextCreate(NULL, win->w(), bt, 8, 0, cspace, kCGImageAlphaPremultipliedLast);
+      CGColorSpaceRelease(cspace);
+      CGContextClearRect(auxgc, CGRectMake(0, 0, win->w(), bt));
+      CGContextTranslateCTM(auxgc, 0, bt);
+      CGContextScaleCTM(auxgc, 1, -1);
+      [layer renderInContext:auxgc]; // 10.5
+      fl_draw_image((uchar*)CGBitmapContextGetData(auxgc), 0, 0, win->w(), bt, 4, CGBitmapContextGetBytesPerRow(auxgc));
+      CGContextRelease(auxgc);
+    } else
+#endif
+    {
+      CGImageRef img = Fl_X::CGImage_from_window_rect(win, 0, -bt, win->w(), bt);
+      CGContextDrawImage(gc, CGRectMake(0, 0, win->w(), bt), img);
+      CFRelease(img);
+    }
+    CGContextRestoreGState(gc);
+  }
+}
 
 static void createAppleMenu(void)
 {

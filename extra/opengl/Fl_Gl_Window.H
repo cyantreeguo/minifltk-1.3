@@ -258,29 +258,42 @@ public:
 		return this;
 	}
 
-#if defined(__APPLE__)
-	int pixel_w();
-	int pixel_h();
+	/** The number of pixels per FLTK unit of length for the window.
+	   Returns 1, except for a window mapped to
+	   an Apple 'retina' display, and if Fl::use_high_res_GL(bool) is set to true,
+	   when it returns 2. This method dynamically adjusts its value when the window
+	   is moved to/from a retina display. This method is useful, e.g., to convert,
+	   in a window's handle() method, the FLTK units returned by Fl::event_x() and
+	   Fl::event_y() to the pixel units used by the OpenGL source code.
+	   \version 1.3.4
+	   */
+#ifdef __APPLE__
+	int pixels_per_unit();
 #else
+	int pixels_per_unit() {
+		return 1;
+	}
+#endif
 	/** Gives the window width in OpenGL pixels.
-	 Generally identical with the result of the w() function, but on macintosh computers
-	 with a 'retina' display, and if Fl::use_high_res_GL(bool) is set to true,
-	 pixel_w() returns 2 * w().
+	 Generally identical with the result of the w() function, but for a window mapped to
+	 an Apple 'retina' display, and if Fl::use_high_res_GL(bool) is set to true,
+	 pixel_w() returns 2 * w(). This method detects when the window has been moved
+	 between low and high resolution displays and automatically adjusts the returned value.
 	 \version 1.3.4
 	 */
 	int pixel_w() {
-		return w();
+		return pixels_per_unit() * w();
 	}
 	/** Gives the window height in OpenGL pixels.
-	 Generally identical with the result of the h() function, but on macintosh computers
-	 with a 'retina' display, and if Fl::use_high_res_GL(bool) is set to true,
-	 pixel_h() returns 2 * h().
+	 Generally identical with the result of the h() function, but for a window mapped to
+	 an Apple 'retina' display, and if Fl::use_high_res_GL(bool) is set to true,
+	 pixel_h() returns 2 * h(). This method detects when the window has been moved
+	 between low and high resolution displays and automatically adjusts the returned value.
 	 \version 1.3.4
 	 */
 	int pixel_h() {
-		return h();
+		return pixels_per_unit() * h();
 	}
-#endif
 
 	~Fl_Gl_Window();
 	/**

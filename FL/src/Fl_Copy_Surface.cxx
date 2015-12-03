@@ -241,6 +241,14 @@ void Fl_Copy_Surface::prepare_copy_pdf_and_tiff(int w, int h)
 
 #endif  // __APPLE__
 
+#if !defined(__APPLE__)
+/** Copies a window and its borders and title bar to the clipboard. */
+void Fl_Copy_Surface::draw_decorated_window(Fl_Window* win, int delta_x, int delta_y)
+{
+	helper->draw_decorated_window(win, delta_x, delta_y, this);
+}
+#endif
+
 #if __FLTK_S60v32__
 #elif __FLTK_ANDROID__
 #else
