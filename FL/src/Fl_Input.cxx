@@ -753,7 +753,8 @@ int Fl_Input::handle(int event)
 				dnd_save_focus = this;
 				// drag the data:
 				copy(0);
-#ifdef __APPLE__
+//#ifdef __APPLE__
+#if __FLTK_MACOSX__
 				Fl_X::dnd(1);
 #else
 				Fl::dnd();

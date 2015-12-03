@@ -192,10 +192,10 @@ void Fl_Graphics_Driver::rect(int x, int y, int w, int h)
 	if ( (!USINGQUARTZPRINTER) && fl_quartz_line_width_ > 1.5f) CGContextSetShouldAntialias(fl_gc, false);
 #endif
 #elif __FLTK_IPHONEOS__
-	if ( (!USINGQUARTZPRINTER) && fl_quartz_line_width_ > 1.5f) CGContextSetShouldAntialias(fl_gc, true);
+	if ( fl_quartz_line_width_ > 1.5f) CGContextSetShouldAntialias(fl_gc, true);
 	CGRect rect = CGRectMake(x, y, w-1, h-1);
 	CGContextStrokeRect(fl_gc, rect);
-	if ( (!USINGQUARTZPRINTER) && fl_quartz_line_width_ > 1.5f) CGContextSetShouldAntialias(fl_gc, false);
+	if ( fl_quartz_line_width_ > 1.5f) CGContextSetShouldAntialias(fl_gc, false);
 #elif __FLTK_LINUX__
 #if defined(USE_X11)
 	if (!clip_to_short(x, y, w, h))
@@ -272,7 +272,7 @@ void Fl_Graphics_Driver::xyline(int x, int y, int x1)
 	}
 	if (USINGQUARTZPRINTER || fl_quartz_line_width_ > 1.5f) CGContextSetShouldAntialias(fl_gc, false);
 #elif __FLTK_IPHONEOS__
-	if (USINGQUARTZPRINTER || fl_quartz_line_width_ > 1.5f) CGContextSetShouldAntialias(fl_gc, true);
+	if ( fl_quartz_line_width_ > 1.5f) CGContextSetShouldAntialias(fl_gc, true);
 	CGContextMoveToPoint(fl_gc, x, y);
 	CGContextAddLineToPoint(fl_gc, x1, y);
 	CGContextStrokePath(fl_gc);
@@ -284,7 +284,7 @@ void Fl_Graphics_Driver::xyline(int x, int y, int x1)
 		CGContextFillRect(fl_gc, CGRectMake(x-0.5 , y  - fl_quartz_line_width_/2, 1 , fl_quartz_line_width_));
 		CGContextFillRect(fl_gc, CGRectMake(x1-0.5 , y  - fl_quartz_line_width_/2, 1 , fl_quartz_line_width_));
 	}
-	if (USINGQUARTZPRINTER || fl_quartz_line_width_ > 1.5f) CGContextSetShouldAntialias(fl_gc, false);
+	if ( fl_quartz_line_width_ > 1.5f) CGContextSetShouldAntialias(fl_gc, false);
 #elif __FLTK_LINUX__
 	XDrawLine(fl_display, fl_window, fl_gc, clip_x(x), clip_x(y), clip_x(x1), clip_x(y));
 #elif __FLTK_S60v32__
@@ -324,7 +324,7 @@ void Fl_Graphics_Driver::xyline(int x, int y, int x1, int y2)
 	}
 	if (USINGQUARTZPRINTER || fl_quartz_line_width_ > 1.5f) CGContextSetShouldAntialias(fl_gc, false);
 #elif __FLTK_IPHONEOS__
-	if (USINGQUARTZPRINTER || fl_quartz_line_width_ > 1.5f) CGContextSetShouldAntialias(fl_gc, true);
+	if ( fl_quartz_line_width_ > 1.5f) CGContextSetShouldAntialias(fl_gc, true);
 	CGContextMoveToPoint(fl_gc, x, y);
 	CGContextAddLineToPoint(fl_gc, x1, y);
 	CGContextAddLineToPoint(fl_gc, x1, y2);
@@ -333,7 +333,7 @@ void Fl_Graphics_Driver::xyline(int x, int y, int x1, int y2)
 		CGContextFillRect(fl_gc, CGRectMake(x-0.5, y  - fl_quartz_line_width_/2, 1 , fl_quartz_line_width_));
 		CGContextFillRect(fl_gc, CGRectMake(x1  -  fl_quartz_line_width_/2, y2-0.5, fl_quartz_line_width_, 1));
 	}
-	if (USINGQUARTZPRINTER || fl_quartz_line_width_ > 1.5f) CGContextSetShouldAntialias(fl_gc, false);
+	if ( fl_quartz_line_width_ > 1.5f) CGContextSetShouldAntialias(fl_gc, false);
 #elif __FLTK_LINUX__
 	XPoint p[3];
 	p[0].x = clip_x(x);
@@ -382,7 +382,7 @@ void Fl_Graphics_Driver::xyline(int x, int y, int x1, int y2, int x3)
 	}
 	if (USINGQUARTZPRINTER || fl_quartz_line_width_ > 1.5f) CGContextSetShouldAntialias(fl_gc, false);
 #elif __FLTK_IPHONEOS__
-	if (USINGQUARTZPRINTER || fl_quartz_line_width_ > 1.5f) CGContextSetShouldAntialias(fl_gc, true);
+	if ( fl_quartz_line_width_ > 1.5f) CGContextSetShouldAntialias(fl_gc, true);
 	CGContextMoveToPoint(fl_gc, x, y);
 	CGContextAddLineToPoint(fl_gc, x1, y);
 	CGContextAddLineToPoint(fl_gc, x1, y2);
@@ -392,7 +392,7 @@ void Fl_Graphics_Driver::xyline(int x, int y, int x1, int y2, int x3)
 		CGContextFillRect(fl_gc, CGRectMake(x-0.5, y  - fl_quartz_line_width_/2, 1 , fl_quartz_line_width_));
 		CGContextFillRect(fl_gc, CGRectMake(x3-0.5, y2  - fl_quartz_line_width_/2, 1 , fl_quartz_line_width_));
 	}
-	if (USINGQUARTZPRINTER || fl_quartz_line_width_ > 1.5f) CGContextSetShouldAntialias(fl_gc, false);
+	if ( fl_quartz_line_width_ > 1.5f) CGContextSetShouldAntialias(fl_gc, false);
 #elif __FLTK_LINUX__
 	XPoint p[4];
 	p[0].x = clip_x(x);
@@ -437,7 +437,7 @@ void Fl_Graphics_Driver::yxline(int x, int y, int y1)
 	}
 	if (USINGQUARTZPRINTER || fl_quartz_line_width_ > 1.5f) CGContextSetShouldAntialias(fl_gc, false);
 #elif __FLTK_IPHONEOS__
-	if (USINGQUARTZPRINTER || fl_quartz_line_width_ > 1.5f) CGContextSetShouldAntialias(fl_gc, true);
+	if ( fl_quartz_line_width_ > 1.5f) CGContextSetShouldAntialias(fl_gc, true);
 	CGContextMoveToPoint(fl_gc, x, y);
 	CGContextAddLineToPoint(fl_gc, x, y1);
 	CGContextStrokePath(fl_gc);
@@ -445,7 +445,7 @@ void Fl_Graphics_Driver::yxline(int x, int y, int y1)
 		CGContextFillRect(fl_gc, CGRectMake(x  -  fl_quartz_line_width_/2, y-0.5, fl_quartz_line_width_, 1));
 		CGContextFillRect(fl_gc, CGRectMake(x  -  fl_quartz_line_width_/2, y1-0.5, fl_quartz_line_width_, 1));
 	}
-	if (USINGQUARTZPRINTER || fl_quartz_line_width_ > 1.5f) CGContextSetShouldAntialias(fl_gc, false);
+	if ( fl_quartz_line_width_ > 1.5f) CGContextSetShouldAntialias(fl_gc, false);
 #elif __FLTK_LINUX__
 	XDrawLine(fl_display, fl_window, fl_gc, clip_x(x), clip_x(y), clip_x(x), clip_x(y1));
 #elif __FLTK_S60v32__
@@ -485,7 +485,7 @@ void Fl_Graphics_Driver::yxline(int x, int y, int y1, int x2)
 	}
 	if (USINGQUARTZPRINTER || fl_quartz_line_width_ > 1.5f) CGContextSetShouldAntialias(fl_gc, false);
 #elif __FLTK_IPHONEOS__
-	if (USINGQUARTZPRINTER || fl_quartz_line_width_ > 1.5f) CGContextSetShouldAntialias(fl_gc, true);
+	if ( fl_quartz_line_width_ > 1.5f) CGContextSetShouldAntialias(fl_gc, true);
 	CGContextMoveToPoint(fl_gc, x, y);
 	CGContextAddLineToPoint(fl_gc, x, y1);
 	CGContextAddLineToPoint(fl_gc, x2, y1);
@@ -494,7 +494,7 @@ void Fl_Graphics_Driver::yxline(int x, int y, int y1, int x2)
 		CGContextFillRect(fl_gc, CGRectMake(x  -  fl_quartz_line_width_/2, y-0.5, fl_quartz_line_width_, 1));
 		CGContextFillRect(fl_gc, CGRectMake(x2-0.5, y1  - fl_quartz_line_width_/2, 1 , fl_quartz_line_width_));
 	}
-	if (USINGQUARTZPRINTER || fl_quartz_line_width_ > 1.5f) CGContextSetShouldAntialias(fl_gc, false);
+	if ( fl_quartz_line_width_ > 1.5f) CGContextSetShouldAntialias(fl_gc, false);
 #elif __FLTK_LINUX__
 	XPoint p[3];
 	p[0].x = p[1].x = clip_x(x);
@@ -543,7 +543,7 @@ void Fl_Graphics_Driver::yxline(int x, int y, int y1, int x2, int y3)
 	}
 	if (USINGQUARTZPRINTER || fl_quartz_line_width_ > 1.5f) CGContextSetShouldAntialias(fl_gc, false);
 #elif __FLTK_IPHONEOS__
-	if (USINGQUARTZPRINTER || fl_quartz_line_width_ > 1.5f) CGContextSetShouldAntialias(fl_gc, true);
+	if ( fl_quartz_line_width_ > 1.5f) CGContextSetShouldAntialias(fl_gc, true);
 	CGContextMoveToPoint(fl_gc, x, y);
 	CGContextAddLineToPoint(fl_gc, x, y1);
 	CGContextAddLineToPoint(fl_gc, x2, y1);
@@ -553,7 +553,7 @@ void Fl_Graphics_Driver::yxline(int x, int y, int y1, int x2, int y3)
 		CGContextFillRect(fl_gc, CGRectMake(x  -  fl_quartz_line_width_/2, y-0.5, fl_quartz_line_width_, 1));
 		CGContextFillRect(fl_gc, CGRectMake(x2  -  fl_quartz_line_width_/2, y3-0.5, fl_quartz_line_width_, 1));
 	}
-	if (USINGQUARTZPRINTER || fl_quartz_line_width_ > 1.5f) CGContextSetShouldAntialias(fl_gc, false);
+	if ( fl_quartz_line_width_ > 1.5f) CGContextSetShouldAntialias(fl_gc, false);
 #elif __FLTK_LINUX__
 	XPoint p[4];
 	p[0].x = p[1].x = clip_x(x);

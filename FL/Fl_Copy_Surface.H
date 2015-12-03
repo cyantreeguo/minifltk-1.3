@@ -78,7 +78,7 @@ private:
 	void init_PDF_context(int w, int h);
 	static size_t MyPutBytes(void* info, const void* buffer, size_t count);
 #elif __FLTK_IPHONEOS__
-	Fl_CFMutableDataRef pdfdata;
+	CFMutableDataRef pdfdata;
 	CGContextRef oldgc;
 	CGContextRef gc;
 	void prepare_copy_pdf_and_tiff(int w, int h);
