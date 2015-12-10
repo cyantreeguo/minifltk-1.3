@@ -20,9 +20,11 @@
 #include "Fl_Platform.h"
 #if __FLTK_LINUX__
 
+/*
 #  ifdef __cplusplus
 extern "C" {
 #  endif
+*/
 
 #include <X11/X.h>
 #include <X11/Xlib.h>
@@ -40,12 +42,12 @@ typedef struct {
 	int *ranges;
 } XUtf8FontStruct;
 
-XUtf8FontStruct *
+extern XUtf8FontStruct *
 XCreateUtf8FontStruct (
         Display         *dpy,
         const char      *base_font_name_list);
 
-void
+extern void
 XUtf8DrawString(
         Display         	*display,
         Drawable        	d,
@@ -56,7 +58,7 @@ XUtf8DrawString(
         const char      	*string,
         int             	num_bytes);
 
-void
+extern void
 XUtf8_measure_extents(
         Display         	*display,
         Drawable        	d,
@@ -69,7 +71,7 @@ XUtf8_measure_extents(
         const char      	*string,
         int             	num_bytes);
 
-void
+extern void
 XUtf8DrawRtlString(
         Display         	*display,
         Drawable        	d,
@@ -80,7 +82,7 @@ XUtf8DrawRtlString(
         const char      	*string,
         int             	num_bytes);
 
-void
+extern void
 XUtf8DrawImageString(
         Display         *display,
         Drawable        d,
@@ -91,64 +93,64 @@ XUtf8DrawImageString(
         const char      *string,
         int             num_bytes);
 
-int
+extern int
 XUtf8TextWidth(
         XUtf8FontStruct  *font_set,
         const char      	*string,
         int             	num_bytes);
-int
+extern int
 XUtf8UcsWidth(
         XUtf8FontStruct  *font_set,
         unsigned int            ucs);
 
-int
+extern int
 fl_XGetUtf8FontAndGlyph(
         XUtf8FontStruct  *font_set,
         unsigned int            ucs,
         XFontStruct     **fnt,
         unsigned short  *id);
 
-void
+extern void
 XFreeUtf8FontStruct(
         Display         	*dpy,
         XUtf8FontStruct 	*font_set);
 
 
-int
+extern int
 XConvertUtf8ToUcs(
         const unsigned char 	*buf,
         int 			len,
         unsigned int 		*ucs);
 
-int
+extern int
 XConvertUcsToUtf8(
         unsigned int 		ucs,
         char 			*buf);
 
-int
+extern int
 XUtf8CharByteLen(
         const unsigned char 	*buf,
         int 			len);
 
-int
+extern int
 XCountUtf8Char(
         const unsigned char *buf,
         int len);
 
-int
+extern int
 XFastConvertUtf8ToUcs(
         const unsigned char 	*buf,
         int 			len,
         unsigned int 		*ucs);
 
-long
+extern long
 XKeysymToUcs(
         KeySym 	keysym);
 
 #ifdef X_HAVE_UTF8_STRING
 #define XUtf8LookupString Xutf8LookupString
 #else
-int
+extern int
 XUtf8LookupString(
         XIC                 ic,
         XKeyPressedEvent*   event,
@@ -158,26 +160,28 @@ XUtf8LookupString(
         Status*             status_return);
 #endif		
 
-unsigned short
+extern unsigned short
 XUtf8IsNonSpacing(
         unsigned int ucs);
 
-unsigned short
+extern unsigned short
 XUtf8IsRightToLeft(
         unsigned int ucs);
 
 
-int
+extern int
 XUtf8Tolower(
         int ucs);
 
-int
+extern int
 XUtf8Toupper(
         int ucs);
 
+/*
 #  ifdef __cplusplus
 }
 #  endif
+*/
 
 #endif
 
