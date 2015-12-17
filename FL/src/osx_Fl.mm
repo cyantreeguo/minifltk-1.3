@@ -161,7 +161,7 @@ void fl_set_status(int x, int y, int w, int h)
 /*
  * Mac keyboard lookup table
  */
-static unsigned short *macKeyLookUp = fl_compute_macKeyLookUp();
+static unsigned short* macKeyLookUp = NULL;
 
 /*
  * convert the current mouse chord into the FLTK modifier state
@@ -1410,6 +1410,7 @@ static FLWindowDelegate *flwindowdelegate_instance = nil;
 {
 	fl_lock_function();
 	FLWindow *nsw = (FLWindow *)[notif object];
+	if ([nsw miniwindowImage]) { [nsw setMiniwindowImage:nil]; }
 	Fl_Window *window = [nsw getFl_Window];
 	Fl::handle(FL_SHOW, window);
 	update_e_xy_and_e_xy_root(nsw);
@@ -2171,6 +2172,7 @@ static void cocoaKeyboardHandler(NSEvent *theEvent)
 	// printf("%08x %08x %08x\n", keyCode, mods, key);
 	maskedKeyCode = keyCode & 0x7f;
 	mods_to_e_state(mods); // process modifier keys
+	if (!macKeyLookUp) macKeyLookUp = fl_compute_macKeyLookUp();
 	sym = macKeyLookUp[maskedKeyCode];
 	if (sym < 0xff00) { // a "simple" key
 						// find the result of this key without modifier
@@ -2425,6 +2427,7 @@ static FLTextInputContext *fltextinputcontext_instance = nil;
 	int sendEvent = 0;
 	if (tMods) {
 		unsigned short keycode = [theEvent keyCode];
+		if (!macKeyLookUp) macKeyLookUp = fl_compute_macKeyLookUp();
 		Fl::e_keysym = Fl::e_original_keysym = macKeyLookUp[keycode & 0x7f];
 		if (Fl::e_keysym) sendEvent = (prevMods < mods) ? FL_KEYBOARD : FL_KEYUP;
 		Fl::e_length = 0;
@@ -3113,18 +3116,6 @@ void Fl_X::make(Fl_Window *w)
     // next 2 statements so a subwindow doesn't leak out of its parent window
     [cw setOpaque:NO];
     [cw setBackgroundColor:[NSColor clearColor]]; // transparent background color
-    CGRect srect = CGRectMake(0, 0, w->w(), w->h());
-    Fl_Window *parent, *from = w;
-    int fromx = 0, fromy = 0;
-    while ((parent = from->window()) != NULL) {
-      fromx -= from->x(); // parent origin in w's coordinates
-      fromy -= from->y();
-      srect = CGRectIntersection(CGRectMake(fromx, fromy, parent->w(), parent->h()), srect);
-      from = parent;
-    }
-    if (!CGRectEqualToRect(srect, CGRectMake(0, 0, w->w(), w->h()))) { // if subwindow extends outside its parent windows
-      x->subRect(new CGRect(srect));
-    }
     [cw setSubwindowFrame];
     // needed if top window was first displayed miniaturized
     FLWindow *pxid = fl_xid(w->top_window());
@@ -3271,7 +3262,7 @@ void Fl_Window::resize(int X, int Y, int W, int H)
 				parent = parent->window();
 			}
 			NSRect r = NSMakeRect(bx, main_screen_height - (by + H), W, H + (border() ? bt : 0));
-			[fl_xid(this) setFrame: r display: YES];
+			if (visible_r()) [fl_xid(this) setFrame:r display:YES];
 		} else {
 			bx = X; by = Y;
 			parent = window();
@@ -3281,7 +3272,7 @@ void Fl_Window::resize(int X, int Y, int W, int H)
 				parent = parent->window();
 			}
 			NSPoint pt = NSMakePoint(bx, main_screen_height - (by + H));
-			[fl_xid(this) setFrameOrigin: pt]; // set cocoa coords to FLTK position
+			if (visible_r()) [fl_xid(this) setFrameOrigin:pt]; // set cocoa coords to FLTK position
 		}
 	} else {
 		resize_from_system = 0;
