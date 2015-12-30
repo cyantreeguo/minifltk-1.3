@@ -1277,6 +1277,11 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 	Fl_Window *window = fl_find(hWnd);
 
 	if (window) switch (uMsg) {
+		// add by cyantree, for scintilla
+		case WM_MOUSEACTIVATE:
+			if ( window->tooltip_window() ) return MA_NOACTIVATE;
+			break;
+			
 		case WM_QUIT: // this should not happen?
 			Fl::fatal("WM_QUIT message");
 
