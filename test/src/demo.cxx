@@ -415,7 +415,7 @@ int main(int argc, char **argv) {
 #if ( defined _MSC_VER || defined __MWERKS__ ) && defined _DEBUG
   // MS_VisualC appends a 'd' to debugging executables. remove it.
   fl_filename_setext( buf, "" );
-  //buf[ strlen(buf)-1 ] = 0;
+  buf[ strlen(buf)-1 ] = 0;
 #endif
   fl_filename_setext(buf,".menu");
   const char *fname = buf;
