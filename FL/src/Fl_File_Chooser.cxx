@@ -27,7 +27,6 @@
 
 #include "Fl_File_Chooser.H"
 #include "fl_draw.H"
-#include "Fl_Bitmap.H"
 
 void Fl_File_Chooser::cb_window_i(Fl_Double_Window*, void*)
 {
@@ -68,10 +67,16 @@ void Fl_File_Chooser::cb_newButton(Fl_Button* o, void* v)
 	((Fl_File_Chooser*)(o->parent()->parent()->user_data()))->cb_newButton_i(o,v);
 }
 
+#include "Fl_Bitmap.H"
 static const unsigned char idata_new[] = {
 	0,0,120,0,132,0,2,1,1,254,1,128,49,128,49,128,253,128,253,128,49,128,49,
 	128,1,128,1,128,255,255,0,0
 };
+static Fl_Image *image_new()
+{
+	static Fl_Image *image = new Fl_Bitmap(idata_new, 16, 16);
+	return image;
+}
 
 void Fl_File_Chooser::cb__i(Fl_Tile*, void*)
 {
@@ -199,10 +204,8 @@ void Fl_File_Chooser::cb_favOkButton(Fl_Return_Button* o, void* v)
 
 Fl_File_Chooser::Fl_File_Chooser(const char *d, const char *p, int t, const char *title)
 {
-	static Fl_Bitmap *image_new = NULL;
-	if (!image_new) {
+	if (!prefs_) {
 		prefs_ = new Fl_Preferences(Fl_Preferences::USER, "fltk.org", "filechooser");
-		image_new = new Fl_Bitmap(idata_new, 16, 16);
 	}
 	Fl_Group *prev_current = Fl_Group::current();
 	{
@@ -227,7 +230,7 @@ Fl_File_Chooser::Fl_File_Chooser(const char *d, const char *p, int t, const char
 			} // Fl_Menu_Button* favoritesButton
 			{
 				Fl_Button* o = newButton = new Fl_Button(455, 10, 25, 25);
-				newButton->image(image_new);
+				newButton->image( image_new() );
 				newButton->labelsize(8);
 				newButton->callback((Fl_Callback*)cb_newButton);
 				o->tooltip(new_directory_tooltip);

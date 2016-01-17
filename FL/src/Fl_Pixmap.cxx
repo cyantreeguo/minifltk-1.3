@@ -16,15 +16,6 @@
 //     http://www.fltk.org/str.php
 //
 
-/** \fn Fl_Pixmap::Fl_Pixmap(const char **data)
-  The constructors create a new pixmap from the specified XPM data.*/
-
-/** \fn Fl_Pixmap::Fl_Pixmap(const unsigned char * const *data)
-  The constructors create a new pixmap from the specified XPM data.*/
-
-/** \fn Fl_Pixmap::Fl_Pixmap(const unsigned char **data)
-  The constructors create a new pixmap from the specified XPM data.*/
-
 // Draws X pixmap data, keeping it stashed in a server pixmap so it
 // redraws fast.
 
@@ -41,20 +32,20 @@
 #include "Fl_Printer.H"
 
 #if defined(USE_X11)
-#  ifdef __APPLE_CC__ // allows using on Darwin + X11 even if X11/Xregion.h is absent
+#  if HAVE_X11_XREGION_H
+#    include <X11/Xregion.h>
+#  else // if the X11/Xregion.h header is not available, we assume this is the layout of an X11 Region:
 typedef struct {
-  short x1, x2, y1, y2;
+	short x1, x2, y1, y2;
 } BOX;
 struct _XRegion {
-  long size;
-  long numRects;
-  BOX *rects;
-  BOX extents;
+	long size;
+	long numRects;
+	BOX *rects;
+	BOX extents;
 };
-#  else
-#    include <X11/Xregion.h>
-#  endif
-#endif
+#  endif // HAVE_X11_XREGION_H
+#endif   // USE_X11
 
 #include <stdio.h>
 #include "flstring.h"
@@ -150,7 +141,7 @@ int Fl_Pixmap::prepare(int XP, int YP, int WP, int HP, int &cx, int &cy,
 #endif
 
 		fl_draw_pixmap(data(), 0, 0, FL_BLACK);
-		
+
 #ifndef __APPLE__
 #if defined(WIN32)
 		extern UINT win_pixmap_bg_color; // computed by fl_draw_pixmap()

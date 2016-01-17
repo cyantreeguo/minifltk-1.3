@@ -30,21 +30,13 @@ Fl_Image_Surface::Fl_Image_Surface(int w, int h) : Fl_Surface_Device(NULL)
 {
 	width = w;
 	height = h;
-#if __FLTK_LINUX__
-	gc = 0;
-	if (!fl_gc) { // allows use of this class before any window is shown
-		fl_open_display();
-		gc = XCreateGC(fl_display, RootWindow(fl_display, fl_screen), 0, 0);
-		fl_gc = gc;
-	}
-#endif
-	offscreen = fl_create_offscreen(w, h);
-
 #if __FLTK_WIN32__
+	offscreen = fl_create_offscreen(w, h);
 	helper = new Fl_GDI_Surface_();
 	driver(helper->driver());
 #elif __FLTK_WINCE__
 #elif __FLTK_MACOSX__
+	offscreen = Fl_Quartz_Graphics_Driver::create_offscreen_with_alpha(w, h);
 	helper = new Fl_Quartz_Flipped_Surface_(width, height);
 	driver(helper->driver());
 	CGContextSaveGState(offscreen);
@@ -52,6 +44,13 @@ Fl_Image_Surface::Fl_Image_Surface(int w, int h) : Fl_Surface_Device(NULL)
 	CGContextScaleCTM(offscreen, 1.0f, -1.0f);
 #elif __FLTK_IPHONEOS__
 #elif __FLTK_LINUX__
+	gc = 0;
+	if (!fl_gc) { // allows use of this class before any window is shown
+		fl_open_display();
+		gc = XCreateGC(fl_display, RootWindow(fl_display, fl_screen), 0, 0);
+		fl_gc = gc;
+	}
+	offscreen = fl_create_offscreen(w, h);
 	helper = new Fl_Xlib_Surface_();
 	driver(helper->driver());
 #elif __FLTK_S60v32__
@@ -65,14 +64,18 @@ Fl_Image_Surface::Fl_Image_Surface(int w, int h) : Fl_Surface_Device(NULL)
  */
 Fl_Image_Surface::~Fl_Image_Surface()
 {
-	fl_delete_offscreen(offscreen);
 #if __FLTK_WIN32__
+	fl_delete_offscreen(offscreen);
 	delete (Fl_GDI_Surface_*)helper;
 #elif __FLTK_WINCE__
 #elif __FLTK_MACOSX__
+	void *data = CGBitmapContextGetData((CGContextRef)offscreen);
+	free(data);
+	CGContextRelease((CGContextRef)offscreen);
 	delete (Fl_Quartz_Flipped_Surface_*)helper;
 #elif __FLTK_IPHONEOS__
 #elif __FLTK_LINUX__
+	fl_delete_offscreen(offscreen);
 	if (gc) {
 		XFreeGC(fl_display, gc);
 		fl_gc = 0;
@@ -91,12 +94,16 @@ Fl_Image_Surface::~Fl_Image_Surface()
 Fl_RGB_Image* Fl_Image_Surface::image()
 {
 	unsigned char *data;
+	int depth = 3, ld = 0;
 #if __FLTK_MACOSX__
 	CGContextFlush(offscreen);
-	data = fl_read_image(NULL, 0, 0, width, height, 0);
+	ld = CGBitmapContextGetBytesPerRow(offscreen);
+	data = (uchar*)malloc(ld * height);
+	memcpy(data, (uchar *)CGBitmapContextGetData(offscreen), ld * height);
+	depth = 4;
 	fl_gc = 0;
 #elif __FLTK_IPHONEOS__
-    CGContextFlush(offscreen);
+	CGContextFlush(offscreen);
 	data = fl_read_image(NULL, 0, 0, width, height, 0);
 	fl_gc = 0;
 #elif __FLTK_WIN32__
@@ -118,7 +125,7 @@ Fl_RGB_Image* Fl_Image_Surface::image()
 #else
 #error unsupported platform
 #endif
-	Fl_RGB_Image *image = new Fl_RGB_Image(data, width, height);
+	Fl_RGB_Image *image = new Fl_RGB_Image(data, width, height, depth, ld);
 	image->alloc_array = 1;
 	return image;
 }
@@ -138,10 +145,12 @@ void Fl_Image_Surface::draw(Fl_Widget *widget, int delta_x, int delta_y)
 void Fl_Image_Surface::set_current()
 {
 #if __FLTK_MACOSX__
-	fl_gc = offscreen; fl_window = 0;
+	fl_gc = offscreen;
+	fl_window = 0;
 	Fl_Surface_Device::set_current();
 #elif __FLTK_IPHONEOS__
-	fl_gc = offscreen; fl_window = 0;
+	fl_gc = offscreen;
+	fl_window = 0;
 	Fl_Surface_Device::set_current();
 #elif __FLTK_WIN32__
 	_sgc=fl_gc;
@@ -187,7 +196,55 @@ void Fl_Quartz_Flipped_Surface_::untranslate()
 
 const char *Fl_Quartz_Flipped_Surface_::class_id = "Fl_Quartz_Flipped_Surface_";
 
-#endif // __APPLE__
+void Fl_Image_Surface::draw_decorated_window(Fl_Window* win, int delta_x, int delta_y)
+{
+	int bt = win->decorated_h() - win->h();
+	draw(win, delta_x, bt + delta_y ); // draw the window content
+	if (win->border()) {
+		// draw the window title bar
+		helper->translate(delta_x, delta_y);
+		CGContextTranslateCTM(fl_gc, 0, bt);
+		CGContextScaleCTM(fl_gc, 1, -1);
+		void *layer = Fl_X::get_titlebar_layer(win);
+		if (layer) {
+			Fl_X::draw_layer_to_context(layer, fl_gc, win->w(), bt);
+		} else {
+			CGImageRef img = Fl_X::CGImage_from_window_rect(win, 0, -bt, win->w(), bt);
+			CGContextDrawImage(fl_gc, CGRectMake(0, 0, win->w(), bt), img);
+			CFRelease(img);
+		}
+		helper->untranslate();
+		CGContextTranslateCTM(fl_gc, delta_x, height+delta_y);
+		CGContextScaleCTM(fl_gc, 1.0f, -1.0f);
+	}
+}
+
+#else
+
+/** Draws a window and its borders and title bar to the image drawing surface.
+ \param win an FLTK window to draw in the image
+ \param delta_x and \param delta_y give
+ the position in the image of the top-left corner of the window's title bar
+*/
+void Fl_Image_Surface::draw_decorated_window(Fl_Window* win, int delta_x, int delta_y)
+{
+#if __FLTK_WIN32__
+	// draw_decorated_window() will change the current drawing surface, and set it
+	// back to us; it's necessary to do some cleaning before
+	fl_pop_clip();
+	RestoreDC(fl_gc, _savedc);
+	DeleteDC(fl_gc);
+#elif __FLTK_LINUX__
+	fl_pop_clip();
+#else
+	//
+#endif
+#if !__FLTK_IPHONEOS__
+	helper->draw_decorated_window(win, delta_x, delta_y, this);
+#endif
+}
+
+#endif
 
 //
 // End of "$Id: Fl_Image_Surface.cxx 10171 2014-05-24 16:19:30Z manolo $".

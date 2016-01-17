@@ -1376,8 +1376,9 @@ static FLWindowDelegate *flwindowdelegate_instance = nil;
 	FLWindow *nsw = (FLWindow *)[notif object];
 	Fl_Window *window = [nsw getFl_Window];
 	/* Fullscreen windows obscure all other windows so we need to return
-	 to a "normal" level when the user switches to another window */
-	if (window->fullscreen_active()) {
+	 to a "normal" level when the user switches to another window,
+	 unless this other window is above the fullscreen window */
+	if (window->fullscreen_active() && [NSApp keyWindow] && [[NSApp keyWindow] level] <= [nsw level]) {
 		[nsw setLevel: NSNormalWindowLevel];
 		fixup_window_levels();
 	}
@@ -1632,16 +1633,18 @@ static FLWindowDelegate *flwindowdelegate_instance = nil;
 }
 - (BOOL)application: (NSApplication *)theApplication openFile: (NSString *)filename
 {
-	// without the next statement, the opening of the 1st window is delayed by several seconds
-	// under Mac OS 鈮?10.8 when a file is dragged on the application icon
-	[[theApplication mainWindow] orderFront: self];
-	if (open_cb) {
-		fl_lock_function();
-		(*open_cb)([filename UTF8String]);
-		fl_unlock_function();
-		return YES;
-	}
-	return NO;
+	// without the next two statements, the opening of the 1st window is delayed by several seconds
+  // under Mac OS 鈮?10.8 when a file is dragged on the application icon
+  Fl_Window *firstw = Fl::first_window();
+  if (firstw) firstw->wait_for_expose();
+  if (open_cb) {
+    fl_lock_function();
+    (*open_cb)([filename UTF8String]);
+    Fl::flush(); // useful for AppleScript that does not break the event loop
+    fl_unlock_function();
+    return YES;
+  }
+  return NO;
 }
 - (void)open_cb: (void (*)(const char *))cb
 {
@@ -1859,7 +1862,6 @@ static void get_window_frame_sizes(int &bx, int &by, int &bt)
 	static int top, left, bottom;
 	if (first) {
 		first = false;
-		if (NSApp == nil) fl_open_display();
 		NSRect inside = { { 20, 20 }, { 100, 100 } };
 		NSRect outside = [NSWindow  frameRectForContentRect: inside styleMask: NSTitledWindowMask];
 		left = int(outside.origin.x - inside.origin.x);
@@ -3888,43 +3890,6 @@ int Fl_X::set_cursor(const Fl_RGB_Image *image, int hotx, int hoty)
 }
 @end
 
-void Fl_Copy_Surface::draw_decorated_window(Fl_Window* win, int delta_x, int delta_y)
-{
-  int bx, by, bt;
-  get_window_frame_sizes(bx, by, bt);
-  draw(win, 0, bt); // draw the window content
-  if (win->border()) {
-    // draw the window title bar
-    CGContextSaveGState(gc);
-    CGContextTranslateCTM(gc, 0, bt);
-    CGContextScaleCTM(gc, 1, -1);
-    Fl_X::clip_to_rounded_corners(gc, win->w(), bt);
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6
-    CALayer *layer = fl_mac_os_version >= 101000 ?
-    [[[fl_xid(win) standardWindowButton:NSWindowCloseButton] superview] layer] : nil; // 10.5
-    if (layer) {
-      CGColorSpaceRef cspace = CGColorSpaceCreateDeviceRGB();
-      // for unknown reason, rendering the layer to the Fl_Copy_Surface pdf graphics context does not work;
-      // we use an auxiliary bitmap context
-      CGContextRef auxgc = CGBitmapContextCreate(NULL, win->w(), bt, 8, 0, cspace, kCGImageAlphaPremultipliedLast);
-      CGColorSpaceRelease(cspace);
-      CGContextClearRect(auxgc, CGRectMake(0, 0, win->w(), bt));
-      CGContextTranslateCTM(auxgc, 0, bt);
-      CGContextScaleCTM(auxgc, 1, -1);
-      [layer renderInContext:auxgc]; // 10.5
-      fl_draw_image((uchar*)CGBitmapContextGetData(auxgc), 0, 0, win->w(), bt, 4, CGBitmapContextGetBytesPerRow(auxgc));
-      CGContextRelease(auxgc);
-    } else
-#endif
-    {
-      CGImageRef img = Fl_X::CGImage_from_window_rect(win, 0, -bt, win->w(), bt);
-      CGContextDrawImage(gc, CGRectMake(0, 0, win->w(), bt), img);
-      CFRelease(img);
-    }
-    CGContextRestoreGState(gc);
-  }
-}
-
 static void createAppleMenu(void)
 {
 	static BOOL donethat = NO;
@@ -4454,45 +4419,61 @@ void Fl_X::clip_to_rounded_corners(CGContextRef gc, int w, int h) {
   CGContextClip(gc);
 }
 
+void *Fl_X::get_titlebar_layer(Fl_Window *win)
+{
+  // a compilation warning appears with SDK 10.5, so we require SDK 10.6 instead
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6
+  return fl_mac_os_version >= 101000 ? [[[fl_xid(win) standardWindowButton:NSWindowCloseButton] superview] layer] : nil; // 10.5
+#else
+  return nil;
+#endif
+}
+
+
+void Fl_X::draw_layer_to_context(void *layer, CGContextRef gc, int w, int h)
+{
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6
+  Fl_X::clip_to_rounded_corners(gc, w, h);
+  CGContextSetRGBFillColor(gc, .79, .79, .79, 1.); // equiv. to FL_DARK1
+  CGContextFillRect(gc, CGRectMake(0, 0, w, h));
+  [(CALayer*)layer renderInContext:gc]; // 10.5
+#endif
+}
+
 void Fl_Paged_Device::print_window(Fl_Window *win, int x_offset, int y_offset)
 {
 	if (!win->shown() || win->parent() || !win->border() || !win->visible()) {
-		this->print_widget(win, x_offset, y_offset);
-		return;
-	}
-	int bx, by, bt, bpp;
-	get_window_frame_sizes(bx, by, bt);
-	BOOL to_quartz =  (this->driver()->class_name() == Fl_Quartz_Graphics_Driver::class_id);
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6
-// a compilation warning appears with SDK 10.5, so we require SDK 10.6 instead
-	if (fl_mac_os_version >= 101000) {
-		CALayer *layer = [[[fl_xid(win) standardWindowButton: NSWindowCloseButton] superview] layer]; // 10.5
-		if (layer) { // if program is linked with 10.10, title bar uses a layer
-			if (to_quartz) { // to Quartz printer
-				CGContextSaveGState(fl_gc);
-				CGContextTranslateCTM(fl_gc, x_offset - 0.5, y_offset + bt - 0.5);
-				CGContextScaleCTM(fl_gc, 1, -1);
-				Fl_X::clip_to_rounded_corners(fl_gc, win->w(), bt);
-				[layer renderInContext: fl_gc]; // 10.5 // print all title bar
-				CGContextRestoreGState(fl_gc);
-			} else { // to PostScript
-				CGColorSpaceRef cspace = CGColorSpaceCreateDeviceRGB();
-				CGContextRef gc = CGBitmapContextCreate(NULL, win->w(), bt, 8, 0, cspace, kCGImageAlphaPremultipliedLast);
-				CGColorSpaceRelease(cspace);
-				CGContextClearRect(gc, CGRectMake(0, 0, win->w(), bt));
-				Fl_X::clip_to_rounded_corners(gc, win->w(), bt);
-				[layer renderInContext: gc]; // 10.5 // draw all title bar to bitmap
-				Fl_RGB_Image *image = new Fl_RGB_Image((const uchar *)CGBitmapContextGetData(gc), win->w(), bt, 4,
-													   CGBitmapContextGetBytesPerRow(gc)); // 10.2
-				image->draw(x_offset, y_offset); // draw title bar to PostScript
-				delete image;
-				CGContextRelease(gc);
-			}
-			this->print_widget(win, x_offset, y_offset + bt);
-			return;
-		}
-	}
-#endif
+    this->print_widget(win, x_offset, y_offset);
+    return;
+  }
+  int bx, by, bt, bpp;
+  get_window_frame_sizes(bx, by, bt);
+  BOOL to_quartz =  (this->driver()->class_name() == Fl_Quartz_Graphics_Driver::class_id);
+  void *layer = Fl_X::get_titlebar_layer(win);
+  if (layer) { // if title bar uses a layer
+    if (to_quartz) { // to Quartz printer
+      CGContextSaveGState(fl_gc);
+      CGContextTranslateCTM(fl_gc, x_offset - 0.5, y_offset + bt - 0.5);
+      CGContextScaleCTM(fl_gc, 1, -1);
+      Fl_X::draw_layer_to_context(layer, fl_gc, win->w(), bt);
+      CGContextRestoreGState(fl_gc);
+    }
+    else { // to PostScript
+      CGColorSpaceRef cspace = CGColorSpaceCreateDeviceRGB ();
+      CGContextRef gc = CGBitmapContextCreate(NULL, win->w(), bt, 8, 0, cspace, kCGImageAlphaPremultipliedLast);
+      CGColorSpaceRelease(cspace);
+      CGContextClearRect(gc, CGRectMake(0, 0, win->w(), bt));
+      Fl_X::draw_layer_to_context(layer, gc, win->w(), bt);
+      Fl_RGB_Image *image = new Fl_RGB_Image((const uchar*)CGBitmapContextGetData(gc), win->w(), bt, 4,
+                                             CGBitmapContextGetBytesPerRow(gc)); // 10.2
+      image->draw(x_offset, y_offset); // draw title bar to PostScript
+      delete image;
+      CGContextRelease(gc);
+    }
+    this->print_widget(win, x_offset, y_offset + bt);
+    return;
+  }
+  
 	Fl_Display_Device::display_device()->set_current(); // send win to front and make it current
 	const char *title = win->label();
 	win->label(""); // temporarily set a void window title
