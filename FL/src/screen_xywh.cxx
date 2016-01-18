@@ -179,6 +179,7 @@ static void screen_init()
 	num_screens = count;
      */
     num_screens = 1;
+	dpi_h[0] = dpi_v[0] = 75.;
 	screens[0].x      = 0;
 	screens[0].y      = 0;
 	screens[0].width  = Fl::w();
