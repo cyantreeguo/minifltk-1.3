@@ -9,6 +9,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "editor", "editor.vcproj", "
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "device", "device.vcproj", "{2FEEB6AC-2D3A-4E0F-B577-6DB1E4665158}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "checkers", "checkers.vcproj", "{A702DBB8-38C9-4439-91AE-45B3B365989B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -31,6 +33,10 @@ Global
 		{2FEEB6AC-2D3A-4E0F-B577-6DB1E4665158}.Debug|Win32.Build.0 = Debug|Win32
 		{2FEEB6AC-2D3A-4E0F-B577-6DB1E4665158}.Release|Win32.ActiveCfg = Release|Win32
 		{2FEEB6AC-2D3A-4E0F-B577-6DB1E4665158}.Release|Win32.Build.0 = Release|Win32
+		{A702DBB8-38C9-4439-91AE-45B3B365989B}.Debug|Win32.ActiveCfg = Debug|Win32
+		{A702DBB8-38C9-4439-91AE-45B3B365989B}.Debug|Win32.Build.0 = Debug|Win32
+		{A702DBB8-38C9-4439-91AE-45B3B365989B}.Release|Win32.ActiveCfg = Release|Win32
+		{A702DBB8-38C9-4439-91AE-45B3B365989B}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
