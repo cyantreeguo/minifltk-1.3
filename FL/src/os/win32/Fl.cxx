@@ -85,6 +85,25 @@ struct TOUCHINPUT {
 	DWORD cyContact;
 };
 
+#define GF_BEGIN   0x00000001 // 笔势已开始。
+#define GF_INERTIA 0x00000002 // 笔势已触发延时。
+#define GF_END     0x00000004 // 笔势已完成。
+
+#define GID_BEGIN        1 // 笔势已开始。
+#define GID_END          2 // 笔势已结束。
+#define GID_ZOOM         3 // 指示缩放笔势的配置设置。
+#define GID_PAN          4 // 指示平移笔势。
+#define GID_ROTATE       5 // 指示旋转笔势。
+#define GID_TWOFINGERTAP 6 // 指示双指点击笔势。
+#define GID_PRESSANDTAP  7 // 指示按住并点击笔势。
+#define GC_ALLGESTURES 0x00000001 // 指示所有笔势
+#define GC_ZOOM 0x00000001 //指示缩放笔势。
+typedef struct _GESTURECONFIG {
+	DWORD dwID;
+	DWORD dwWant;
+	DWORD dwBlock;
+} GESTURECONFIG, *PGESTURECONFIG;
+
 struct GESTUREINFO {
 	UINT cbSize;
 	DWORD dwFlags;
@@ -114,27 +133,49 @@ enum Process_DPI_Awareness {
 };
 #endif
 
+// Shcore.dll
+typedef BOOL (WINAPI* SetProcessDPIAwareFunc)();
+typedef BOOL (WINAPI* SetProcessDPIAwarenessFunc) (Process_DPI_Awareness);
+
+static SetProcessDPIAwareFunc     setProcessDPIAware = NULL;
+static SetProcessDPIAwarenessFunc setProcessDPIAwareness = NULL;
+
 typedef BOOL (WINAPI* RegisterTouchWindowFunc) (HWND, ULONG);
 typedef BOOL (WINAPI* GetTouchInputInfoFunc) (HTOUCHINPUT, UINT, TOUCHINPUT*, int);
 typedef BOOL (WINAPI* CloseTouchInputHandleFunc) (HTOUCHINPUT);
 typedef BOOL (WINAPI* GetGestureInfoFunc) (HGESTUREINFO, GESTUREINFO*);
-typedef BOOL (WINAPI* SetProcessDPIAwareFunc)();
-typedef BOOL (WINAPI* SetProcessDPIAwarenessFunc) (Process_DPI_Awareness);
-typedef HRESULT (WINAPI* GetDPIForMonitorFunc) (HMONITOR, Monitor_DPI_Type, UINT*, UINT*);
+typedef BOOL (WINAPI *SetGestureConfigFunc)(HWND hwnd, DWORD dwReserved, UINT cIDs, PGESTURECONFIG pGestureConfig, UINT cbSize);
+typedef BOOL (WINAPI *CloseGestureInfoHandleFunc)(HGESTUREINFO hGestureInfo);
+
+// UxTheme.dll
+typedef BOOL (WINAPI *BeginPanningFeedbackFunc)(HWND hwnd);
+typedef BOOL (WINAPI *EndPanningFeedbackFunc)(HWND hwnd, BOOL fAnimateBack);
+typedef BOOL (WINAPI *UpdatePanningFeedbackFunc)(HWND hwnd, LONG lTotalOverpanOffsetX, LONG lTotalOverpanOffsetY, BOOL fInInertia);
 
 static RegisterTouchWindowFunc    registerTouchWindow = NULL;
 static GetTouchInputInfoFunc      getTouchInputInfo = NULL;
 static CloseTouchInputHandleFunc  closeTouchInputHandle = NULL;
+
 static GetGestureInfoFunc         getGestureInfo = NULL;
-static SetProcessDPIAwareFunc     setProcessDPIAware = NULL;
-static SetProcessDPIAwarenessFunc setProcessDPIAwareness = NULL;
-static GetDPIForMonitorFunc       getDPIForMonitor = NULL;
+static SetGestureConfigFunc       setGestureConfig = NULL;
+static CloseGestureInfoHandleFunc closeGestureInfoHandle = NULL;
+
+static BeginPanningFeedbackFunc  beginPanningFeedback = NULL;
+static EndPanningFeedbackFunc	 endPanningFeedback = NULL;
+static UpdatePanningFeedbackFunc updatePanningFeedback = NULL;
 
 static bool hasCheckedForMultiTouch = false;
 
-static void* getUser32Function (const char* functionName)
+static void* getUser32Function(const char* functionName)
 {
 	HMODULE module = GetModuleHandleA("user32.dll");
+	if (module == 0) return 0;
+	return (void*) GetProcAddress (module, functionName);
+}
+
+static void* getUxThemeFunction(const char* functionName)
+{
+	HMODULE module = GetModuleHandleA("UxTheme.dll");
 	if (module == 0) return 0;
 	return (void*) GetProcAddress (module, functionName);
 }
@@ -144,13 +185,46 @@ static bool canUseMultiTouch()
 	if (registerTouchWindow == NULL && ! hasCheckedForMultiTouch) {
 		hasCheckedForMultiTouch = true;
 
-		registerTouchWindow   = (RegisterTouchWindowFunc)   getUser32Function ("RegisterTouchWindow");
-		getTouchInputInfo     = (GetTouchInputInfoFunc)     getUser32Function ("GetTouchInputInfo");
-		closeTouchInputHandle = (CloseTouchInputHandleFunc) getUser32Function ("CloseTouchInputHandle");
-		getGestureInfo        = (GetGestureInfoFunc)        getUser32Function ("GetGestureInfo");
+		registerTouchWindow    = (RegisterTouchWindowFunc)    getUser32Function ("RegisterTouchWindow");
+		getTouchInputInfo      = (GetTouchInputInfoFunc)      getUser32Function ("GetTouchInputInfo");
+		closeTouchInputHandle  = (CloseTouchInputHandleFunc)  getUser32Function ("CloseTouchInputHandle");
+		getGestureInfo         = (GetGestureInfoFunc)         getUser32Function ("GetGestureInfo");
+		setGestureConfig       = (SetGestureConfigFunc)       getUser32Function ("SetGestureConfig");
+		closeGestureInfoHandle = (CloseGestureInfoHandleFunc) getUser32Function ("CloseGestureInfoHandle");
+
+		beginPanningFeedback  = (BeginPanningFeedbackFunc)  getUxThemeFunction("BeginPanningFeedback");
+		endPanningFeedback    = (EndPanningFeedbackFunc)    getUxThemeFunction("EndPanningFeedback");
+		updatePanningFeedback = (UpdatePanningFeedbackFunc) getUxThemeFunction("UpdatePanningFeedback");
 	}
 
 	return registerTouchWindow != NULL;
+}
+
+static void* getShcoreFunction(const char* functionName)
+{
+	HMODULE module = GetModuleHandleA("Shcore.dll");
+	if (module == 0) return 0;
+	return (void*) GetProcAddress (module, functionName);
+}
+
+static bool LoadHDPI()
+{
+	if ( setProcessDPIAware == NULL ) {
+		setProcessDPIAware     = (SetProcessDPIAwareFunc)     getUser32Function("SetProcessDPIAware");
+		setProcessDPIAwareness = (SetProcessDPIAwarenessFunc) getShcoreFunction("SetProcessDpiAwareness");																				 
+
+		if ( setProcessDPIAware != NULL ) {
+			//printf("1\n");
+			setProcessDPIAware();
+		} else {
+			if ( setProcessDPIAwareness != NULL ) {
+				//printf("2\n");
+				setProcessDPIAwareness(Process_Per_Monitor_DPI_Aware);
+			}
+		}
+	}
+
+	return setProcessDPIAware != NULL;
 }
 
 //
@@ -2218,6 +2292,8 @@ Fl_X* Fl_X::make(Fl_Window* w)
 
 	if (canUseMultiTouch())
 		registerTouchWindow(x->xid, 0);
+	
+	LoadHDPI();
 
 	if (!im_enabled)
 		flImmAssociateContextEx(x->xid, 0, 0);
