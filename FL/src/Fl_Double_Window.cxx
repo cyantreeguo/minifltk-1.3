@@ -407,13 +407,27 @@ Fl_Offscreen Fl_Quartz_Graphics_Driver::create_offscreen_with_alpha(int w, int h
  \param w,h     width and height in pixels of the buffer.
  \return    the created graphics buffer.
  */
-Fl_Offscreen fl_create_offscreen(int w, int h)
+//#import <Cocoa/cocoa.h>
+Fl_Offscreen fl_create_offscreen(int ww, int hh)
 {
+	// add by cyantree, for retina
+	/*
+	int scale = [[NSScreen mainScreen] backingScaleFactor];
+    printf("scale:%d\n", scale);
+	*/
+    int scale = 2;
+	int w = ww*scale;
+    int h = hh*scale;
+	
 	void *data = calloc(w*h,4);
 	CGColorSpaceRef lut = CGColorSpaceCreateDeviceRGB();
-	CGContextRef ctx = CGBitmapContextCreate(
-	                           data, w, h, 8, w*4, lut, kCGImageAlphaNoneSkipLast);
+	CGContextRef ctx = CGBitmapContextCreate(data, w, h, 8, w*4, lut, kCGImageAlphaNoneSkipLast);
 	CGColorSpaceRelease(lut);
+	
+	// add by cyantree, for retina
+	if ( scale > 1 ) CGContextTranslateCTM(ctx, 0, -h);
+    CGContextScaleCTM(ctx, scale, scale);
+	
 	return (Fl_Offscreen)ctx;
 }
 
@@ -426,6 +440,10 @@ static void bmProviderRelease (void *src, const void *data, size_t size)
 
 void Fl_Quartz_Graphics_Driver::copy_offscreen(int x,int y,int w,int h,Fl_Offscreen osrc,int srcx,int srcy)
 {
+	// add by cyantree, for retina
+	//int scale = [[NSScreen mainScreen] backingScaleFactor];
+    int scale = 2;
+	
 	CGContextRef src = (CGContextRef)osrc;
 	void *data = CGBitmapContextGetData(src);
 	int sw = CGBitmapContextGetWidth(src);
@@ -440,7 +458,7 @@ void Fl_Quartz_Graphics_Driver::copy_offscreen(int x,int y,int w,int h,Fl_Offscr
 	                                src_bytes, 0L, false, kCGRenderingIntentDefault);
 	// fl_push_clip();
 	CGRect rect = CGRectMake(x, y, w, h);
-	Fl_X::q_begin_image(rect, srcx, srcy, sw, sh);
+	Fl_X::q_begin_image(rect, srcx, srcy, sw/scale, sh/scale); // add by cyantree, for retina
 	CGContextDrawImage(fl_gc, rect, img);
 	Fl_X::q_end_image();
 	CGImageRelease(img);
@@ -533,13 +551,27 @@ Fl_Offscreen Fl_Quartz_Graphics_Driver::create_offscreen_with_alpha(int w, int h
  \param w,h     width and height in pixels of the buffer.
  \return    the created graphics buffer.
  */
-Fl_Offscreen fl_create_offscreen(int w, int h)
+Fl_Offscreen fl_create_offscreen(int ww, int hh)
 {
+	// add by cyantree, for retina
+	/*
+	int scale = [[UIScreen mainScreen] scale];
+    if (scale < 1 ) scale = 1;
+    if ( scale == 3 ) scale = 2;
+	*/
+    int scale = 2;
+	int w = ww*scale;
+    int h = hh*scale;
+	
 	void *data = calloc(w*h,4);
 	CGColorSpaceRef lut = CGColorSpaceCreateDeviceRGB();
-	CGContextRef ctx = CGBitmapContextCreate(
-	                           data, w, h, 8, w*4, lut, kCGImageAlphaNoneSkipLast);
+	CGContextRef ctx = CGBitmapContextCreate(data, w, h, 8, w*4, lut, kCGImageAlphaNoneSkipLast);
 	CGColorSpaceRelease(lut);
+	
+	// add by cyantree, for retina
+	if ( scale > 1 ) CGContextTranslateCTM(ctx, 0, -h);
+    CGContextScaleCTM(ctx, scale, scale);
+	
 	return (Fl_Offscreen)ctx;
 }
 
@@ -552,6 +584,14 @@ static void bmProviderRelease (void *src, const void *data, size_t size)
 
 void Fl_Quartz_Graphics_Driver::copy_offscreen(int x,int y,int w,int h,Fl_Offscreen osrc,int srcx,int srcy)
 {
+	// add by cyantree, for retina
+	/*
+	int scale = [[UIScreen mainScreen] scale];
+    if (scale < 1 ) scale = 1;
+    if ( scale == 3 ) scale = 2;
+	*/
+    int scale = 2;
+	
 	CGContextRef src = (CGContextRef)osrc;
 	void *data = CGBitmapContextGetData(src);
 	int sw = CGBitmapContextGetWidth(src);
@@ -566,7 +606,7 @@ void Fl_Quartz_Graphics_Driver::copy_offscreen(int x,int y,int w,int h,Fl_Offscr
 	                                src_bytes, 0L, false, kCGRenderingIntentDefault);
 	// fl_push_clip();
 	CGRect rect = CGRectMake(x, y, w, h);
-	Fl_X::q_begin_image(rect, srcx, srcy, sw, sh);
+	Fl_X::q_begin_image(rect, srcx, srcy, sw/scale, sh/scale); // add by cyantree, for retina
 	CGContextDrawImage(fl_gc, rect, img);
 	Fl_X::q_end_image();
 	CGImageRelease(img);
