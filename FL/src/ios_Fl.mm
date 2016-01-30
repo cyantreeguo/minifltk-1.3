@@ -81,7 +81,10 @@ static void SetEventPump(unsigned char enabled)
         return nil;
     }
     
-    [self setWantsFullScreenLayout:YES];
+    if ([[[UIDevice currentDevice] systemVersion] floatValue] < 7.0) {
+        //if ( setWantsFullScreenLayout != NULL )
+        [self setWantsFullScreenLayout:YES];
+    }
 
     self->splash = [[UIImageView alloc] init];
     [self setView:self->splash];
@@ -202,7 +205,7 @@ static UIWindow *launch_window=nil;
     
     CGRect bounds = [[UIScreen mainScreen] applicationFrame];
     work_y = bounds.origin.y;
-    printf("work_y=%d\n", work_y);
+    //printf("work_y=%d\n", work_y);
 	
     /* run the user's application, passing argc and argv */
     SetEventPump(1);
@@ -250,7 +253,7 @@ static UIWindow *launch_window=nil;
 
 - (void) keyboardWillShow:(NSNotification *)notification
 {
-    printf("keyboard show\n");
+    //printf("keyboard show\n");
     
     /*
      Reduce the size of the text view so that it's not obscured by the keyboard.
@@ -273,12 +276,12 @@ static UIWindow *launch_window=nil;
     // Animate the resize of the text view's frame in sync with the keyboard's appearance.
     //[self moveInputBarWithKeyboardHeight:keyboardRect.size.height withDuration:animationDuration];
     
-    printf("height=%d\n", (int)keyboardRect.size.height);
+    //printf("height=%d\n", (int)keyboardRect.size.height);
 }
 
 - (void) keyboardWillHide:(NSNotification *)notification
 {
-    printf("keyboard hide\n");
+    //printf("keyboard hide\n");
     
     NSDictionary* userInfo = [notification userInfo];
     
@@ -450,9 +453,9 @@ static void iosMouseHandler(NSSet *touches, UIEvent *event, UIView *view, int ty
 - (BOOL) resignFirstResponder;
 - (BOOL) canBecomeFirstResponder;
 
-+ (void)prepareEtext: (NSString *)aString;
-+ (void)concatEtext: (NSString *)aString;
-- (BOOL) textView: (UITextView*) textView shouldChangeTextInRange: (NSRange) range replacementText: (NSString*) text;
+//+ (void)prepareEtext: (NSString *)aString;
+//+ (void)concatEtext: (NSString *)aString;
+//- (BOOL) textView: (UITextView*) textView shouldChangeTextInRange: (NSRange) range replacementText: (NSString*) text;
 
 //- (void) keyboardWillShow:(NSNotification *)notification;
 //- (void) keyboardWillHide:(NSNotification *)notification;
@@ -577,6 +580,7 @@ static void iosMouseHandler(NSSet *touches, UIEvent *event, UIView *view, int ty
     return;
 }
 
+/*
 static void cocoaMouseWheelHandler(NSSet *touches, UIEvent *event, UIView *view, int type)
 {
     // Handle the new "MightyMouse" mouse wheel events. Please, someone explain
@@ -606,14 +610,14 @@ static void cocoaMouseWheelHandler(NSSet *touches, UIEvent *event, UIView *view,
     float dy = pos.y - oldpos.y;
     //float dy = [theEvent deltaY];
     //if ( fabs(dy) < 1.0 ) dy = (dy > 0) ? 1.0 : -1.0;
-    /*
+    / *
     //if ([theEvent deltaX] != 0) {
     if (dx != 0) {
         Fl::e_dx = (int)-dx;
         Fl::e_dy = 0;
         if ( Fl::e_dx) Fl::handle( FL_MOUSEWHEEL, window );
     //} else if ([theEvent deltaY] != 0) {
-    } else*/ if (dy != 0) {
+    } else* / if (dy != 0) {
         Fl::e_dx = 0;
         Fl::e_dy = (int)-dy;
         if ( Fl::e_dy) Fl::handle( FL_MOUSEWHEEL, window );
@@ -626,6 +630,7 @@ static void cocoaMouseWheelHandler(NSSet *touches, UIEvent *event, UIView *view,
     
     //  return noErr;
 }
+ */
 
 //******************* spot **********************************
 
@@ -639,23 +644,49 @@ Fl_Fontdesc *fl_fonts = Fl_X::calc_fl_fonts();
 
 static Fl_Window *spot_win_=0;
 
+static void ios_reset_spot()
+{
+    FLView *view = (FLView*)[[Fl_X::first->xid rootViewController] view];
+    if ( [view->hiddenTextView isFirstResponder] ) {
+        [view->hiddenTextView resignFirstResponder];
+        [view->hiddenTextView becomeFirstResponder];
+        
+        //printf("ios reset spot\n");
+    }
+    //if ( ! [view->hiddenTextView isFirstResponder] ) [view->hiddenTextView becomeFirstResponder];
+}
+
 void fl_reset_spot()
 {
+    //printf("reset_spot\n");
     if ( Fl_X::first == NULL ) return;
     FLView *view = (FLView*)[[Fl_X::first->xid rootViewController] view];
+    if ( ! [view->hiddenTextView isFirstResponder] ) return;
     [view->hiddenTextView resignFirstResponder];
-    printf("reset_spot\n");
 }
 
 void fl_set_spot(int font, int size, int X, int Y, int W, int H, Fl_Window *win)
 {
+    if ( ! win ) {
+        spot_win_ = 0;
+        return;
+    }
+    
     FLView *view = (FLView*)[[Fl_X::first->xid rootViewController] view];
-    [view->hiddenTextView becomeFirstResponder];
-    view->hiddenTextView.text = @"";
-    view->hiddenTextView.text = @"1";
+    
+    int height = fl_height(font, size);
+    if ( X > 0 && Y > height ) {
+        CGRect r;
+        r.origin.x = X; r.origin.y = Y-height; r.size.width = 120; r.size.height = 50;
+        view->hiddenTextView.frame = r;
+        //printf("set spot:%d %d\n", X, Y-height);
+    }
+    
+    //[view->hiddenTextView resignFirstResponder];
+    if ( ! [view->hiddenTextView isFirstResponder] ) [view->hiddenTextView becomeFirstResponder];
     
     spot_win_ = win;
-    printf("set_spot\n");
+    //printf("set_spot\n");
 }
 
 void fl_set_status(int x, int y, int w, int h)
@@ -686,17 +717,15 @@ double fl_ios_flush_and_wait(double time_to_wait)  //ok
     Fl::flush();
     
     //printf("start\n");
+	[[NSRunLoop currentRunLoop] runMode: NSDefaultRunLoopMode beforeDate: [NSDate dateWithTimeIntervalSinceNow: 0.001]];
+	/*
     NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
     [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:endDate];
     [pool release];
+	*/
     //printf("runloop end\n");
     
     return 0.0;
-}
-
-void fl_clipboard_notify_change()
-{
-	// No need to do anything here...
 }
 
 /*
@@ -945,6 +974,12 @@ void Fl_X::make(Fl_Window *w)
 		
 		FLViewController* controller;
 		controller = [[FLViewController alloc] init];
+        //controller.automaticallyAdjustsScrollViewInsets = NO;
+        //myview.autoresizesSubviews = NO;
+        //if (IOS_VERSION_7_OR_ABOVE) {
+            //[controller setEdgesForExtendedLayout:UIRectEdgeNone];
+            //[controller setExtendedLayoutIncludesOpaqueBars:NO];
+        //}
         controller.view = myview;
 
 		x->xid = cw;
@@ -1090,7 +1125,7 @@ void Fl_Window::show()
  */
 void Fl_Window::resize(int X, int Y, int W, int H)
 {
-    CGRect r = [[UIScreen mainScreen] bounds];
+    //CGRect r = [[UIScreen mainScreen] bounds];
     //printf("resize: %d %d, %d %d\n", (int)r.size.width, (int)r.size.height, device_w, device_h);
     
 	if ((!parent()) && shown()) {
@@ -1275,35 +1310,16 @@ void Fl_X::q_end_image()
 ////////////////////////////////////////////////////////////////
 // Copy & Paste fltk implementation.
 ////////////////////////////////////////////////////////////////
-/*
 static void convert_crlf(char *s, size_t len)
 {
     // turn all \r characters into \n:
     for (size_t x = 0; x < len; x++) if (s[x] == '\r') s[x] = '\n';
 }
 
-// fltk 1.3 clipboard support constant definitions:
-static NSString* calc_utf8_format(void)
-{
-#if MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_6
-#define NSPasteboardTypeString @"public.utf8-plain-text"
-#endif
-    if (fl_mac_os_version >= 100600) return NSPasteboardTypeString;
-    return NSStringPboardType;
-}
-
 // clipboard variables definitions :
 char *fl_selection_buffer[2] = { NULL, NULL };
 int fl_selection_length[2] = { 0, 0 };
 static int fl_selection_buffer_length[2];
-
-static PasteboardRef allocatePasteboard(void)
-{
-    PasteboardRef clip;
-    PasteboardCreate(kPasteboardClipboard, &clip); // requires Mac OS 10.3
-    return clip;
-}
-static PasteboardRef myPasteboard = allocatePasteboard();
 
 extern void fl_trigger_clipboard_notify(int source);
 
@@ -1312,18 +1328,24 @@ void fl_clipboard_notify_change()
     // No need to do anything here...
 }
 
+/*
 static void clipboard_check(void)
 {
-    PasteboardSyncFlags flags;
-    
-    flags = PasteboardSynchronize(myPasteboard); // requires Mac OS 10.3
-    
-    if (!(flags & kPasteboardModified)) return;
-    if (flags & kPasteboardClientIsOwner) return;
-    
+    static NSInteger oldcount = -1;
+    NSInteger newcount = [[UIPasteboard generalPasteboard] changeCount];
+    if (newcount == oldcount) return;
+    oldcount = newcount;
     fl_trigger_clipboard_notify(1);
 }
 */
+
+static void resize_selection_buffer(int len, int clipboard) {
+    if (len <= fl_selection_buffer_length[clipboard])
+        return;
+    delete[] fl_selection_buffer[clipboard];
+    fl_selection_buffer[clipboard] = new char[len+100];
+    fl_selection_buffer_length[clipboard] = len+100;
+}
 
 /*
  * create a selection
@@ -1333,36 +1355,166 @@ static void clipboard_check(void)
  */
 void Fl::copy(const char *stuff, int len, int clipboard, const char *type)
 {
-    /*
-    if (!stuff || len < 0) return;
-    if (len + 1 > fl_selection_buffer_length[clipboard]) {
-        delete[]fl_selection_buffer[clipboard];
-        fl_selection_buffer[clipboard] = new char[len + 100];
-        fl_selection_buffer_length[clipboard] = len + 100;
-    }
+    if (!stuff || len<0) return;
+    if (clipboard >= 2) clipboard = 1; // Only on X11 do multiple clipboards make sense.
+    
+    resize_selection_buffer(len+1, clipboard);
     memcpy(fl_selection_buffer[clipboard], stuff, len);
     fl_selection_buffer[clipboard][len] = 0; // needed for direct paste
     fl_selection_length[clipboard] = len;
     if (clipboard) {
-        CFDataRef text = CFDataCreate(kCFAllocatorDefault, (UInt8 *)fl_selection_buffer[1], len);
-        if (text == NULL) return; // there was a pb creating the object, abort.
-        NSPasteboard *clip = [NSPasteboard generalPasteboard];
-        [clip declareTypes: [NSArray arrayWithObject: utf8_format] owner: nil];
-        [clip setData: (NSData *)text forType: utf8_format];
-        CFRelease(text);
+        if ( strlen(fl_selection_buffer[clipboard]) == 0 ) return;
+        //CFDataRef text = CFDataCreate(kCFAllocatorDefault, (UInt8*)fl_selection_buffer[1], len);
+        //if (text==NULL) return; // there was a pb creating the object, abort.
+        UIPasteboard *clip = [UIPasteboard generalPasteboard];
+        //[clip declareTypes:[NSArray arrayWithObject:UTF8_pasteboard_type] owner:nil];
+        //[clip setData:(NSData*)text forType:UTF8_pasteboard_type];
+        [clip setString:[NSString stringWithUTF8String:fl_selection_buffer[clipboard]]];
+        //clip.string = text;
+        //CFRelease(text);
     }
+}
+
+static int get_plain_text_from_clipboard(int clipboard)
+{
+    int length = 0;
+    UIPasteboard *clip = [UIPasteboard generalPasteboard];
+    NSString *data = [clip string];
+    if ( data ) {
+        const char *s_utf8 = [data UTF8String];
+        int len = (int)strlen(s_utf8) + 1;
+        resize_selection_buffer(len, clipboard);
+        strcpy(fl_selection_buffer[clipboard], s_utf8);
+        fl_selection_buffer[clipboard][len - 1] = 0;
+        length = len - 1;
+        convert_crlf(fl_selection_buffer[clipboard], len - 1); // turn all \r characters into \n:
+        Fl::e_clipboard_type = Fl::clipboard_plain_text;
+    }
+    
+    return length;
+    
+    /*
+    NSString *found = [clip string ]; // [clip availableTypeFromArray:[NSArray arrayWithObjects:UTF8_pasteboard_type, @"public.utf16-plain-text", @"com.apple.traditional-mac-plain-text", nil]];
+    if (found) {
+        NSData *data = [clip dataForType:found];
+        if (data) {
+            NSInteger len;
+            char *aux_c = NULL;
+            if (![found isEqualToString:UTF8_pasteboard_type]) {
+                NSString *auxstring;
+                auxstring = (NSString *)CFStringCreateWithBytes(NULL,
+                                                                (const UInt8*)[data bytes],
+                                                                [data length],
+                                                                [found isEqualToString:@"public.utf16-plain-text"] ? kCFStringEncodingUnicode : kCFStringEncodingMacRoman,
+                                                                false);
+                aux_c = strdup([auxstring UTF8String]);
+                [auxstring release];
+                len = strlen(aux_c) + 1;
+            }
+            else len = [data length] + 1;
+            resize_selection_buffer(len, clipboard);
+            if (![found isEqualToString:UTF8_pasteboard_type]) {
+                strcpy(fl_selection_buffer[clipboard], aux_c);
+                free(aux_c);
+            }
+            else {
+                [data getBytes:fl_selection_buffer[clipboard]];
+            }
+            fl_selection_buffer[clipboard][len - 1] = 0;
+            length = len - 1;
+            convert_crlf(fl_selection_buffer[clipboard], len - 1); // turn all \r characters into \n:
+            Fl::e_clipboard_type = Fl::clipboard_plain_text;
+        }
+    }
+    return length;
      */
+}
+
+static Fl_Image* get_image_from_clipboard(Fl_Widget *receiver)
+{
+    // FIXIT: just copy string now, but image should be supported.
+/*
+    UIPasteboard *clip = [UIPasteboard generalPasteboard];
+    NSArray *present = [clip types]; // types in pasteboard in order of decreasing preference
+    NSArray  *possible = [NSArray arrayWithObjects:TIFF_pasteboard_type, PDF_pasteboard_type, PICT_pasteboard_type, nil];
+    NSString *found = nil;
+    NSUInteger rank;
+    for (NSUInteger i = 0; (!found) && i < [possible count]; i++) {
+        for (rank = 0; rank < [present count]; rank++) { // find first of possible types present in pasteboard
+            if ([[present objectAtIndex:rank] isEqualToString:[possible objectAtIndex:i]]) {
+                found = [present objectAtIndex:rank];
+                break;
+            }
+        }
+    }
+    if (!found) return NULL;
+    NSData *data = [clip dataForType:found];
+    if (!data) return NULL;
+    NSBitmapImageRep *bitmap = nil;
+    if ([found isEqualToString:TIFF_pasteboard_type]) {
+        bitmap = [[NSBitmapImageRep alloc] initWithData:data];
+    }
+    else if ([found isEqualToString:PDF_pasteboard_type] || [found isEqualToString:PICT_pasteboard_type]) {
+        NSImage *nsimg = [[NSImage alloc] initWithData:data];
+        [nsimg lockFocus];
+        bitmap = [[NSBitmapImageRep alloc] initWithFocusedViewRect:NSMakeRect(0, 0, [nsimg size].width, [nsimg size].height)];
+        [nsimg unlockFocus];
+        [nsimg release];
+    }
+    if (!bitmap) return NULL;
+    int bytesPerPixel([bitmap bitsPerPixel]/8);
+    int bpr([bitmap bytesPerRow]);
+    int bpp([bitmap bytesPerPlane]);
+    int hh(bpp/bpr);
+    int ww(bpr/bytesPerPixel);
+    uchar *imagedata = new uchar[bpr * hh];
+    memcpy(imagedata, [bitmap bitmapData], bpr * hh);
+    Fl_RGB_Image *image = new Fl_RGB_Image(imagedata, ww, hh, bytesPerPixel);
+    image->alloc_array = 1;
+    [bitmap release];
+    Fl::e_clipboard_type = Fl::clipboard_image;
+    return image;
+*/
+    return NULL;
 }
 
 // Call this when a "paste" operation happens:
 void Fl::paste(Fl_Widget &receiver, int clipboard, const char *type)
 {
+    if (type[0] == 0) type = Fl::clipboard_plain_text;
+    if (clipboard) {
+        Fl::e_clipboard_type = "";
+        if (strcmp(type, Fl::clipboard_plain_text) == 0) {
+            fl_selection_length[1] = get_plain_text_from_clipboard(1);
+        } else if (strcmp(type, Fl::clipboard_image) == 0) {
+            Fl::e_clipboard_data = get_image_from_clipboard(&receiver);
+            if (Fl::e_clipboard_data) {
+                int done = receiver.handle(FL_PASTE);
+                Fl::e_clipboard_type = "";
+                if (done == 0) {
+                    delete (Fl_Image *)Fl::e_clipboard_data;
+                    Fl::e_clipboard_data = NULL;
+                }
+            }
+            return;
+        } else fl_selection_length[1] = 0;
+    }
+    Fl::e_text = fl_selection_buffer[clipboard];
+    Fl::e_length = fl_selection_length[clipboard];
+    if (!Fl::e_length) Fl::e_text = (char *)"";
+    receiver.handle(FL_PASTE);
 }
 
 int Fl::clipboard_contains(const char *type)
 {
-    printf("clipboard_contains\n");
-	return 0;
+    NSString *found = nil;
+    if (strcmp(type, Fl::clipboard_plain_text) == 0) {
+        found = [[UIPasteboard generalPasteboard] string];// availableTypeFromArray:[NSArray arrayWithObjects:UTF8_pasteboard_type, @"public.utf16-plain-text", @"com.apple.traditional-mac-plain-text", nil]];
+    } else if (strcmp(type, Fl::clipboard_image) == 0) {
+        // FIXIT: just copy string now, but image should be supported.
+        found = nil;//[[UIPasteboard generalPasteboard] image ]; //availableTypeFromArray:[NSArray arrayWithObjects:TIFF_pasteboard_type, PDF_pasteboard_type, PICT_pasteboard_type, nil]];
+    }
+    return found != nil;
 }
 
 int Fl_X::unlink(Fl_X *start)
@@ -1417,7 +1569,8 @@ void Fl_X::destroy()
 void Fl_X::map()
 {
     if (w && xid) {
-        [xid orderFront: nil];
+        [xid makeKeyAndVisible];
+        //[xid orderFront: nil];
     }
     //+ link to window list
     if (w && w->parent()) {
@@ -1429,7 +1582,8 @@ void Fl_X::map()
 void Fl_X::unmap()
 {
     if (w && !w->parent() && xid) {
-        [xid orderOut: nil];
+        //[xid orderOut: nil];
+        [xid resignKeyWindow];
     }
     if (w && Fl_X::i(w)) Fl_X::i(w)->unlink();
 }
@@ -1470,9 +1624,57 @@ void Fl_X::set_key_window()
 {
 }
 
-int Fl::dnd(void)
+int Fl::dnd()
 {
-	return true;
+    return Fl_X::dnd(0);
+}
+
+int Fl_X::dnd(int use_selection)
+{
+    // Mybe ios do not need dnd?
+    /*
+    // just support text now
+    NSString *text = [NSString stringWithUTF8String:fl_selection_buffer[0]];
+    //CFDataRef text = CFDataCreate(kCFAllocatorDefault, (UInt8 *)fl_selection_buffer[0], fl_selection_length[0]);
+    if (!text) return false;
+    NSAutoreleasePool *localPool;
+    localPool = [[NSAutoreleasePool alloc] init];
+    UIPasteboard *mypasteboard = [UIPasteboard generalPasteboard ];//pasteboardWithName: @"cyantree_pasteboard" create:YES];
+    //[mypasteboard declareTypes:[NSArray arrayWithObject:UTF8_pasteboard_type] owner:nil];
+    //[mypasteboard setData:(NSData*)text forType:UTF8_pasteboard_type];
+    //CFRelease(text);
+    [mypasteboard setString:text];
+    Fl_Widget *w = Fl::pushed();
+    Fl_Window *win = w->top_window();
+    //UIView *myview = [Fl_X::i(win)->xid viewForBaselineLayout];// contentView];
+    //NSEvent *theEvent = [NSApp currentEvent];
+    
+    //int width, height;
+    //NSImage *image;
+    if (use_selection) {
+        fl_selection_buffer[0][fl_selection_length[0]] = 0;
+        //image = imageFromText(fl_selection_buffer[0], &width, &height);
+    } else {
+        //image = defaultDragImage(&width, &height);
+    }
+    
+    static CGSize offset = { 0, 0 };
+    CGPoint pt = [theEvent locationInWindow];
+    pt.x -= width / 2;
+    pt.y -= height / 2;
+    [myview dragImage: image  at: pt  offset: offset
+                event: theEvent  pasteboard: mypasteboard
+               source: myview  slideBack: YES];
+     
+    if (w) {
+        int old_event = Fl::e_number;
+        w->handle(Fl::e_number = FL_RELEASE);
+        Fl::e_number = old_event;
+        Fl::pushed(0);
+    }
+    [localPool release];
+     */
+    return true;
 }
 
 /*
@@ -1693,6 +1895,36 @@ static CGRect convertToCGRect (const RectType& r)
 }
 @end
 
+// =====================================================================
+static int btkb_keysym_, btkb_state_;
+static double btkb_time_sec_ = 0.5;
+static void cb_time_btkb(void *data)
+{
+    Fl_Window *target = (Fl_Window *)data;
+    Fl::e_keysym = btkb_keysym_;
+    Fl::e_state = btkb_state_;
+    Fl::handle(FL_KEYDOWN, target);
+    //ios_reset_spot();
+    
+    btkb_time_sec_ = 0.05;
+    //if ( btkb_time_sec_ <= 0.10 ) btkb_time_sec_ = 0.1;
+    Fl::repeat_timeout(btkb_time_sec_, cb_time_btkb, data);
+}
+static void BTKB_PressContinue_Start(void *data)
+{
+    btkb_time_sec_ = 0.5;
+    Fl::add_timeout(btkb_time_sec_, cb_time_btkb, data);
+}
+
+static void BTKB_PressContinue_Stop()
+{
+    //ios_reset_spot();
+    Fl::remove_timeout(cb_time_btkb);
+}
+
+static char *e_text_buffer_=NULL;
+static int e_text_buffer_size_=0;
+
 @implementation FLView
 
 - (FLView*) initWithFlWindow: (Fl_Window*)win contentRect: (CGRect) rect;
@@ -1701,20 +1933,18 @@ static CGRect convertToCGRect (const RectType& r)
 	
 	flwindow = win;
     in_key_event = NO;
-
-    hiddenTextView = [[UITextView alloc] initWithFrame: CGRectZero];
-    /*
+    
     CGRect r;
-    r.origin.x = 10; r.origin.y = 140; r.size.width = 120; r.size.height = 25;
+    r.origin.x = 10; r.origin.y = 140; r.size.width = 120; r.size.height = 50;
     hiddenTextView = [[UITextView alloc] initWithFrame: r];
-    //*/
     [self addSubview: hiddenTextView];
     hiddenTextView.delegate = self;
 
     hiddenTextView.autocapitalizationType = UITextAutocapitalizationTypeNone;
     hiddenTextView.autocorrectionType = UITextAutocorrectionTypeNo;
     hiddenTextView.keyboardType = UIKeyboardTypeDefault;
-    hiddenTextView.text = @"1"; // for backspace keyboard
+    hiddenTextView.text = @"1";
+    hiddenTextView.hidden = YES;
     
     //[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillShow:) name:UIKeyboardWillShowNotification object:nil];
     //[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillShow) name:UIKeyboardWillShowNotification object:nil];
@@ -1791,17 +2021,11 @@ static CGRect convertToCGRect (const RectType& r)
 //==============================================================================
 - (BOOL) becomeFirstResponder
 {
-    //if (owner != nullptr)
-    //    owner->viewFocusGain();
-
     return true;
 }
 
 - (BOOL) resignFirstResponder
 {
-    //if (owner != nullptr)
-    //    owner->viewFocusLoss();
-
     return true;
 }
 
@@ -1811,132 +2035,466 @@ static CGRect convertToCGRect (const RectType& r)
     return !(flwindow->tooltip_window() || flwindow->menu_window());
 }
 
-+ (void)prepareEtext: (NSString *)aString
+- (void)textViewDidChange:(UITextView *)textView
 {
-    // fills Fl::e_text with UTF-8 encoded aString using an adequate memory allocation
-    static char *received_utf8 = NULL;
-    static int lreceived = 0;
-    char *p = (char *)[aString UTF8String];
-    int l = (int)strlen(p);
-    if (l > 0) {
-        if (lreceived == 0) {
-            received_utf8 = (char *)malloc(l + 1);
-            lreceived = l;
-        } else if (l > lreceived) {
-            received_utf8 = (char *)realloc(received_utf8, l + 1);
-            lreceived = l;
-        }
-        strcpy(received_utf8, p);
-        Fl::e_text = received_utf8;
-    }
-    Fl::e_length = l;
-}
-
-+ (void)concatEtext: (NSString *)aString
-{
-    // extends Fl::e_text with aString
-    NSString *newstring = [[NSString stringWithUTF8String: Fl::e_text] stringByAppendingString: aString];
-    [FLView prepareEtext: newstring];
-}
-
-- (BOOL) textView: (UITextView*) textView shouldChangeTextInRange: (NSRange) range replacementText: (NSString*) text
-{
-    (void) textView;
+    const char *ss;// = [textView.text UTF8String];
+    //int cursorPosition = textView.selectedRange.location;
+    //int len = textView.selectedRange.length;
     
-    /*
-    const char *s1 = [text UTF8String];
-    if ( range.length > 0 ) {
-        if ( strlen(s1) == 0 ) printf("delete\n");
-        else printf("input:%s\n", s1);
-    } else {
-        if ( strlen(s1) > 0 ) {
-            printf("input:%s\n", s1);
-        }
-    }
-    //*/
+    UITextRange *SelectedRange = [textView markedTextRange];
+    NSString *selectedtext = [textView textInRange:SelectedRange];
+    UITextPosition *pos = [textView positionFromPosition:SelectedRange.start offset:0];
     
-    // =============================
-    NSString *received;
-    if ([text isKindOfClass: [NSAttributedString class]]) {
-        received = [(NSAttributedString *)text string];
+    //printf("textViewDidChange: %s, len:%d, pos:%d, sel txt:%s\n", ss, len, cursorPosition, [selectedtext UTF8String]);
+    
+    Fl_Window *target = flwindow;
+    int l;
+    
+    //如果有高亮且当前字数开始位置小于最大限制时允许输入
+    if (SelectedRange && pos) {
+        //NSInteger startOffset = [textView offsetFromPosition:textView.beginningOfDocument toPosition:SelectedRange.start];
+        //NSInteger endOffset = [textView offsetFromPosition:textView.beginningOfDocument toPosition:SelectedRange.end];
+        //NSRange offsetRange = NSMakeRange(startOffset, endOffset - startOffset);
+        //printf("start:%d, end:%d, off loc:%d, off len:%d\n", startOffset, endOffset, offsetRange.location, offsetRange.length);
+        
+        ss = [selectedtext UTF8String];
+        l = (int)strlen(ss);
+        //printf("ss:%s, l:%d, utf8 len:%d\n", ss, l, [selectedtext length]);
+        //if ( l == 0 ) return;
+        if ( e_text_buffer_size_ < l+1 ) {
+            void *p = realloc(e_text_buffer_, l+1);
+            if ( p == NULL ) return;
+            e_text_buffer_ = (char*)p;
+            e_text_buffer_size_ = l+1;
+        }
+        Fl::e_length = l;
+        
+        memcpy(e_text_buffer_, ss, l+1);
+        e_text_buffer_[l] = 0;
+        Fl::e_text = e_text_buffer_;
+        
+        //printf("1.length:%d, %s, ss:[%s], l=%d\n", Fl::e_length, e_text_buffer_, ss, l);
+        
+        Fl_X::next_marked_length = l;//[selectedtext length];
+        Fl::e_keysym = 0;
+        Fl::handle(FL_KEYDOWN, target);        
+        Fl::e_length = 0;
     } else {
-        received = (NSString *)text;
-    }
-    const char *s = [text UTF8String];
-    fl_lock_function();
-    Fl_Window *target = flwindow;// [(FLWindow *)[self window] getFl_Window];
-    if ( range.length > 0 ) {
-        if ( strlen(s) == 0 ) {
-            int saved_keysym = Fl::e_keysym;
+        ss = [textView.text UTF8String];
+        l = (int)strlen(ss);
+        if ( l <= 0 ) {
+            Fl::e_length = 0;
             Fl::e_keysym = FL_BackSpace;
             Fl::handle(FL_KEYBOARD, target);
-            Fl::e_keysym = saved_keysym;
-        } else {
-            if ( 0 == strcmp(s, "\n") || 0 == strcmp(s, "\r") || 0 == strcmp(s, "\r\n") ) {
-                Fl::e_keysym = FL_Enter;
-                Fl::handle(FL_KEYBOARD, target);
-                Fl::e_length = 0;
-                if ( spot_win_ != 0 ) {
-                    if ( spot_win_->visible_focus() ) {
-                        fl_set_spot(0, 0, 0, 0, 0, 0, spot_win_);
-                        spot_win_ = 0;
-                    }
-                }
-                fl_unlock_function();
-                return NO;
-            }
+            textView.text = @"1";
+            return;
         }
-    } else {
-        if ( strlen(s) == 0 ) {
-            fl_unlock_function();
-            return NO;
-        } else {
-            if ( 0 == strcmp(s, "\n") || 0 == strcmp(s, "\r") || 0 == strcmp(s, "\r\n") ) {
-                Fl::e_keysym = FL_Enter;
-                Fl::handle(FL_KEYBOARD, target);
+        if ( l == 1 ) {
+            if ( Fl_X::next_marked_length > 0 ) {
+                Fl_X::next_marked_length = 1;
+                Fl::e_text = "";
                 Fl::e_length = 0;
-                if ( spot_win_ != 0 ) {
-                    if ( spot_win_->visible_focus() ) {
-                        fl_set_spot(0, 0, 0, 0, 0, 0, spot_win_);
-                        spot_win_ = 0;
-                    }
-                }
-                fl_unlock_function();
-                return NO;
+                Fl::e_keysym = 0;
+                Fl::handle(FL_KEYDOWN, target);
+                Fl::e_length = 0;
+                Fl::compose_state = 0;
+                Fl_X::next_marked_length = 0;
             }
+            textView.text = @"1";
+            return;
         }
-    }
-
-    if (in_key_event && Fl_X::next_marked_length && Fl::e_length) {
-        // if setMarkedText + insertText is sent during handleEvent, text cannot be concatenated in single FL_KEYBOARD event
-        Fl::handle(FL_KEYBOARD, target);
+        if ( e_text_buffer_size_ < l ) {
+            void *p = realloc(e_text_buffer_, l);
+            if ( p == NULL ) {
+                textView.text = @"1";
+                return;
+            }
+            e_text_buffer_ = (char*)p;
+            e_text_buffer_size_ = l;
+        }
+        Fl::e_length = l-1;
+        //printf("2.length:%d\n", Fl::e_length);
+        memcpy(e_text_buffer_, ss+1, l);
+        e_text_buffer_[l-1] = 0;
+        Fl::e_text = e_text_buffer_;
+        
+        if ( 0 == strcmp(e_text_buffer_, "\n") || 0 == strcmp(e_text_buffer_, "\r") || 0 == strcmp(e_text_buffer_, "\r\n") ) {
+            Fl::e_length = 0;
+            Fl::e_keysym = FL_Enter;
+            Fl::handle(FL_KEYBOARD, target);
+            Fl::e_length = 0;
+            Fl::compose_state = 0;
+            Fl_X::next_marked_length = 0;
+            textView.text = @"1";
+            return;
+        }
+        
+        if ( 0 == strcmp(e_text_buffer_, "\t") ) {
+            Fl::e_length = 0;
+            Fl::e_keysym = FL_Tab;
+            Fl::handle(FL_KEYBOARD, target);
+            Fl::e_length = 0;
+            Fl::compose_state = 0;
+            Fl_X::next_marked_length = 0;
+            textView.text = @"1";
+            return;
+        }
+        
+        Fl::e_keysym = 0;
+        Fl::handle(FL_KEYDOWN, target);
         Fl::e_length = 0;
+        Fl::compose_state = 0;
+        Fl_X::next_marked_length = 0;
+        
+        //printf("=====>add string:[%s]\n", Fl::e_text);
+        textView.text = @"1";
     }
-    if (in_key_event && Fl::e_length) [FLView concatEtext: received];
-    else [FLView prepareEtext: received];
-    Fl_X::next_marked_length = 0;
-    // We can get called outside of key events (e.g., from the character palette, from CJK text input).
-    BOOL palette = !(in_key_event || Fl::compose_state);
-    if (palette) Fl::e_keysym = 0;
-    //printf("e_keysym=%x\n", Fl::e_keysym);
-    // YES if key has text attached
-    BOOL has_text_key = Fl::e_keysym <= '~' || Fl::e_keysym == FL_Iso_Key || (Fl::e_keysym >= FL_KP && Fl::e_keysym <= FL_KP_Last && Fl::e_keysym != FL_KP_Enter);
-    // insertText sent during handleEvent of a key without text cannot be processed in a single FL_KEYBOARD event.
-    // Occurs with deadkey followed by non-text key
-    if (!in_key_event || !has_text_key) {
-        Fl::handle(FL_KEYBOARD, target);
-        Fl::e_length = 0;
-    } else need_handle = YES;
-    selectedRange = NSMakeRange(100, 0); // 100 is an arbitrary value
-    // for some reason, with the palette, the window does not redraw until the next mouse move or button push
-    // sending a 'redraw()' or 'awake()' does not solve the issue!
-    if (palette) Fl::flush();
-    //if (fl_mac_os_version < 100600) [(FLTextView *)[[self window] fieldEditor: YES forObject: nil] setActive: NO];
-    fl_unlock_function();
-
-    //if (range.length == 0 ) return YES;
-    return NO;
 }
+
+- (void)escapeKeyPressed:(UIKeyCommand *)keyCommand {
+    printf("esc\n");
+    //UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"UIKeyCommand Demo" message:[NSString stringWithFormat:@"%@ pressed", keyCommand.input] delegate:nil cancelButtonTitle:@"Ok" otherButtonTitles:nil];
+    //[alertView show];
+}
+
+- (void)keyProcess:(UIKeyCommand *)keyCommand {
+    const char *s1 = [keyCommand.input UTF8String];
+    //NSLog(@"input:%@, %s\n", keyCommand.input, s1);
+    
+    Fl_Window *target = flwindow;
+    //*
+    if ( keyCommand.input == UIKeyInputUpArrow ) {
+        Fl::e_keysym = FL_Up; Fl::e_state = 0;
+        Fl::handle(FL_KEYDOWN, target);
+        ios_reset_spot();
+        btkb_keysym_ = Fl::e_keysym; btkb_state_ = 0; BTKB_PressContinue_Start((void*)target);
+        return;
+    }
+    
+    if ( keyCommand.input == UIKeyInputDownArrow ) {
+        Fl::e_keysym = FL_Down; Fl::e_state = 0;
+        Fl::handle(FL_KEYDOWN, target);
+        ios_reset_spot();
+        btkb_keysym_ = Fl::e_keysym; btkb_state_ = 0; BTKB_PressContinue_Start((void*)target);
+        return;
+    }
+    
+    if ( keyCommand.input == UIKeyInputLeftArrow ) {
+        Fl::e_keysym = FL_Left; Fl::e_state = 0;
+        Fl::handle(FL_KEYDOWN, target);
+        ios_reset_spot();
+        btkb_keysym_ = Fl::e_keysym; btkb_state_ = 0; BTKB_PressContinue_Start((void*)target);
+        return;
+    }
+    
+    if ( keyCommand.input == UIKeyInputRightArrow ) {
+        Fl::e_keysym = FL_Right; Fl::e_state = 0;
+        Fl::handle(FL_KEYDOWN, target);
+        ios_reset_spot();
+        btkb_keysym_ = Fl::e_keysym; btkb_state_ = 0; BTKB_PressContinue_Start((void*)target);
+        return;
+    }
+     //*/
+    
+    if ( strcmp(s1, "UIKeyInputPageDown") == 0 ) {
+        Fl::e_keysym = FL_Page_Down; Fl::e_state = 0;
+        Fl::handle(FL_KEYDOWN, target);
+        ios_reset_spot();
+        btkb_keysym_ = Fl::e_keysym; btkb_state_ = 0; BTKB_PressContinue_Start((void*)target);
+        return;
+    }
+    
+    if ( strcmp(s1, "UIKeyInputPageUp") == 0 ) {
+        Fl::e_keysym = FL_Page_Up; Fl::e_state = 0;
+        Fl::handle(FL_KEYDOWN, target);
+        ios_reset_spot();
+        btkb_keysym_ = Fl::e_keysym; btkb_state_ = 0; BTKB_PressContinue_Start((void*)target);
+        return;
+    }
+    
+    if ( strcmp(s1, "UIKeyInputHome") == 0 ) {
+        Fl::e_keysym = FL_Home;
+        Fl::handle(FL_KEYDOWN, target);
+        return;
+    }
+    
+    if ( strcmp(s1, "UIKeyInputEnd") == 0 ) {
+        Fl::e_keysym = FL_End;
+        Fl::handle(FL_KEYDOWN, target);
+        return;
+    }
+    
+    if ( strcmp(s1, "UIKeyInputF1") == 0 ) {
+        Fl::e_keysym = FL_F+1;
+        Fl::handle(FL_KEYDOWN, target);
+        return;
+    }
+}
+
+// shift + left right up down pagedown pageup
+- (void)key_shift_up_Process:(UIKeyCommand *)keyCommand {
+    Fl_Window *target = flwindow;
+    Fl::e_keysym = FL_Up;
+    Fl::e_state = FL_SHIFT;
+    Fl::handle(FL_KEYDOWN, target);
+    ios_reset_spot();
+    btkb_keysym_ = Fl::e_keysym; btkb_state_ = Fl::e_state; BTKB_PressContinue_Start((void*)target);
+    Fl::e_state = 0;
+}
+
+- (void)key_shift_down_Process:(UIKeyCommand *)keyCommand {
+    Fl_Window *target = flwindow;
+    Fl::e_keysym = FL_Down;
+    Fl::e_state = FL_SHIFT;
+    Fl::handle(FL_KEYDOWN, target);
+    ios_reset_spot();
+    btkb_keysym_ = Fl::e_keysym; btkb_state_ = Fl::e_state; BTKB_PressContinue_Start((void*)target);
+    Fl::e_state = 0;
+}
+
+- (void)key_shift_left_Process:(UIKeyCommand *)keyCommand {
+    Fl_Window *target = flwindow;
+    Fl::e_keysym = FL_Left;
+    Fl::e_state = FL_SHIFT;
+    Fl::handle(FL_KEYDOWN, target);
+    ios_reset_spot();
+    btkb_keysym_ = Fl::e_keysym; btkb_state_ = Fl::e_state; BTKB_PressContinue_Start((void*)target);
+    Fl::e_state = 0;
+}
+
+- (void)key_shift_right_Process:(UIKeyCommand *)keyCommand {
+    Fl_Window *target = flwindow;
+    Fl::e_keysym = FL_Right;
+    Fl::e_state = FL_SHIFT;
+    Fl::handle(FL_KEYDOWN, target);
+    ios_reset_spot();
+    btkb_keysym_ = Fl::e_keysym; btkb_state_ = Fl::e_state; BTKB_PressContinue_Start((void*)target);
+    Fl::e_state = 0;
+}
+
+- (void)key_shift_pgup_Process:(UIKeyCommand *)keyCommand {
+    Fl_Window *target = flwindow;
+    Fl::e_keysym = FL_Page_Up;
+    Fl::e_state = FL_SHIFT;
+    Fl::handle(FL_KEYDOWN, target);
+    ios_reset_spot();
+    btkb_keysym_ = Fl::e_keysym; btkb_state_ = Fl::e_state; BTKB_PressContinue_Start((void*)target);
+    Fl::e_state = 0;
+}
+
+- (void)key_shift_pgdn_Process:(UIKeyCommand *)keyCommand {
+    Fl_Window *target = flwindow;
+    Fl::e_keysym = FL_Page_Down;
+    Fl::e_state = FL_SHIFT;
+    Fl::handle(FL_KEYDOWN, target);
+    ios_reset_spot();
+    btkb_keysym_ = Fl::e_keysym; btkb_state_ = Fl::e_state; BTKB_PressContinue_Start((void*)target);
+    Fl::e_state = 0;
+}
+
+// esc
+- (void)key_esc_Process:(UIKeyCommand *)keyCommand {
+    Fl_Window *target = flwindow;
+    Fl::e_keysym = FL_Escape; Fl::e_state = 0;
+    Fl::handle(FL_KEYDOWN, target);
+}
+
+// ctrl a c v x z y
+- (void)key_ctrl_a_Process:(UIKeyCommand *)keyCommand {
+    Fl_Window *target = flwindow;
+    Fl::e_keysym = 'a';
+    Fl::e_state = FL_CTRL;
+    Fl::handle(FL_KEYDOWN, target);
+    Fl::e_keysym = 0; Fl::e_state = 0;
+}
+
+- (void)key_ctrl_c_Process:(UIKeyCommand *)keyCommand {
+    Fl_Window *target = flwindow;
+    Fl::e_keysym = 'c';
+    Fl::e_state = FL_CTRL;
+    Fl::handle(FL_KEYDOWN, target);
+    Fl::e_keysym = 0; Fl::e_state = 0;
+}
+
+- (void)key_ctrl_v_Process:(UIKeyCommand *)keyCommand {
+    Fl_Window *target = flwindow;
+    Fl::e_keysym = 'v';
+    Fl::e_state = FL_CTRL;
+    Fl::handle(FL_KEYDOWN, target);
+    Fl::e_keysym = 0; Fl::e_state = 0;
+}
+
+- (void)key_ctrl_x_Process:(UIKeyCommand *)keyCommand {
+    Fl_Window *target = flwindow;
+    Fl::e_keysym = 'x';
+    Fl::e_state = FL_CTRL;
+    Fl::handle(FL_KEYDOWN, target);
+    Fl::e_keysym = 0; Fl::e_state = 0;
+}
+
+- (void)key_ctrl_z_Process:(UIKeyCommand *)keyCommand {
+    Fl_Window *target = flwindow;
+    Fl::e_keysym = 'z';
+    Fl::e_state = FL_CTRL;
+    Fl::handle(FL_KEYDOWN, target);
+    Fl::e_keysym = 0; Fl::e_state = 0;
+}
+
+- (void)key_ctrl_y_Process:(UIKeyCommand *)keyCommand {
+    Fl_Window *target = flwindow;
+    Fl::e_keysym = 'y';
+    Fl::e_state = FL_CTRL;
+    Fl::handle(FL_KEYDOWN, target);
+    Fl::e_keysym = 0; Fl::e_state = 0;
+}
+
+// ctrl + left right
+- (void)key_ctrl_left_Process:(UIKeyCommand *)keyCommand {
+    Fl_Window *target = flwindow;
+    Fl::e_keysym = FL_Left;
+    Fl::e_state = FL_CTRL;
+    Fl::handle(FL_KEYDOWN, target);
+    ios_reset_spot();
+    btkb_keysym_ = Fl::e_keysym; btkb_state_ = Fl::e_state; BTKB_PressContinue_Start((void*)target);
+    Fl::e_state = 0;
+}
+- (void)key_ctrl_right_Process:(UIKeyCommand *)keyCommand {
+    //printf("ctrl right\n");
+    Fl_Window *target = flwindow;
+    Fl::e_keysym = FL_Right;
+    Fl::e_state = FL_CTRL;
+    Fl::handle(FL_KEYDOWN, target);
+    ios_reset_spot();
+    btkb_keysym_ = Fl::e_keysym; btkb_state_ = Fl::e_state; BTKB_PressContinue_Start((void*)target);
+    Fl::e_state = 0;
+}
+
+//*
+- (NSArray *)keyCommands
+{
+    //printf("keycommand\n");
+    
+    BTKB_PressContinue_Stop();
+    
+    //const char *s1 = [UIKeyInputUpArrow UTF8String];
+    //NSLog(@"input: %s\n", s1);
+    
+    UIKeyCommand *key_shift = [UIKeyCommand keyCommandWithInput:@"" modifierFlags:UIKeyModifierShift action:@selector(keyProcess:)];
+    
+    //*
+    UIKeyCommand *upArrow = [UIKeyCommand keyCommandWithInput:UIKeyInputUpArrow modifierFlags:0 action:@selector(keyProcess:)];
+    UIKeyCommand *downArrow = [UIKeyCommand keyCommandWithInput:UIKeyInputDownArrow modifierFlags:0 action:@selector(keyProcess:)];
+    UIKeyCommand *leftArrow = [UIKeyCommand keyCommandWithInput:UIKeyInputLeftArrow modifierFlags:0 action:@selector(keyProcess:)];
+    UIKeyCommand *rightArrow = [UIKeyCommand keyCommandWithInput:UIKeyInputRightArrow modifierFlags:0 action:@selector(keyProcess:)];
+     //*/
+    
+    UIKeyCommand *key_home = [UIKeyCommand keyCommandWithInput:@"UIKeyInputHome" modifierFlags:0 action:@selector(keyProcess:)];
+    UIKeyCommand *key_end = [UIKeyCommand keyCommandWithInput:@"UIKeyInputEnd" modifierFlags:0 action:@selector(keyProcess:)];
+    UIKeyCommand *key_insert = [UIKeyCommand keyCommandWithInput:@"UIKeyInputIns" modifierFlags:0 action:@selector(keyProcess:)];
+    UIKeyCommand *key_f1 = [UIKeyCommand keyCommandWithInput:@"UIKeyInputDelBackward" modifierFlags:0 action:@selector(keyProcess:)];
+    
+    //UIKeyCommand *lCmd = [UIKeyCommand keyCommandWithInput:@"\r" modifierFlags:0 action:@selector(keyProcess:)];
+    
+    UIKeyCommand *key_pgdn = [UIKeyCommand keyCommandWithInput:@"UIKeyInputPageDown" modifierFlags:0 action:@selector(keyProcess:)];
+    UIKeyCommand *key_pgup = [UIKeyCommand keyCommandWithInput:@"UIKeyInputPageUp" modifierFlags:0 action:@selector(keyProcess:)];
+    
+    UIKeyCommand *key_shift_up = [UIKeyCommand keyCommandWithInput:UIKeyInputUpArrow modifierFlags:UIKeyModifierShift action:@selector(key_shift_up_Process:)];
+    UIKeyCommand *key_shift_down = [UIKeyCommand keyCommandWithInput:UIKeyInputDownArrow modifierFlags:UIKeyModifierShift action:@selector(key_shift_down_Process:)];
+    UIKeyCommand *key_shift_left = [UIKeyCommand keyCommandWithInput:UIKeyInputLeftArrow modifierFlags:UIKeyModifierShift action:@selector(key_shift_left_Process:)];
+    UIKeyCommand *key_shift_right = [UIKeyCommand keyCommandWithInput:UIKeyInputRightArrow modifierFlags:UIKeyModifierShift action:@selector(key_shift_right_Process:)];
+    UIKeyCommand *key_shift_pgup = [UIKeyCommand keyCommandWithInput:@"UIKeyInputPageUp" modifierFlags:UIKeyModifierShift action:@selector(key_shift_pgup_Process:)];
+    UIKeyCommand *key_shift_pgdn = [UIKeyCommand keyCommandWithInput:@"UIKeyInputPageDown" modifierFlags:UIKeyModifierShift action:@selector(key_shift_pgdn_Process:)];
+    
+    UIKeyCommand *key_esc = [UIKeyCommand keyCommandWithInput:UIKeyInputEscape modifierFlags:0 action:@selector(key_esc_Process:)];
+    
+    UIKeyCommand *key_ctrl_a = [UIKeyCommand keyCommandWithInput:@"a" modifierFlags:UIKeyModifierControl action:@selector(key_ctrl_a_Process:)];
+    UIKeyCommand *key_ctrl_A = [UIKeyCommand keyCommandWithInput:@"A" modifierFlags:UIKeyModifierControl action:@selector(key_ctrl_a_Process:)];
+    UIKeyCommand *key_cmd_a = [UIKeyCommand keyCommandWithInput:@"a" modifierFlags:UIKeyModifierCommand action:@selector(key_ctrl_a_Process:)];
+    UIKeyCommand *key_cmd_A = [UIKeyCommand keyCommandWithInput:@"A" modifierFlags:UIKeyModifierCommand action:@selector(key_ctrl_a_Process:)];
+    
+    UIKeyCommand *key_ctrl_c = [UIKeyCommand keyCommandWithInput:@"c" modifierFlags:UIKeyModifierControl action:@selector(key_ctrl_c_Process:)];
+    UIKeyCommand *key_ctrl_C = [UIKeyCommand keyCommandWithInput:@"C" modifierFlags:UIKeyModifierControl action:@selector(key_ctrl_c_Process:)];
+    UIKeyCommand *key_cmd_c = [UIKeyCommand keyCommandWithInput:@"c" modifierFlags:UIKeyModifierCommand action:@selector(key_ctrl_c_Process:)];
+    UIKeyCommand *key_cmd_C = [UIKeyCommand keyCommandWithInput:@"C" modifierFlags:UIKeyModifierCommand action:@selector(key_ctrl_c_Process:)];
+    
+    UIKeyCommand *key_ctrl_v = [UIKeyCommand keyCommandWithInput:@"v" modifierFlags:UIKeyModifierControl action:@selector(key_ctrl_v_Process:)];
+    UIKeyCommand *key_ctrl_V = [UIKeyCommand keyCommandWithInput:@"V" modifierFlags:UIKeyModifierControl action:@selector(key_ctrl_v_Process:)];
+    UIKeyCommand *key_cmd_v = [UIKeyCommand keyCommandWithInput:@"v" modifierFlags:UIKeyModifierCommand action:@selector(key_ctrl_v_Process:)];
+    UIKeyCommand *key_cmd_V = [UIKeyCommand keyCommandWithInput:@"V" modifierFlags:UIKeyModifierCommand action:@selector(key_ctrl_v_Process:)];
+    
+    UIKeyCommand *key_ctrl_x = [UIKeyCommand keyCommandWithInput:@"x" modifierFlags:UIKeyModifierControl action:@selector(key_ctrl_x_Process:)];
+    UIKeyCommand *key_ctrl_X = [UIKeyCommand keyCommandWithInput:@"X" modifierFlags:UIKeyModifierControl action:@selector(key_ctrl_x_Process:)];
+    UIKeyCommand *key_cmd_x = [UIKeyCommand keyCommandWithInput:@"x" modifierFlags:UIKeyModifierCommand action:@selector(key_ctrl_x_Process:)];
+    UIKeyCommand *key_cmd_X = [UIKeyCommand keyCommandWithInput:@"X" modifierFlags:UIKeyModifierCommand action:@selector(key_ctrl_x_Process:)];
+    
+    UIKeyCommand *key_ctrl_z = [UIKeyCommand keyCommandWithInput:@"z" modifierFlags:UIKeyModifierControl action:@selector(key_ctrl_z_Process:)];
+    UIKeyCommand *key_ctrl_Z = [UIKeyCommand keyCommandWithInput:@"Z" modifierFlags:UIKeyModifierControl action:@selector(key_ctrl_z_Process:)];
+    UIKeyCommand *key_cmd_z = [UIKeyCommand keyCommandWithInput:@"z" modifierFlags:UIKeyModifierCommand action:@selector(key_ctrl_z_Process:)];
+    UIKeyCommand *key_cmd_Z = [UIKeyCommand keyCommandWithInput:@"Z" modifierFlags:UIKeyModifierCommand action:@selector(key_ctrl_z_Process:)];
+    
+    UIKeyCommand *key_ctrl_y = [UIKeyCommand keyCommandWithInput:@"y" modifierFlags:UIKeyModifierControl action:@selector(key_ctrl_y_Process:)];
+    UIKeyCommand *key_ctrl_Y = [UIKeyCommand keyCommandWithInput:@"Y" modifierFlags:UIKeyModifierControl action:@selector(key_ctrl_y_Process:)];
+    UIKeyCommand *key_cmd_y = [UIKeyCommand keyCommandWithInput:@"y" modifierFlags:UIKeyModifierCommand action:@selector(key_ctrl_y_Process:)];
+    UIKeyCommand *key_cmd_Y = [UIKeyCommand keyCommandWithInput:@"Y" modifierFlags:UIKeyModifierCommand action:@selector(key_ctrl_y_Process:)];
+    
+    // ctrl + left right
+    UIKeyCommand *key_ctrl_left = [UIKeyCommand keyCommandWithInput:UIKeyInputLeftArrow modifierFlags:UIKeyModifierControl action:@selector(key_ctrl_left_Process:)];
+    UIKeyCommand *key_ctrl_right = [UIKeyCommand keyCommandWithInput:UIKeyInputRightArrow modifierFlags:UIKeyModifierControl action:@selector(key_ctrl_right_Process:)];
+    
+    NSArray *ret;
+    
+    if ( Fl_X::next_marked_length > 0 ) {
+        ret = @[key_shift
+                //,upArrow, downArrow, leftArrow, rightArrow
+                ,key_home, key_end, key_insert, key_f1
+                ,key_pgdn, key_pgup
+                ,key_shift_up, key_shift_down, key_shift_left, key_shift_right, key_shift_pgdn, key_shift_pgup
+                ,key_esc
+                ,key_ctrl_a, key_ctrl_A, key_cmd_a, key_cmd_A
+                ,key_ctrl_c, key_ctrl_C, key_cmd_c, key_cmd_C
+                ,key_ctrl_v, key_ctrl_V, key_cmd_v, key_cmd_V
+                ,key_ctrl_x, key_ctrl_X, key_cmd_x, key_cmd_X
+                ,key_ctrl_z, key_ctrl_Z, key_cmd_z, key_cmd_Z
+                ,key_ctrl_y, key_ctrl_Y, key_cmd_y, key_cmd_Y
+                ,key_ctrl_left, key_ctrl_right
+                ];
+    } else {
+        ret = @[key_shift
+             ,upArrow, downArrow, leftArrow, rightArrow
+             ,key_home, key_end, key_insert, key_f1
+             ,key_pgdn, key_pgup
+             ,key_shift_up, key_shift_down, key_shift_left, key_shift_right, key_shift_pgdn, key_shift_pgup
+             ,key_esc
+             ,key_ctrl_a, key_ctrl_A, key_cmd_a, key_cmd_A
+             ,key_ctrl_c, key_ctrl_C, key_cmd_c, key_cmd_C
+             ,key_ctrl_v, key_ctrl_V, key_cmd_v, key_cmd_V
+             ,key_ctrl_x, key_ctrl_X, key_cmd_x, key_cmd_X
+             ,key_ctrl_z, key_ctrl_Z, key_cmd_z, key_cmd_Z
+             ,key_ctrl_y, key_ctrl_Y, key_cmd_y, key_cmd_Y
+             ,key_ctrl_left, key_ctrl_right
+             ];
+    }
+    
+    return ret;
+}
+ //*/
+
+/*
+-(UIKeyCommand *)_keyCommandForEvent:(UIEvent *)event // UIPhysicalKeyboardEvent
+{
+    NSLog(@"keyCommandForEvent: %@\n\
+          type = %i\n\
+          keycode = %@\n\
+          keydown = %@\n\n",
+          event.description,
+          //event.debugDescription,
+          event.type,
+          [event valueForKey:@"_keyCode"],
+          [event valueForKey:@"_isKeyDown"]);
+    
+    return nil;//  [UIKeyCommand keyCommandWithInput:nil modifierFlags:nil action:@selector(processKeyInput:)];
+}
+ //*/
 
 /*
 - (void) keyboardWillShow:(NSNotification *)notification
