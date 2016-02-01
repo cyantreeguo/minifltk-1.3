@@ -2451,7 +2451,6 @@ void Fl::clear_widget_pointer(Fl_Widget const *w)
 	}
 }
 
-
 /**
  \brief FLTK library options management.
 
@@ -2564,6 +2563,17 @@ void Fl::option(Fl_Option opt, bool val)
 }
 
 int Fl::use_high_res_GL_ = 0;
+    
+// add by cyantree
+void Fl::softkeyboard_work_area(int &X, int &Y, int &W, int &H)
+{
+    X = 0; Y = 0; W = 0; H = 0;
+#if __FLTK_IPHONEOS__
+    Fl_X::softkeyboard_work_area(X, Y, W, H);
+#else
+#endif
+}
+
 //
 // End of "$Id: Fl.cxx 10159 2014-05-23 16:47:21Z manolo $".
 //

@@ -1408,9 +1408,12 @@ private:
 	static Fl_Cairo_State cairo_state_;
 public:
 	/** @} */
-
+    
 #endif // FLTK_HAVE_CAIRO
-
+    
+// add by cyantree
+public:
+    static void softkeyboard_work_area(int &X, int &Y, int &W, int &H);
 };
 
 /**
@@ -1508,6 +1511,7 @@ public:
 
 //#include "Fl_Platform.h"
 
+// add by cyantree
 #if __FLTK_IPHONEOS__
 #define main    IOS_main
 extern int IOS_main(int argc, char *argv[]);

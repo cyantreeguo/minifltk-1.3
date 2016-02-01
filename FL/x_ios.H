@@ -155,6 +155,8 @@ public:
 	void set_icons() {};
 	int set_cursor(Fl_Cursor){return 1;}
 	int set_cursor(const Fl_RGB_Image*, int, int) {return 1;}
+    
+    static void softkeyboard_work_area(int &X, int &Y, int &W, int &H);
 private:
 	static void relink(Fl_Window*, Fl_Window*);
 	bool subwindow;

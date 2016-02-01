@@ -50,6 +50,8 @@ static NSDate *endDate = [NSDate dateWithTimeIntervalSinceNow:-0.001];
 
 static Fl_Window *resize_from_system;
 
+static int softkeyboard_x=0, softkeyboard_y=0, softkeyboard_w=0, softkeyboard_h=0;
+
 // ************************* main begin ****************************************
 static int forward_argc;
 static char **forward_argv;
@@ -277,6 +279,10 @@ static UIWindow *launch_window=nil;
     //[self moveInputBarWithKeyboardHeight:keyboardRect.size.height withDuration:animationDuration];
     
     //printf("height=%d\n", (int)keyboardRect.size.height);
+    softkeyboard_x = (int)keyboardRect.origin.x;
+    softkeyboard_y = (int)keyboardRect.origin.y;
+    softkeyboard_w = (int)keyboardRect.size.width;
+    softkeyboard_h = (int)keyboardRect.size.height;
 }
 
 - (void) keyboardWillHide:(NSNotification *)notification
@@ -294,6 +300,11 @@ static UIWindow *launch_window=nil;
     [animationDurationValue getValue:&animationDuration];
     
     //[self moveInputBarWithKeyboardHeight:0.0 withDuration:animationDuration];
+    
+    softkeyboard_x = 0;
+    softkeyboard_y = 0;
+    softkeyboard_w = 0;
+    softkeyboard_h = 0;
 }
 
 - (void)applicationWillTerminate:(UIApplication *)application
@@ -1946,8 +1957,8 @@ static int e_text_buffer_size_=0;
     hiddenTextView.text = @"1";
     hiddenTextView.hidden = YES;
     
-    //[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillShow:) name:UIKeyboardWillShowNotification object:nil];
-    //[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillShow) name:UIKeyboardWillShowNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillShow:) name:UIKeyboardWillShowNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillHide:) name:UIKeyboardWillHideNotification object:nil];
     
     return self;
 }
@@ -2496,17 +2507,19 @@ static int e_text_buffer_size_=0;
 }
  //*/
 
-/*
 - (void) keyboardWillShow:(NSNotification *)notification
 {
     printf("keyboard show\n");
+    
+    flwindow->resize(0, 0, device_w, device_h);
 }
 
 - (void) keyboardWillHide:(NSNotification *)notification
 {
     printf("keyboard hide\n");
+    
+    flwindow->resize(0, 0, device_w, device_h);
 }
-*/
 
 @end
 
@@ -2532,5 +2545,14 @@ static int e_text_buffer_size_=0;
 	// FIXIT: save focus current uiwindow?
 }
 @end
+
+//==============================================================================
+void Fl_X::softkeyboard_work_area(int &X, int &Y, int &W, int &H)
+{
+    X = softkeyboard_x;
+    Y = softkeyboard_y;
+    W = softkeyboard_w;
+    H = softkeyboard_h;    
+}
 
 #endif // __FLTK_IPHONEOS__
