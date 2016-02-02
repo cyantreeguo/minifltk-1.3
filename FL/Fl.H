@@ -1414,6 +1414,10 @@ public:
 // add by cyantree
 public:
     static void softkeyboard_work_area(int &X, int &Y, int &W, int &H);
+    
+    // gesture
+    static int gesture_type();
+    static float gesture_pinch_scale();
 };
 
 /**

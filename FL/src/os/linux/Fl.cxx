@@ -2283,12 +2283,12 @@ void Fl_Window::resize(int X,int Y,int W,int H)
 		if (is_a_resize) {
 			if (!resizable()) size_range(w(),h(),w(),h());
 			if (is_a_move) {
-				XMoveResizeWindow(fl_display, i->xid, X, Y, W>0 ? W : 1, H>0 ? H : 1);
+				XMoveResizeWindow(fl_display, flx->xid, X, Y, W>0 ? W : 1, H>0 ? H : 1);
 			} else {
-				XResizeWindow(fl_display, i->xid, W>0 ? W : 1, H>0 ? H : 1);
+				XResizeWindow(fl_display, flx->xid, W>0 ? W : 1, H>0 ? H : 1);
 			}
 		} else
-			XMoveWindow(fl_display, i->xid, X, Y);
+			XMoveWindow(fl_display, flx->xid, X, Y);
 	}
 }
 
@@ -2819,7 +2819,7 @@ void Fl_X::sendxjunk()
 void Fl_Window::size_range_()
 {
 	size_range_set = 1;
-	if (shown()) i->sendxjunk();
+	if (shown()) flx->sendxjunk();
 }
 
 ////////////////////////////////////////////////////////////////
@@ -3082,10 +3082,10 @@ void Fl_Window::label(const char *name,const char *iname)
 		int namelen = strlen(name);
 		if (!iname) iname = fl_filename_name(name);
 		int inamelen = strlen(iname);
-		XChangeProperty(fl_display, i->xid, fl_NET_WM_NAME,      fl_XaUtf8String, 8, 0, (uchar*)name,  namelen);	// utf8
-		XChangeProperty(fl_display, i->xid, XA_WM_NAME,          XA_STRING,       8, 0, (uchar*)name,  namelen);	// non-utf8
-		XChangeProperty(fl_display, i->xid, fl_NET_WM_ICON_NAME, fl_XaUtf8String, 8, 0, (uchar*)iname, inamelen);	// utf8
-		XChangeProperty(fl_display, i->xid, XA_WM_ICON_NAME,     XA_STRING,       8, 0, (uchar*)iname, inamelen);	// non-utf8
+		XChangeProperty(fl_display, flx->xid, fl_NET_WM_NAME,      fl_XaUtf8String, 8, 0, (uchar*)name,  namelen);	// utf8
+		XChangeProperty(fl_display, flx->xid, XA_WM_NAME,          XA_STRING,       8, 0, (uchar*)name,  namelen);	// non-utf8
+		XChangeProperty(fl_display, flx->xid, fl_NET_WM_ICON_NAME, fl_XaUtf8String, 8, 0, (uchar*)iname, inamelen);	// utf8
+		XChangeProperty(fl_display, flx->xid, XA_WM_ICON_NAME,     XA_STRING,       8, 0, (uchar*)iname, inamelen);	// non-utf8
 	}
 }
 
@@ -3125,7 +3125,7 @@ void Fl_Window::show()
 		}
 		Fl_X::make_xid(this);
 	} else {
-		XMapRaised(fl_display, i->xid);
+		XMapRaised(fl_display, flx->xid);
 	}
 #ifdef USE_PRINT_BUTTON
 	void preparePrintFront(void);
@@ -3145,8 +3145,8 @@ void Fl_Window::make_current()
 		fl_alert("Fl_Window::make_current(), but window is not shown().");
 		Fl::fatal("Fl_Window::make_current(), but window is not shown().");
 	}
-	if (!gc) gc = XCreateGC(fl_display, i->xid, 0, 0);
-	fl_window = i->xid;
+	if (!gc) gc = XCreateGC(fl_display, flx->xid, 0, 0);
+	fl_window = flx->xid;
 	fl_gc = gc;
 	current_ = this;
 	fl_clip_region(0);

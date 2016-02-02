@@ -3059,7 +3059,7 @@ void Fl_X::make(Fl_Window *w)
       [cw setBackgroundColor:[NSColor clearColor]]; // and with transparent background color
       }
     x->xid = cw;
-    x->w = w; w->i = x;
+    x->w = w; w->flx = x;
     x->wait_for_expose = 1;
     if (!w->parent()) {
       x->next = Fl_X::first;
@@ -3145,9 +3145,9 @@ void Fl_Window::size_range_()
 	size_range_set = 1;
 	NSSize minSize = NSMakeSize(minw, minh + bt);
 	NSSize maxSize = NSMakeSize(maxw ? maxw : 32000, maxh ? maxh + bt : 32000);
-	if (i && i->xid) {
-		[i->xid setMinSize: minSize];
-		[i->xid setMaxSize: maxSize];
+	if (flx && flx->xid) {
+		[flx->xid setMinSize: minSize];
+		[flx->xid setMaxSize: maxSize];
 	}
 }
 
@@ -3155,7 +3155,7 @@ void Fl_Window::wait_for_expose()
 {
 	if (shown()) {
 		// this makes freshly created windows appear on the screen, if they are not there already
-		NSModalSession session = [NSApp beginModalSessionForWindow:i->xid];
+		NSModalSession session = [NSApp beginModalSessionForWindow:flx->xid];
 		[NSApp runModalSession:session];
 		[NSApp endModalSession:session];
 	}
@@ -3188,8 +3188,8 @@ void Fl_Window::label(const char *name, const char *mininame)
 {
 	Fl_Widget::label(name);
 	iconlabel_ = mininame;
-	if (shown() || i) {
-		q_set_window_title(i->xid, name, mininame);
+	if (shown() || flx) {
+		q_set_window_title(flx->xid, name, mininame);
 	}
 }
 
@@ -3208,17 +3208,17 @@ void Fl_Window::show()
 	}
 	Fl_Tooltip::exit(this);
 	Fl_X *top = NULL;
-	if (parent()) top = top_window()->i;
+	if (parent()) top = top_window()->flx;
 	if (!shown() && (!parent() || (top && ![top->xid isMiniaturized]))) {
 		Fl_X::make(this);
 	} else {
 		if (!parent()) {
-			if ([i->xid isMiniaturized]) {
-				i->w->redraw();
-				[i->xid deminiaturize: nil];
+			if ([flx->xid isMiniaturized]) {
+				flx->w->redraw();
+				[flx->xid deminiaturize: nil];
 			}
 			if (!fl_capture) {
-				[i->xid makeKeyAndOrderFront: nil];
+				[flx->xid makeKeyAndOrderFront: nil];
 			}
 		} else set_visible();
 	}
@@ -3320,8 +3320,8 @@ void Fl_Window::make_current()
 	if (make_current_counts > 1) return;
   if (make_current_counts) make_current_counts++;
   Fl_X::q_release_context();
-  fl_window = i->xid;
-  Fl_X::set_high_resolution( i->mapped_to_retina() );
+  fl_window = flx->xid;
+  Fl_X::set_high_resolution( flx->mapped_to_retina() );
   current_ = this;
   
   NSGraphicsContext *nsgc;
@@ -3331,8 +3331,8 @@ void Fl_Window::make_current()
   else
 #endif
     nsgc = through_Fl_X_flush ? [NSGraphicsContext currentContext] : [NSGraphicsContext graphicsContextWithWindow:fl_window];
-  i->gc = (CGContextRef)[nsgc graphicsPort];
-  fl_gc = i->gc;
+  flx->gc = (CGContextRef)[nsgc graphicsPort];
+  fl_gc = flx->gc;
   CGContextSaveGState(fl_gc); // native context
   // antialiasing must be deactivated because it applies to rectangles too
   // and escapes even clipping!!!
@@ -3343,7 +3343,7 @@ void Fl_Window::make_current()
   CGContextScaleCTM(fl_gc, 1.0f, -1.0f); // now 0,0 is top-left point of the window
   // for subwindows, limit drawing to inside of parent window
   // half pixel offset is necessary for clipping as done by fl_cgrectmake_cocoa()
-  if (i->subRect()) CGContextClipToRect(fl_gc, CGRectOffset(*(i->subRect()), -0.5, -0.5));
+  if (flx->subRect()) CGContextClipToRect(fl_gc, CGRectOffset(*(flx->subRect()), -0.5, -0.5));
   
 // this is the context with origin at top left of (sub)window
   CGContextSaveGState(fl_gc);

@@ -98,7 +98,7 @@ class FL_EXPORT Fl_Window : public Fl_Group
 	int fullscreen_screen_right;
 
 	friend class Fl_X;
-	Fl_X *i; // points at the system-specific stuff
+	Fl_X *flx; // points at the system-specific stuff
 
 	struct icon_data {
 		const void *legacy_icon;
@@ -526,7 +526,7 @@ public:
 	  && !w->visible()).
 	*/
 	int shown() {
-		return i != 0;
+		return flx != 0;
 	}
 	/**
 	    Puts the window on the screen. Usually (on X) this has the side

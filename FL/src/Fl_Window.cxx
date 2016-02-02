@@ -45,7 +45,7 @@ void Fl_Window::_Fl_Window()
 	} else {
 		labeltype(FL_NO_LABEL);
 	}
-	i = 0;
+	flx = 0;
 	xclass_ = 0;
 	icon_ = new icon_data;
 	memset(icon_, 0, sizeof(*icon_));
@@ -378,8 +378,7 @@ void Fl_Window::icons(const Fl_RGB_Image *icons[], int count)
 			icon_->icons[i] = (Fl_RGB_Image*)((Fl_RGB_Image*)icons[i])->copy();
 	}
 
-	if (i)
-		i->set_icons();
+	if (flx) flx->set_icons();
 }
 
 /** Gets the current icon window target dependent data.
@@ -493,7 +492,7 @@ void Fl_Window::free_icons()
 void Fl_Window::wait_for_expose()
 {
 	if (!shown()) return;
-	while (!i || i->wait_for_expose) {
+	while (!flx || flx->wait_for_expose) {
 		Fl::wait();
 	}
 }

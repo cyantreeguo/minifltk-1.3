@@ -22,6 +22,7 @@
 #include "Fl_Device.H"
 
 #import <UIKit/UIKit.h>
+#import <UIKit/UIGestureRecognizerSubclass.h>
 #import <Foundation/Foundation.h>
 
 // ======================================================
@@ -51,6 +52,10 @@ static NSDate *endDate = [NSDate dateWithTimeIntervalSinceNow:-0.001];
 static Fl_Window *resize_from_system;
 
 static int softkeyboard_x=0, softkeyboard_y=0, softkeyboard_w=0, softkeyboard_h=0;
+
+// gesture
+static int gesture_type_ = FL_GESTURE_NONE;
+static float gesture_pinch_scale_ = 1.0;
 
 // ************************* main begin ****************************************
 static int forward_argc;
@@ -83,7 +88,7 @@ static void SetEventPump(unsigned char enabled)
         return nil;
     }
     
-    if ([[[UIDevice currentDevice] systemVersion] floatValue] < 7.0) {
+    if ( SYSTEM_VERSION_LESS_THAN(@"7.0") ) {
         //if ( setWantsFullScreenLayout != NULL )
         [self setWantsFullScreenLayout:YES];
     }
@@ -455,25 +460,23 @@ static void iosMouseHandler(NSSet *touches, UIEvent *event, UIView *view, int ty
 
 - (void) drawRect: (CGRect) r;
 
+/*
 - (void) touchesBegan: (NSSet*) touches withEvent: (UIEvent*) event;
 - (void) touchesMoved: (NSSet*) touches withEvent: (UIEvent*) event;
 - (void) touchesEnded: (NSSet*) touches withEvent: (UIEvent*) event;
 - (void) touchesCancelled: (NSSet*) touches withEvent: (UIEvent*) event;
+*/
 
 - (BOOL) becomeFirstResponder;
 - (BOOL) resignFirstResponder;
 - (BOOL) canBecomeFirstResponder;
-
-//+ (void)prepareEtext: (NSString *)aString;
-//+ (void)concatEtext: (NSString *)aString;
-//- (BOOL) textView: (UITextView*) textView shouldChangeTextInRange: (NSRange) range replacementText: (NSString*) text;
 
 //- (void) keyboardWillShow:(NSNotification *)notification;
 //- (void) keyboardWillHide:(NSNotification *)notification;
 @end
 
 //==============================================================================
-@interface FLViewController : UIViewController
+@interface FLViewController : UIViewController <UIGestureRecognizerDelegate>
 {
 }
 - (NSUInteger) supportedInterfaceOrientations;
@@ -492,7 +495,19 @@ static void iosMouseHandler(NSSet *touches, UIEvent *event, UIView *view, int ty
 - (void) becomeKeyWindow;
 @end
 
-static void iosMouseHandler(NSSet *touches, UIEvent *event, UIView *view, int type)
+// updates Fl::e_x, Fl::e_y, Fl::e_x_root, and Fl::e_y_root
+static void update_e_xy_and_e_xy_root(Fl_Window *win, int x, int y)
+{
+    int wx=win->x(), wy=win->y();
+    for (Fl_Window* w = win->window(); w; w = w->window()) {
+        wx += w->x();
+        wy += w->y();
+    }
+    
+    Fl::e_x_root = wx + x;
+    Fl::e_y_root = wy + y;
+}
+static void iosMouseHandler(NSSet *touches, UIEvent *event, UIView *view, Fl_Window *win, int type)
 {
     static int keysym[] = { 0, FL_Button + 1, FL_Button + 3, FL_Button + 2 };
     static int px, py;
@@ -500,14 +515,18 @@ static void iosMouseHandler(NSSet *touches, UIEvent *event, UIView *view, int ty
     
     fl_lock_function();
     
-    Fl_Window *window = (Fl_Window *)[(FLWindow *)[view window] getFl_Window];
+    Fl_Window *window = win;//(Fl_Window *)[(FLWindow *)[view window] getFl_Window];
     if (!window->shown()) {
         fl_unlock_function();
         return;
     }
     
+    //*
     Fl_Window *first = Fl::first_window();
-    if (first != window && !(first->modal() || first->non_modal())) Fl::first_window(window);
+    if (first != window && !(first->modal() || first->non_modal())) {
+        Fl::first_window(window);
+    }
+     //*/
     
     UITouch *touch = [touches anyObject];
     CGPoint pos = [touch locationInView:view];
@@ -534,6 +553,8 @@ static void iosMouseHandler(NSSet *touches, UIEvent *event, UIView *view, int ty
     if ( type == 0 ) Fl::e_state |= FL_BUTTON1;
     else if ( type == 2 ) Fl::e_state &= ~FL_BUTTON1;
     
+    printf("x=%d, y=%d\n", (int)pos.x, (int)pos.y);
+    
     switch (type) {
         case 0:
             suppressed = 0;
@@ -557,7 +578,7 @@ static void iosMouseHandler(NSSet *touches, UIEvent *event, UIView *view, int ty
         case 1:
             suppressed = 0;
             if (!sendEvent) {
-                sendEvent = FL_MOVE;
+                sendEvent = FL_DRAG;// FL_MOVE;
             }
             // fall through
             /*
@@ -576,9 +597,12 @@ static void iosMouseHandler(NSSet *touches, UIEvent *event, UIView *view, int ty
             //update_e_xy_and_e_xy_root([view window]);
             Fl::e_x = int(pos.x);
             Fl::e_y = int(pos.y);
-            Fl::e_x_root = int(pos.x);
-            Fl::e_y_root = int(pos.y);
+            Fl::e_state = 0;
+            update_e_xy_and_e_xy_root(win, Fl::e_x, Fl::e_y);
+            //Fl::e_x_root = int(pos.x);
+            //Fl::e_y_root = int(pos.y);
             
+            //printf("mouse window:%x\n", window);
             Fl::handle(sendEvent, window);
         }
             break;
@@ -590,58 +614,6 @@ static void iosMouseHandler(NSSet *touches, UIEvent *event, UIView *view, int ty
     
     return;
 }
-
-/*
-static void cocoaMouseWheelHandler(NSSet *touches, UIEvent *event, UIView *view, int type)
-{
-    // Handle the new "MightyMouse" mouse wheel events. Please, someone explain
-    // to me why Apple changed the API on this even though the current API
-    // supports two wheels just fine. Matthias,
-    fl_lock_function();
-    
-    Fl_Window *window = (Fl_Window *)[(FLWindow *)[view window] getFl_Window];
-    if ( !window->shown() ) {
-        fl_unlock_function();
-        return;
-    }
-    Fl::first_window(window);
-    
-    
-    UITouch *touch = [touches anyObject];
-    CGPoint oldpos = [touch previousLocationInView:view];
-    CGPoint pos = [touch locationInView:view];
-    NSUInteger taps = [touch tapCount];
-    
-    // Under OSX, single mousewheel increments are 0.1,
-    // so make sure they show up as at least 1..
-    //
-    float dx = pos.x - oldpos.x;
-    //float dx = [theEvent deltaX];
-    //if ( fabs(dx) < 1.0 ) dx = (dx > 0) ? 1.0 : -1.0;
-    float dy = pos.y - oldpos.y;
-    //float dy = [theEvent deltaY];
-    //if ( fabs(dy) < 1.0 ) dy = (dy > 0) ? 1.0 : -1.0;
-    / *
-    //if ([theEvent deltaX] != 0) {
-    if (dx != 0) {
-        Fl::e_dx = (int)-dx;
-        Fl::e_dy = 0;
-        if ( Fl::e_dx) Fl::handle( FL_MOUSEWHEEL, window );
-    //} else if ([theEvent deltaY] != 0) {
-    } else* / if (dy != 0) {
-        Fl::e_dx = 0;
-        Fl::e_dy = (int)-dy;
-        if ( Fl::e_dy) Fl::handle( FL_MOUSEWHEEL, window );
-    } else {
-        fl_unlock_function();
-        return;
-    }
-    
-    fl_unlock_function();
-    
-    //  return noErr;
-}
- */
 
 //******************* spot **********************************
 
@@ -686,7 +658,7 @@ void fl_set_spot(int font, int size, int X, int Y, int W, int H, Fl_Window *win)
     FLView *view = (FLView*)[[Fl_X::first->xid rootViewController] view];
     
     int height = fl_height(font, size);
-    if ( X > 0 && Y > height ) {
+    if ( X > 0 && Y > height && view ) {
         CGRect r;
         r.origin.x = X; r.origin.y = Y-height; r.size.width = 120; r.size.height = 50;
         view->hiddenTextView.frame = r;
@@ -755,6 +727,30 @@ void Fl::disable_im()
 {
 }
 
+// Gets the border sizes and the titlebar size
+static void get_window_frame_sizes(int &bx, int &by, int &bt)
+{
+    bx = 0;
+    by = 0;
+    bt = 0;
+    
+    /*
+    static bool first = true;
+    static int top, left, bottom;
+    if (first) {
+        first = false;
+        CGRect inside = { { 20, 20 }, { 100, 100 } };
+        CGRect outside = [UIWindow  frameRectForContentRect: inside styleMask: NSTitledWindowMask];
+        left = int(outside.origin.x - inside.origin.x);
+        bottom = int(outside.origin.y - inside.origin.y);
+        top = int(outside.size.height - inside.size.height) - bottom;
+    }
+    bx = left;
+    by = bottom;
+    bt = top;
+     */
+}
+
 /*
  * smallest x coordinate in screen space of work area of menubar-containing display
  */
@@ -815,6 +811,32 @@ void Fl::get_mouse(int &x, int &y)
  */
 static void handleUpdateEvent(Fl_Window *window)
 {
+    if ( !window ) return;
+    
+    Fl_X *i = Fl_X::i( window );
+    
+    bool previous = i->mapped_to_retina();
+    /*
+    // rewrite next call that requires 10.7 and therefore triggers a compiler warning on old SDKs
+    //NSSize s = [[i->xid contentView] convertSizeToBacking:NSMakeSize(10, 10)];
+    typedef CGSize (*convertSizeIMP)(id, SEL, CGSize);
+    static convertSizeIMP addr = (convertSizeIMP)[UIView instanceMethodForSelector:@selector(convertSizeToBacking:)];
+    CGSize s = addr([i->xid contentView], @selector(convertSizeToBacking:), UIMakeSize(10, 10));
+    i->mapped_to_retina( int(s.width + 0.5) > 10 );
+    if (i->wait_for_expose == 0 && previous != i->mapped_to_retina()) i->changed_resolution(true);
+     */
+    
+    i->wait_for_expose = 0;
+    
+    if ( i->region ) {
+        XDestroyRegion(i->region);
+        i->region = 0;
+    }
+    window->clear_damage(FL_DAMAGE_ALL);
+    i->flush();
+    window->clear_damage();
+    
+    /*
 	if (!window) return;
 	Fl_X *i = Fl_X::i(window);
 	i->wait_for_expose = 0;
@@ -839,6 +861,7 @@ static void handleUpdateEvent(Fl_Window *window)
 	window->clear_damage(FL_DAMAGE_ALL);
 	i->flush();
 	window->clear_damage();
+     */
 }
 
 void Fl_Window::fullscreen_x()
@@ -882,13 +905,300 @@ void Fl_X::flush()
     fl_x_to_redraw = NULL;
 }
 
+int Fl_X::fake_X_wm(const Fl_Window *w, int &X, int &Y, int &bt, int &bx, int &by)
+{
+    int W, H, xoff, yoff, dx, dy;
+    int ret = bx = by = bt = 0;
+    if (w->border() && !w->parent()) {
+        if (w->maxw != w->minw || w->maxh != w->minh) {
+            ret = 2;
+        } else {
+            ret = 1;
+        }
+        get_window_frame_sizes(bx, by, bt);
+    }
+    // The coordinates of the whole window, including non-client area
+    xoff = bx;
+    yoff = by + bt;
+    dx = 2 * bx;
+    dy = 2 * by + bt;
+    X = w->x() - xoff;
+    Y = w->y() - yoff;
+    W = w->w() + dx;
+    H = w->h() + dy;
+    
+    if (w->parent()) return 0;
+    
+    // Proceed to positioning the window fully inside the screen, if possible
+    
+    // let's get a little elaborate here. Mac OS X puts a lot of stuff on the desk
+    // that we want to avoid when positioning our window, namely the Dock and the
+    // top menu bar (and even more stuff in 10.4 Tiger). So we will go through the
+    // list of all available screens and find the one that this window is most
+    // likely to go to, and then reposition it to fit withing the 'good' area.
+    //  Rect r;
+    // find the screen, that the center of this window will fall into
+    int R = X + W, B = Y + H; // right and bottom
+    //int cx = (X+ R) / 2, cy = (Y + B) / 2; // center of window;
+    UIScreen *gd = [UIScreen mainScreen];
+    CGRect r;
+    r = [gd bounds];
+    r.origin.y = device_h - (r.origin.y + r.size.height); // use FLTK's multiscreen coordinates
+    
+    if (gd) {
+        r = [gd applicationFrame];// visibleFrame];
+        r.origin.y = device_h - (r.origin.y + r.size.height); // use FLTK's multiscreen coordinates
+        if (R > r.origin.x + r.size.width) X -= int(R - (r.origin.x + r.size.width));
+        if (B > r.size.height + r.origin.y) Y -= int(B - (r.size.height + r.origin.y));
+        if (X < r.origin.x) X = int(r.origin.x);
+        if (Y < r.origin.y) Y = int(r.origin.y);
+    }
+    
+    // Return the client area's top left corner in (X,Y)
+    X += xoff;
+    Y += yoff;
+    
+    return ret;
+}
+
 
 /*
  * go ahead, create that (sub)window
  */
 void Fl_X::make(Fl_Window *w)
 {
-	if (w->parent()) {      // create a subwindow
+    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+    Fl_Group::current(0);
+    fl_open_display();
+    if (w->parent()) {
+        w->border(0);
+        fl_show_iconic = 0;
+    }
+    if (fl_show_iconic && !w->parent()) { // prevent window from being out of work area when created iconized
+        int sx, sy, sw, sh;
+        Fl::screen_work_area (sx, sy, sw, sh, w->x(), w->y());
+        if (w->x() < sx) w->x(sx);
+        if (w->y() < sy) w->y(sy);
+    }
+    int xp = w->x();
+    int yp = w->y();
+    int wp = w->w();
+    int hp = w->h();
+    if (w->size_range_set) {
+
+    } else {
+        if (w->resizable()) {
+            Fl_Widget *o = w->resizable();
+            int minw = o->w(); if (minw > 100) minw = 100;
+            int minh = o->h(); if (minh > 100) minh = 100;
+            w->size_range(w->w() - o->w() + minw, w->h() - o->h() + minh, 0, 0);
+        } else {
+            w->size_range(w->w(), w->h(), w->w(), w->h());
+        }
+    }
+    int xwm = xp, ywm = yp, bt, bx, by;
+    //fake_X_wm(w, xwm, ywm, bt, bx, by);
+    /*
+    if (!fake_X_wm(w, xwm, ywm, bt, bx, by)) {
+        // menu windows and tooltips
+        if (w->modal()||w->tooltip_window()) {
+            winlevel = modal_window_level();
+        }
+    }
+     */
+    
+    if (by+bt) {
+        wp += 2*bx;
+        hp += 2*by+bt;
+    }
+    if (w->force_position()) {
+        if (!Fl::grab()) {
+            xp = xwm; yp = ywm;
+            w->x(xp);w->y(yp);
+        }
+        xp -= bx;
+        yp -= by+bt;
+    }
+    
+    Fl_X* x = new Fl_X;
+    x->other_xid = 0; // room for doublebuffering image map. On OS X this is only used by overlay windows
+    x->region = 0;
+    x->subRect(0);
+    //x->cursor = NULL;
+    x->gc = 0;
+    x->mapped_to_retina(false);
+    x->changed_resolution(false);
+    x->in_windowDidResize(false);
+    
+    CGRect crect;
+    if (w->fullscreen_active()) {
+        int top, bottom, left, right;
+        int sx, sy, sw, sh, X, Y, W, H;
+        
+        top = w->fullscreen_screen_top;
+        bottom = w->fullscreen_screen_bottom;
+        left = w->fullscreen_screen_left;
+        right = w->fullscreen_screen_right;
+        
+        if ((top < 0) || (bottom < 0) || (left < 0) || (right < 0)) {
+            top = Fl::screen_num(w->x(), w->y(), w->w(), w->h());
+            bottom = top;
+            left = top;
+            right = top;
+        }
+        
+        Fl::screen_xywh(sx, sy, sw, sh, top);
+        Y = sy;
+        Fl::screen_xywh(sx, sy, sw, sh, bottom);
+        H = sy + sh - Y;
+        Fl::screen_xywh(sx, sy, sw, sh, left);
+        X = sx;
+        Fl::screen_xywh(sx, sy, sw, sh, right);
+        W = sx + sw - X;
+        
+        w->resize(X, Y, W, H);
+    }
+    crect.origin.x = w->x();// + w->w(); // correct origin set later for subwindows
+    crect.origin.y = w->y();// + w->h();//device_h - (w->y() + w->h());
+    crect.size.width=w->w();
+    crect.size.height=w->h();
+    FLWindow *cw = [[FLWindow alloc] initWithFlWindow:w contentRect:crect];
+    cw.autoresizesSubviews = NO;
+    [cw setFrame:crect]; // setFrameOrigin:crect.origin];
+    /*
+    if (!w->parent()) {
+        [cw setHasShadow:YES];
+        [cw setAcceptsMouseMovedEvents:YES];
+    }
+     */
+
+    x->xid = cw;
+    x->w = w; w->flx = x;
+    x->wait_for_expose = 1;
+    if (!w->parent()) {
+        x->next = Fl_X::first;
+        Fl_X::first = x;
+    } else if (Fl_X::first) {
+        x->next = Fl_X::first->next;
+        Fl_X::first->next = x;
+    }
+    else {
+        x->next = NULL;
+        Fl_X::first = x;
+    }
+    
+    CGRect crectview;
+    crectview.size.width = w->w();
+    crectview.size.height = w->h();
+    crectview.origin.x = 0.0;
+    crectview.origin.y = 0.0;
+    FLView *myview = [[FLView alloc] initWithFlWindow:w contentRect:crectview ]; // initWithFrame:crect];
+    myview.multipleTouchEnabled = YES;
+    myview.opaque = YES;
+    myview.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:0];
+    //[cw setContentView:myview];
+    
+    FLViewController* controller = [[FLViewController alloc] init];
+    controller.view = myview;
+    
+    cw.rootViewController = controller;
+    [cw addSubview: myview];
+    
+    [myview release];
+    //[cw setLevel:winlevel];
+    
+    if (!w->force_position()) {
+        CGRect rect_center;
+        rect_center.origin.x = (device_w - w->w())/2;
+        rect_center.origin.y = (device_h - w->h()) / 2;
+        rect_center.size.width = w->w();
+        rect_center.size.height = w->h();
+        [cw setFrame:rect_center];
+        /*
+        if (w->modal()) {
+            [cw setFrame:]
+            [cw center];
+        } else if (w->non_modal()) {
+            [cw center];
+        } else {
+            [cw center];
+            //static CGPoint delta = CGPointZero;
+            //delta = [cw cascadeTopLeftFromPoint:delta];
+        }
+         */
+        crect = [cw frame]; // synchronize FLTK's and the system's window coordinates
+        w->x(int(crect.origin.x));
+        //w->y(int(device_h - (crect.origin.y + w->h())));
+        w->y(int(crect.origin.y));
+    }
+    if ( w->parent() ) {
+        int wx=w->x(), wy=w->y();
+        for (Fl_Window* wp = w->window(); wp; wp = wp->window()) {
+            wx += wp->x();
+            wy += wp->y();
+        }
+        CGRect rect_sub;
+        rect_sub.origin.x = wx;
+        rect_sub.origin.y = wy;
+        rect_sub.size.width = w->w();
+        rect_sub.size.height = w->h();
+        [cw setFrame:rect_sub];
+        
+        cw.windowLevel = UIWindowLevelAlert;
+        [cw makeKeyWindow];
+        [cw makeKeyAndVisible];
+    }
+    
+    if(w->menu_window()) { // make menu windows slightly transparent
+        [cw.rootViewController.view setAlpha:0.97f];
+    }
+    // Install DnD handlers
+    //[myview registerForDraggedTypes:[NSArray arrayWithObjects:UTF8_pasteboard_type,  NSFilenamesPboardType, nil]];
+    
+    if (w->size_range_set) w->size_range_();
+    
+    if ( w->border() || (!w->modal() && !w->tooltip_window()) ) {
+        Fl_Tooltip::enter(0);
+    }
+    
+    if (w->modal()) Fl::modal_ = w;
+    
+    w->set_visible();
+    if ( w->border() || (!w->modal() && !w->tooltip_window()) ) Fl::handle(FL_FOCUS, w);
+    //[cw setDelegate:[FLWindowDelegate singleInstance]];
+    if (fl_show_iconic) {
+        fl_show_iconic = 0;
+        w->handle(FL_SHOW); // create subwindows if any
+        //[cw recursivelySendToSubwindows:@selector(display)];  // draw the window and its subwindows before its icon is computed
+        //[cw miniaturize:nil];
+    } else if (w->parent()) { // a subwindow
+        //[cw setIgnoresMouseEvents:YES]; // needs OS X 10.2
+        // next 2 statements so a subwindow doesn't leak out of its parent window
+        [cw setOpaque:NO];
+        [cw setBackgroundColor:[UIColor clearColor]]; // transparent background color
+        //[cw setSubwindowFrame];
+        [cw makeKeyAndVisible];
+        
+        // needed if top window was first displayed miniaturized
+        //FLWindow *pxid = fl_xid(w->top_window());
+        //[pxid makeFirstResponder:[pxid contentView]];
+    } else { // a top-level window
+        //[cw makeKeyAndOrderFront:nil];
+        [cw makeKeyAndVisible];
+    }
+    
+    int old_event = Fl::e_number;
+    w->handle(Fl::e_number = FL_SHOW);
+    Fl::e_number = old_event;
+    
+    // if (w->modal()) { Fl::modal_ = w; fl_fix_focus(); }
+    [pool release];
+}
+
+/*
+static void make_backup(Fl_Window *w)
+{
+    if (w->parent()) {      // create a subwindow
 		Fl_Group::current(0);
 		// our subwindow needs this structure to know about its clipping.
 		Fl_X *x = new Fl_X;
@@ -917,18 +1227,13 @@ void Fl_X::make(Fl_Window *w)
 			Fl::e_number = old_event;
 			w->redraw();      // force draw to happen
 		}
-		/*
-		if (w->as_gl_window()) { // if creating a sub-GL-window
-			while (win->window()) win = win->window();
-			[Fl_X::i(win)->xid containsGLsubwindow: YES];
-		}
-		*/
+		
 	} else {            // create a desktop window
         //printf("make\n");
 		Fl_Group::current(0);
 		fl_open_display();
 
-		if (w->non_modal() && Fl_X::first /*&& !fl_disable_transient_for*/) {
+		if (w->non_modal() && Fl_X::first / *&& !fl_disable_transient_for* /) {
 			// find some other window to be "transient for":
 			Fl_Window *w = Fl_X::first->w;
 			while (w->parent()) w = w->window(); // todo: this code does not make any sense! (w!=w??)
@@ -1002,40 +1307,6 @@ void Fl_X::make(Fl_Window *w)
         cw.rootViewController = controller;
 		[cw addSubview: myview];
 		//[myview release];
-        
-        /*
-        if ([controller respondsToSelector:@selector(setNeedsStatusBarAppearanceUpdate)]) {
-            // ios 7
-            [controller prefersStatusBarHidden];
-            [controller performSelector:@selector(setNeedsStatusBarAppearanceUpdate)];
-        }
-        */
-
-		/*
-		q_set_window_title(cw, w->label(), w->iconlabel());
-		if (!w->force_position()) {
-			if (w->modal()) {
-				[cw center];
-			} else if (w->non_modal()) {
-				[cw center];
-			} else {
-				static NSPoint delta = NSZeroPoint;
-				delta = [cw cascadeTopLeftFromPoint: delta];
-			}
-		}
-		if (w->menu_window()) { // make menu windows slightly transparent
-			[cw setAlphaValue: 0.97];
-		}
-		*/
-		
-		// Install DnD handlers
-		//[myview registerForDraggedTypes: [NSArray arrayWithObjects: utf8_format,  NSFilenamesPboardType, nil]];
-		/*
-		if (!Fl_X::first->next) {
-			// if this is the first window, we need to bring the application to the front
-			[NSApp activateIgnoringOtherApps:YES];
-		}
-		*/
 
 		if (w->size_range_set) w->size_range_();
 
@@ -1049,16 +1320,6 @@ void Fl_X::make(Fl_Window *w)
 		if (w->border() || (!w->modal() && !w->tooltip_window())) Fl::handle(FL_FOCUS, w);
 		Fl::first_window(w);
         [cw makeKeyAndVisible];
-        
-        /*
-        if ( launch_window != nil ) {
-            [[[launch_window rootViewController] view] release];
-            [[launch_window rootViewController] release];
-            [launch_window release];
-            launch_window = nil;
-            printf("release\n");
-        }
-        //*/
 
 		int old_event = Fl::e_number;
 		w->handle(Fl::e_number = FL_SHOW);
@@ -1067,6 +1328,7 @@ void Fl_X::make(Fl_Window *w)
 		// if (w->modal()) { Fl::modal_ = w; fl_fix_focus(); }
 	}
 }
+//*/
 
 
 /*
@@ -1153,10 +1415,10 @@ void Fl_Window::resize(int X, int Y, int W, int H)
 		dim.size.width = W;
 		dim.size.height = H;// + bt;
 		//[i->xid frame: dim display: YES]; // calls windowDidResize
-        i->xid.frame = dim;
+        flx->xid.frame = dim;
         //[i->xid setNeedsDisplay];
-        i->xid.rootViewController.view.frame = dim;
-        [i->xid.rootViewController.view setNeedsDisplay];
+        flx->xid.rootViewController.view.frame = dim;
+        [flx->xid.rootViewController.view setNeedsDisplay];
 		return;
 	}
 	resize_from_system = 0;
@@ -1170,6 +1432,7 @@ void Fl_Window::resize(int X, int Y, int W, int H)
 	//}
 }
 
+/*
 // removes x,y,w,h rectangle from region r and returns result as a new Fl_Region
 static Fl_Region MacRegionMinusRect(Fl_Region r, int x, int y, int w, int h)
 {
@@ -1213,9 +1476,56 @@ static Fl_Region MacRegionMinusRect(Fl_Region r, int x, int y, int w, int h)
     } else outr->rects = (CGRect *)realloc(outr->rects, outr->count * sizeof(CGRect));
     return outr;
 }
+ */
 
 void Fl_Window::make_current()
 {
+    if (make_current_counts > 1) return;
+    if (make_current_counts) make_current_counts++;
+    Fl_X::q_release_context();
+    fl_window = flx->xid;
+    Fl_X::set_high_resolution( flx->mapped_to_retina() );
+    current_ = this;
+    
+    /*
+    NSGraphicsContext *nsgc;
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_4
+    if (fl_mac_os_version >= 100400)
+        nsgc = [fl_window graphicsContext]; // 10.4
+    else
+#endif
+        nsgc = through_Fl_X_flush ? [NSGraphicsContext currentContext] : [NSGraphicsContext graphicsContextWithWindow:fl_window];
+    i->gc = (CGContextRef)[nsgc graphicsPort];
+     */
+    flx->gc = (CGContextRef)UIGraphicsGetCurrentContext();
+    
+    fl_gc = flx->gc;
+    CGContextSaveGState(fl_gc); // native context
+    // antialiasing must be deactivated because it applies to rectangles too
+    // and escapes even clipping!!!
+    // it gets activated when needed (e.g., draw text)
+    CGContextSetShouldAntialias(fl_gc, false);
+    //CGFloat hgt = [[fl_window contentView] frame].size.height;
+    //CGContextTranslateCTM(fl_gc, 0.5, hgt-0.5f);
+    CGContextTranslateCTM(fl_gc, 0.5, 0.5f);
+    CGContextScaleCTM(fl_gc, 1.0f, 1.0f); // now 0,0 is top-left point of the window
+    // for subwindows, limit drawing to inside of parent window
+    // half pixel offset is necessary for clipping as done by fl_cgrectmake_cocoa()
+    if (flx->subRect()) CGContextClipToRect(fl_gc, CGRectOffset(*(flx->subRect()), -0.5, -0.5));
+    
+    // this is the context with origin at top left of (sub)window
+    CGContextSaveGState(fl_gc);
+#if defined(FLTK_USE_CAIRO)
+    if (Fl::cairo_autolink_context()) Fl::cairo_make_current(this); // capture gc changes automatically to update the cairo context adequately
+#endif
+    fl_clip_region( 0 );
+    
+#if defined(FLTK_USE_CAIRO)
+    // update the cairo_t context
+    if (Fl::cairo_autolink_context()) Fl::cairo_make_current(this);
+#endif
+    
+    /*
     if (make_current_counts > 1) return;
     if (make_current_counts) make_current_counts++;
     Fl_X::q_release_context();
@@ -1260,6 +1570,7 @@ void Fl_Window::make_current()
     XDestroyRegion(fl_window_region);
     // this is the context with origin at top left of (sub)window clipped out of its subwindows if any
     CGContextSaveGState(fl_gc);
+     */
 }
 
 // helper function to manage the current CGContext fl_gc
@@ -1528,6 +1839,7 @@ int Fl::clipboard_contains(const char *type)
     return found != nil;
 }
 
+/*
 int Fl_X::unlink(Fl_X *start)
 {
     if (start) {
@@ -1567,36 +1879,44 @@ void Fl_X::relink(Fl_Window *w, Fl_Window *wp)
     x->xidNext = p->xidChildren;
     p->xidChildren = x;
 }
+ */
 
 void Fl_X::destroy()
 {
     // subwindows share their xid with their parent window, so should not close it
-    if (!subwindow && w && !w->parent() && xid) {
+    if (xid) {
+        //*
+        //[xid.superview release];
+//        [xid.rootViewController.view release];
+        
+        xid.rootViewController.view.hidden = YES;
+        //*
+        [xid.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
+        xid.rootViewController = nil;
         [xid resignKeyWindow];
+        [xid removeFromSuperview];
+         //*/
+        
+        //[xid resignKeyWindow];
         [xid release];
+        //xid = 0;
+        //printf("delete xid:%x\n", xid);
     }
+    delete subRect();
 }
 
 void Fl_X::map()
 {
     if (w && xid) {
-        [xid makeKeyAndVisible];
-        //[xid orderFront: nil];
-    }
-    //+ link to window list
-    if (w && w->parent()) {
-        Fl_X::relink(w, w->window());
-        w->redraw();
+        [xid setHidden:NO];
     }
 }
 
 void Fl_X::unmap()
 {
-    if (w && !w->parent() && xid) {
-        //[xid orderOut: nil];
-        [xid resignKeyWindow];
+    if (w && xid) {
+        [xid setHidden:YES];
     }
-    if (w && Fl_X::i(w)) Fl_X::i(w)->unlink();
 }
 
 // intersects current and x,y,w,h rectangle and returns result as a new Fl_Region
@@ -1624,6 +1944,7 @@ Fl_Region Fl_X::intersect_region_and_rect(Fl_Region current, int x, int y, int w
 
 void Fl_X::collapse()
 {
+    // it is for window iconic, do nothing
 }
 
 CFDataRef Fl_X::CGBitmapContextToTIFF(CGContextRef c)
@@ -1633,6 +1954,8 @@ CFDataRef Fl_X::CGBitmapContextToTIFF(CGContextRef c)
 
 void Fl_X::set_key_window()
 {
+    [xid makeKeyAndVisible];
+    [xid becomeFirstResponder];
 }
 
 int Fl::dnd()
@@ -1860,7 +2183,10 @@ static CGRect convertToCGRect (const RectType& r)
         printf("w=%d, h=%d\n", device_w, device_h);
         FLView *view = (FLView *)[self view];
         Fl_Window *w = [view getFl_Window];
-        w->resize(0, 0, device_w, device_h);
+        int X = w->x(), Y = w->y(), W = w->w(), H = w->h();
+        //fl_lock_function();
+        //w->resize(0, 0, device_w, device_h);
+        //fl_unlock_function();
     }
     
     [UIView setAnimationsEnabled: NO]; // disable this because it goes the wrong way and looks like crap.
@@ -1887,7 +2213,10 @@ static CGRect convertToCGRect (const RectType& r)
     printf("w=%d, h=%d\n", device_w, device_h);
     FLView *view = (FLView *)[self view];
     Fl_Window *w = [view getFl_Window];
-    w->resize(0, 0, device_w, device_h);
+        int X = w->x(), Y = w->y(), W = w->w(), H = w->h();
+        //fl_lock_function();
+        //w->resize(0, 0, device_w, device_h);
+        //fl_unlock_function();
     }
     
     [UIView setAnimationsEnabled: YES];
@@ -1904,6 +2233,67 @@ static CGRect convertToCGRect (const RectType& r)
         return NO;
     }
 }
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    
+    UITapGestureRecognizer *singleTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tap1:)];
+    singleTap.delegate = self;
+    singleTap.numberOfTapsRequired = 1;
+    singleTap.numberOfTouchesRequired = 1;
+    [self.view addGestureRecognizer:singleTap];
+    [singleTap release];
+    
+    UITapGestureRecognizer *doubleTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tap2:)];
+    doubleTap.numberOfTapsRequired = 2;
+    doubleTap.numberOfTouchesRequired = 1;
+    [self.view addGestureRecognizer:doubleTap];
+    [singleTap requireGestureRecognizerToFail:doubleTap];
+    [doubleTap release];
+}
+
+- (void)tap1:(UITapGestureRecognizer *)recognizer
+{
+    CGPoint pos = [recognizer locationInView:self.view];
+    Fl::e_x = Fl::e_x_root = (int)pos.x;
+    Fl::e_y = Fl::e_x_root = (int)pos.y;
+    gesture_type_ = FL_GESTURE_TAP1;
+    FLView *view = (FLView *)[self view];
+    Fl_Window *w = [view getFl_Window];
+    Fl::handle(FL_GESTURE, w);
+    printf("tap 1\n");
+    //    singleLabel.text = @"Single Tap Detected";
+    //   [self performSelector:@selector(eraseMe:)
+    //                                                       withObject:singleLabel afterDelay:1.6f];
+}
+- (void)tap2:(UITapGestureRecognizer *)recognizer
+{
+    CGPoint pos = [recognizer locationInView:self.view];
+    Fl::e_x = Fl::e_x_root = (int)pos.x;
+    Fl::e_y = Fl::e_x_root = (int)pos.y;
+    gesture_type_ = FL_GESTURE_TAP2;
+    FLView *view = (FLView *)[self view];
+    Fl_Window *w = [view getFl_Window];
+    Fl::handle(FL_GESTURE, w);
+    printf("tap 2\n");
+    //doubleLabel.text = @"Double Tap Detected"; [self performSelector:@selector(eraseMe:)
+    //                                                    withObject:doubleLabel afterDelay:1.6f];
+}
+
+/*
+#pragma mark--
+#pragma mark--UIGestureRecognizerDelegate
+-(BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldReceiveTouch:(UITouch *)touch
+{
+    return YES;
+    if([touch.view isKindOfClass:[UIButton class]])
+    {
+        return NO;
+    }
+    return YES;
+}
+ */
+
 @end
 
 // =====================================================================
@@ -1945,6 +2335,8 @@ static int e_text_buffer_size_=0;
 	flwindow = win;
     in_key_event = NO;
     
+    printf("initWithFlWindow window:%x\n", win);
+    
     CGRect r;
     r.origin.x = 10; r.origin.y = 140; r.size.width = 120; r.size.height = 50;
     hiddenTextView = [[UITextView alloc] initWithFrame: r];
@@ -1959,6 +2351,56 @@ static int e_text_buffer_size_=0;
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillShow:) name:UIKeyboardWillShowNotification object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillHide:) name:UIKeyboardWillHideNotification object:nil];
+    
+    //*
+    /*
+    UITapGestureRecognizer *singleTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tap1:)];
+    singleTap.delegate = self;
+    singleTap.numberOfTapsRequired = 1;
+    singleTap.numberOfTouchesRequired = 1;
+    [self addGestureRecognizer:singleTap];
+    
+    UITapGestureRecognizer *doubleTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tap2:)];
+    doubleTap.numberOfTapsRequired = 2;
+    doubleTap.numberOfTouchesRequired = 1;
+    [self addGestureRecognizer:doubleTap];
+    [singleTap requireGestureRecognizerToFail:doubleTap];
+     //*/
+    
+    /*
+    UITapGestureRecognizer *tripleTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tap3)];
+    tripleTap.numberOfTapsRequired = 3;
+    tripleTap.numberOfTouchesRequired = 1;
+    [self addGestureRecognizer:tripleTap];
+    [doubleTap requireGestureRecognizerToFail:tripleTap];
+    
+    UITapGestureRecognizer *quadrupleTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tap4)];
+    quadrupleTap.numberOfTapsRequired = 4;
+    quadrupleTap.numberOfTouchesRequired = 1;
+    [self addGestureRecognizer:quadrupleTap];
+    [tripleTap requireGestureRecognizerToFail:quadrupleTap];
+     //*/
+    
+    // pinch
+    UIPinchGestureRecognizer *pinch = [[UIPinchGestureRecognizer alloc] initWithTarget:self action:@selector(doPinch:)];
+    [self addGestureRecognizer:pinch];
+    
+    /*
+    // swipe
+    for (NSUInteger touchCount = 1; touchCount <= 5; touchCount++) {
+        UISwipeGestureRecognizer *vertical;
+        vertical = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(reportVerticalSwipe:)];
+        vertical.direction = UISwipeGestureRecognizerDirectionUp | UISwipeGestureRecognizerDirectionDown;
+        vertical.numberOfTouchesRequired = touchCount;
+        [self addGestureRecognizer:vertical];
+        
+        UISwipeGestureRecognizer *horizontal;
+        horizontal = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(reportHorizontalSwipe:)];
+        horizontal.direction = UISwipeGestureRecognizerDirectionLeft | UISwipeGestureRecognizerDirectionRight;
+        horizontal.numberOfTouchesRequired = touchCount;
+        [self addGestureRecognizer:horizontal];
+    }
+     */
     
     return self;
 }
@@ -1981,6 +2423,15 @@ static int e_text_buffer_size_=0;
 //==============================================================================
 - (void) drawRect: (CGRect) r
 {
+    fl_lock_function();
+    FLWindow *cw = (FLWindow*)[self window];
+    Fl_Window *w = [cw getFl_Window];
+    through_drawRect = YES;
+    handleUpdateEvent(w);
+    through_drawRect = NO;
+    fl_unlock_function();
+    
+    /*
     //if (owner != nullptr) owner->drawRect (r);
 	
 	fl_lock_function();
@@ -1989,36 +2440,146 @@ static int e_text_buffer_size_=0;
 	else handleUpdateEvent(flwindow);
 	through_drawRect = NO;
 	fl_unlock_function();
+     */
 }
 
 //==============================================================================
+- (void)tap1:(UITapGestureRecognizer *)recognizer
+{
+    CGPoint pos = [recognizer locationInView:self];
+    Fl::e_x = Fl::e_x_root = (int)pos.x;
+    Fl::e_y = Fl::e_x_root = (int)pos.y;
+    gesture_type_ = FL_GESTURE_TAP1;
+    Fl::handle(FL_GESTURE, flwindow);
+    printf("tap 1\n");
+//    singleLabel.text = @"Single Tap Detected";
+ //   [self performSelector:@selector(eraseMe:)
+   //                                                       withObject:singleLabel afterDelay:1.6f];
+}
+- (void)tap2:(UITapGestureRecognizer *)recognizer
+{
+    CGPoint pos = [recognizer locationInView:self];
+    Fl::e_x = Fl::e_x_root = (int)pos.x;
+    Fl::e_y = Fl::e_x_root = (int)pos.y;
+    gesture_type_ = FL_GESTURE_TAP2;
+    Fl::handle(FL_GESTURE, flwindow);
+    printf("tap 2\n");
+    //doubleLabel.text = @"Double Tap Detected"; [self performSelector:@selector(eraseMe:)
+      //                                                    withObject:doubleLabel afterDelay:1.6f];
+}
+- (void)tap3 {
+    printf("tap 3\n");
+    //tripleLabel.text = @"Triple Tap Detected"; [self performSelector:@selector(eraseMe:)
+      //                                                    withObject:tripleLabel afterDelay:1.6f];
+}
+- (void)tap4 {
+    printf("tap 4\n");
+    //quadrupleLabel.text = @"Quadruple Tap Detected"; [self performSelector:@selector(eraseMe:)
+      //                                                          withObject:quadrupleLabel afterDelay:1.6f];
+}
+
+- (void)doPinch:(UIPinchGestureRecognizer *)pinch
+{
+    if ( pinch.state == UIGestureRecognizerStateChanged ) {
+        gesture_type_ = FL_GESTURE_PINCH;
+        gesture_pinch_scale_ = (float)pinch.scale;
+        Fl::handle(FL_GESTURE, flwindow);
+        printf("pinch scale:%f\n", pinch.scale);
+    }
+    
+    if (pinch.state == UIGestureRecognizerStateBegan) {
+        gesture_type_ = FL_GESTURE_PINCH_BEGIN;
+        gesture_pinch_scale_ = (float)pinch.scale;
+        Fl::handle(FL_GESTURE, flwindow);
+        return;
+    }
+    
+    gesture_type_ = FL_GESTURE_PINCH_END;
+    gesture_pinch_scale_ = (float)pinch.scale;
+    Fl::handle(FL_GESTURE, flwindow);
+}
+
+- (void)reportHorizontalSwipe:(UIGestureRecognizer *)recognizer
+{
+    printf("Horizontal swipe detected\n");
+    /*
+    if ( recognizer.state.direction == UISwipeGestureRecognizerDirectionRight) {
+        printf("Horizontal swipe detected, right\n");
+    }
+    if ( recognizer.state == UISwipeGestureRecognizerDirectionLeft) {
+        printf("Horizontal swipe detected, left\n");
+    }
+    if ( recognizer.state == UISwipeGestureRecognizerDirectionUp) {
+        printf("Horizontal swipe detected, up\n");
+    }
+    if ( recognizer.state == UISwipeGestureRecognizerDirectionDown) {
+        printf("Horizontal swipe detected, down\n");
+    }
+     */
+    
+//    label.text = [NSString stringWithFormat:@"%@Horizontal swipe detected",
+//                  [self descriptionForTouchCount:[recognizer numberOfTouches]]];
+ //   [self performSelector:@selector(eraseText) withObject:nil afterDelay:2];
+}
+- (void)reportVerticalSwipe:(UIGestureRecognizer *)recognizer
+{
+    printf("Vertical swipe detected\n");
+//    label.text = [NSString stringWithFormat:@"%@Vertical swipe detected",
+  //                [self descriptionForTouchCount:[recognizer numberOfTouches]]];;
+    //[self performSelector:@selector(eraseText) withObject:nil afterDelay:2];
+}
+
+- (void)Tap1Down
+{
+    printf("tap 1 down\n");
+}
+
+- (void)singleTap
+{
+    [self performSelector:@selector(Tap1Down) withObject:nil afterDelay:0.6f];
+}
+
+- (void)Tap2Down
+{
+    printf("tap 2 down\n");
+}
+
+- (void)doubleTap
+{
+    [self performSelector:@selector(Tap2Down) withObject:nil afterDelay:0.6f];
+}
+
 - (void) touchesBegan: (NSSet*) touches withEvent: (UIEvent*) event
 {
-    (void) touches;
-
-    //if (owner != nullptr)
-    //    owner->handleTouches (event, true, false, false);
-    iosMouseHandler(touches, event, self, 0);
+    UITouch *touch = [touches anyObject];
+    NSUInteger tapcount = [touch tapCount];
+    NSUInteger finger = [touches count];
+    if ( tapcount == 1 && finger == 1 ) {
+        printf("touch begin\n");
+        iosMouseHandler(touches, event, self, flwindow, 0);
+    }
 }
 
 - (void) touchesMoved: (NSSet*) touches withEvent: (UIEvent*) event
 {
-    (void) touches;
-
-    //if (owner != nullptr)
-    //    owner->handleTouches (event, false, false, false);
-    iosMouseHandler(touches, event, self, 1);
-    //cocoaMouseWheelHandler(touches, event, self, 1);
-    printf("move\n");
+    UITouch *touch = [touches anyObject];
+    NSUInteger tapcount = [touch tapCount];
+    NSUInteger finger = [touches count];
+    if ( tapcount == 1 && finger == 1 ) {
+        printf("touch move\n");
+        iosMouseHandler(touches, event, self, flwindow, 1);
+    }
 }
 
 - (void) touchesEnded: (NSSet*) touches withEvent: (UIEvent*) event
 {
-    (void) touches;
-
-    //if (owner != nullptr)
-    //    owner->handleTouches (event, false, true, false);
-    iosMouseHandler(touches, event, self, 2);
+    UITouch *touch = [touches anyObject];
+    NSUInteger tapcount = [touch tapCount];
+    NSUInteger finger = [touches count];
+    if ( tapcount == 1 && finger == 1 ) {
+        printf("touch end\n");
+        iosMouseHandler(touches, event, self, flwindow, 2);
+    }
 }
 
 - (void) touchesCancelled: (NSSet*) touches withEvent: (UIEvent*) event
@@ -2090,6 +2651,7 @@ static int e_text_buffer_size_=0;
         Fl::e_keysym = 0;
         Fl::handle(FL_KEYDOWN, target);        
         Fl::e_length = 0;
+        //Fl::compose_state = 0;
     } else {
         ss = [textView.text UTF8String];
         l = (int)strlen(ss);
@@ -2152,10 +2714,12 @@ static int e_text_buffer_size_=0;
         }
         
         Fl::e_keysym = 0;
-        Fl::handle(FL_KEYDOWN, target);
-        Fl::e_length = 0;
         Fl::compose_state = 0;
         Fl_X::next_marked_length = 0;
+        Fl::handle(FL_KEYDOWN, target);
+        Fl::e_length = 0;
+        //Fl::compose_state = 0;
+        //Fl_X::next_marked_length = 0;
         
         //printf("=====>add string:[%s]\n", Fl::e_text);
         textView.text = @"1";
@@ -2509,16 +3073,28 @@ static int e_text_buffer_size_=0;
 
 - (void) keyboardWillShow:(NSNotification *)notification
 {
-    printf("keyboard show\n");
+    //printf("keyboard show\n");
     
-    flwindow->resize(0, 0, device_w, device_h);
+    int x = flwindow->x();
+    int y = flwindow->y();
+    int w = flwindow->w();
+    int h = flwindow->h();
+    //fl_lock_function();
+    //flwindow->resize(x, y, w, h);//0, 0, device_w, device_h);
+    //fl_unlock_function();
 }
 
 - (void) keyboardWillHide:(NSNotification *)notification
 {
-    printf("keyboard hide\n");
+    //printf("keyboard hide\n");
     
-    flwindow->resize(0, 0, device_w, device_h);
+    int x = flwindow->x();
+    int y = flwindow->y();
+    int w = flwindow->w();
+    int h = flwindow->h();
+    //fl_lock_function();
+    //flwindow->resize(x, y, w, h);//0, 0, device_w, device_h);
+    //fl_unlock_function();
 }
 
 @end
@@ -2553,6 +3129,96 @@ void Fl_X::softkeyboard_work_area(int &X, int &Y, int &W, int &H)
     Y = softkeyboard_y;
     W = softkeyboard_w;
     H = softkeyboard_h;    
+}
+
+int Fl_X::gesture_type()
+{
+    return gesture_type_;
+}
+
+float Fl_X::gesture_pinch_scale()
+{
+    return gesture_pinch_scale_;
+}
+
+//
+#if FLTK_ABI_VERSION >= 10304
+static const unsigned windowDidResize_mask = 1;
+#else
+static const unsigned long windowDidResize_mask = 1;
+#endif
+
+bool Fl_X::in_windowDidResize()
+{
+#if FLTK_ABI_VERSION >= 10304
+    return mapped_to_retina_ & windowDidResize_mask;
+#else
+    return (unsigned long)xidChildren & windowDidResize_mask;
+#endif
+}
+
+void Fl_X::in_windowDidResize(bool b)
+{
+#if FLTK_ABI_VERSION >= 10304
+    if (b) mapped_to_retina_ |= windowDidResize_mask;
+    else mapped_to_retina_ &= ~windowDidResize_mask;
+#else
+    if (b) xidChildren = (Fl_X *)((unsigned long)xidChildren | windowDidResize_mask);
+    else xidChildren = (Fl_X *)((unsigned long)xidChildren & ~windowDidResize_mask);
+#endif
+}
+
+#if FLTK_ABI_VERSION >= 10304
+static const unsigned mapped_mask = 2;
+static const unsigned changed_mask = 4;
+#else
+static const unsigned long mapped_mask = 2; // sizeof(unsigned long) = sizeof(Fl_X*)
+static const unsigned long changed_mask = 4;
+#endif
+
+bool Fl_X::mapped_to_retina()
+{
+#if FLTK_ABI_VERSION >= 10304
+    return mapped_to_retina_ & mapped_mask;
+#else
+    return (unsigned long)xidChildren & mapped_mask;
+#endif
+}
+
+void Fl_X::mapped_to_retina(bool b)
+{
+#if FLTK_ABI_VERSION >= 10304
+    if (b) mapped_to_retina_ |= mapped_mask;
+    else mapped_to_retina_ &= ~mapped_mask;
+#else
+    if (b) xidChildren = (Fl_X *)((unsigned long)xidChildren | mapped_mask);
+    else xidChildren = (Fl_X *)((unsigned long)xidChildren & ~mapped_mask);
+#endif
+}
+
+bool Fl_X::changed_resolution()
+{
+#if FLTK_ABI_VERSION >= 10304
+    return mapped_to_retina_ & changed_mask;
+#else
+    return (unsigned long)xidChildren & changed_mask;
+#endif
+}
+
+void Fl_X::changed_resolution(bool b)
+{
+#if FLTK_ABI_VERSION >= 10304
+    if (b) mapped_to_retina_ |= changed_mask;
+    else mapped_to_retina_ &= ~changed_mask;
+#else
+    if (b) xidChildren = (Fl_X *)((unsigned long)xidChildren | changed_mask);
+    else xidChildren = (Fl_X *)((unsigned long)xidChildren & ~changed_mask);
+#endif
+}
+
+void Fl_X::set_high_resolution(bool new_val)
+{
+    Fl_Display_Device::high_res_window_ = new_val;
 }
 
 #endif // __FLTK_IPHONEOS__

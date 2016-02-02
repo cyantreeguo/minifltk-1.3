@@ -1726,16 +1726,16 @@ void Fl_Window::hide()
 	// when hiding a window, build list of windows it owns, and do hide/show on them.
 	int count = 0;
 	Fl_Window *win, **doit = NULL;
-	for (win = Fl::first_window(); win && i; win = Fl::next_window(win)) {
-		if (win->non_modal() && GetWindow(fl_xid(win), GW_OWNER) == i->xid) {
+	for (win = Fl::first_window(); win && flx; win = Fl::next_window(win)) {
+		if (win->non_modal() && GetWindow(fl_xid(win), GW_OWNER) == flx->xid) {
 			count++;
 		}
 	}
 	if (count) {
 		doit = new Fl_Window*[count];
 		count = 0;
-		for (win = Fl::first_window(); win && i; win = Fl::next_window(win)) {
-			if (win->non_modal() && GetWindow(fl_xid(win), GW_OWNER) == i->xid) {
+		for (win = Fl::first_window(); win && flx; win = Fl::next_window(win)) {
+			if (win->non_modal() && GetWindow(fl_xid(win), GW_OWNER) == flx->xid) {
 				doit[count++] = win;
 			}
 		}
@@ -1746,7 +1746,7 @@ void Fl_Window::hide()
 	if (!shown()) return;
 
 	// remove from the list of windows:
-	Fl_X* ip = i;
+	Fl_X* ip = flx;
 	Fl_X** pp = &Fl_X::first;
 	for (; *pp != ip; pp = &(*pp)->next) if (!*pp) return;
 	*pp = ip->next;
@@ -1756,7 +1756,7 @@ void Fl_Window::hide()
 	// worst case, an invisible pointer
 	if (!parent()) cursor(FL_CURSOR_DEFAULT);
 #endif
-	i = 0;
+	flx = 0;
 
 	// recursively remove any subwindows:
 	for (Fl_X *wi = Fl_X::first; wi;) {
@@ -1896,9 +1896,9 @@ int Fl_Window::handle(int ev)
 #elif __FLTK_WINCE__
 				XMapWindow(fl_display, fl_xid(this)); // extra map calls are harmless
 #elif __FLTK_MACOSX__
-				i->map();
+				flx->map();
 #elif __FLTK_IPHONEOS__
-				i->map();
+				flx->map();
 #elif __FLTK_LINUX__
 				XMapWindow(fl_display, fl_xid(this)); // extra map calls are harmless
 #elif __FLTK_S60v32__
@@ -1930,9 +1930,9 @@ int Fl_Window::handle(int ev)
 #elif __FLTK_WINCE__
 				XUnmapWindow(fl_display, fl_xid(this));
 #elif __FLTK_MACOSX__
-				i->unmap();
+				flx->unmap();
 #elif __FLTK_IPHONEOS__
-				i->unmap();
+				flx->unmap();
 #elif __FLTK_LINUX__
 				XUnmapWindow(fl_display, fl_xid(this));
 #elif __FLTK_S60v32__
@@ -2207,8 +2207,8 @@ void Fl_Window::flush()
 	if (!shown()) return;
 	make_current();
 //if (damage() == FL_DAMAGE_EXPOSE && can_boxcheat(box())) fl_boxcheat = this;
-	fl_clip_region(i->region);
-	i->region = 0;
+	fl_clip_region(flx->region);
+	flx->region = 0;
 	draw();
 }
 
@@ -2571,6 +2571,24 @@ void Fl::softkeyboard_work_area(int &X, int &Y, int &W, int &H)
 #if __FLTK_IPHONEOS__
     Fl_X::softkeyboard_work_area(X, Y, W, H);
 #else
+#endif
+}
+    
+float Fl::gesture_pinch_scale()
+{
+#if __FLTK_IPHONEOS__
+    return Fl_X::gesture_pinch_scale();
+#else
+    return 1.0;
+#endif
+}
+    
+int Fl::gesture_type()
+{
+#if __FLTK_IPHONEOS__
+    return Fl_X::gesture_type();
+#else
+    return FL_GESTURE_NONE;
 #endif
 }
 

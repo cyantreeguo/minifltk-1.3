@@ -27,11 +27,11 @@ void Fl_Window::iconize()
 		show();
 	} else {
 #if __FLTK_WIN32__
-		ShowWindow(i->xid, SW_SHOWMINNOACTIVE);
+		ShowWindow(flx->xid, SW_SHOWMINNOACTIVE);
 #elif __FLTK_MACOSX__
-		i->collapse();
+		flx->collapse();
 #elif __FLTK_LINUX__
-		XIconifyWindow(fl_display, i->xid, fl_screen);
+		XIconifyWindow(fl_display, flx->xid, fl_screen);
 #elif __FLTK_S60v32__
 		//
 #endif

@@ -426,7 +426,21 @@ enum Fl_Event {	// events
 	    The Fl::event_dy() method can be used to find magnification amount,
 	    Fl::event_x() and Fl::event_y() are set as well.
 	   */
-	FL_ZOOM_GESTURE	= 26
+	FL_ZOOM_GESTURE	= 26,
+    
+    // add by cyantree
+    FL_GESTURE = 1000
+};
+
+enum Fl_Gesture_Type {
+    FL_GESTURE_NONE = 0,
+    
+    FL_GESTURE_TAP1,
+    FL_GESTURE_TAP2,
+    
+    FL_GESTURE_PINCH_BEGIN,
+    FL_GESTURE_PINCH,
+    FL_GESTURE_PINCH_END,
 };
 
 /** \name When Conditions */

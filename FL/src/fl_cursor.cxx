@@ -135,13 +135,13 @@ void Fl_Window::cursor(Fl_Cursor c)
 	if (c == FL_CURSOR_DEFAULT)
 		c = cursor_default;
 
-	if (!i)
+	if (!flx)
 		return;
 
 #if __FLTK_S60v32__
 #elif __FLTK_ANDROID__
 #else
-	ret = i->set_cursor(c);
+	ret = flx->set_cursor(c);
 #endif
 	if (ret)
 		return;
@@ -177,13 +177,13 @@ void Fl_Window::cursor(const Fl_RGB_Image *image, int hotx, int hoty)
 		return;
 	}
 
-	if (!i)
+	if (!flx)
 		return;
 
 #if __FLTK_S60v32__
 #elif __FLTK_ANDROID__
 #else
-	ret = i->set_cursor(image, hotx, hoty);
+	ret = flx->set_cursor(image, hotx, hoty);
 #endif
 	if (ret)
 		return;

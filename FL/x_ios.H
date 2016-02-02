@@ -28,12 +28,12 @@
 #  error "Never use <x_mac.H> directly; include <x.H> instead."
 #endif // !Fl_X_H
 
-#ifdef __OBJC__
+//#ifdef __OBJC__
 @class FLWindow; // a subclass of the NSWindow Cocoa class
 typedef FLWindow *Window;
-#else
-typedef class FLWindow_opaque *Window; // pointer to the FLWindow objective-c class
-#endif // __OBJC__
+//#else
+//typedef class FLWindow_opaque *Window; // pointer to the FLWindow objective-c class
+//#endif // __OBJC__
 
 
 // Standard MacOS C/C++ includes...
@@ -121,10 +121,24 @@ public:
 	int wait_for_expose;
 	static Fl_X* first;
 	static Fl_X* i(const Fl_Window* w) {
-		return w->i;
+		return w->flx;
 	}
+    static int fake_X_wm(const Fl_Window*,int&,int&,int&,int&,int&);
 	static void make(Fl_Window*);
 	void flush();
+    static void set_high_resolution(bool);
+    CGRect* subRect() {
+        return subRect_;        // getter
+    }
+    void subRect(CGRect *r) {
+        subRect_ = r;        // setter
+    }
+    bool mapped_to_retina();      // is window mapped to retina display?
+    void mapped_to_retina(bool);  // sets whether window is mapped to retina display
+    bool changed_resolution();      // did window just moved to display with another resolution?
+    void changed_resolution(bool);// sets whether window just moved to display with another resolution
+    bool in_windowDidResize();      // is window performing windowDidResize?
+    void in_windowDidResize(bool);  // sets whether window is performing windowDidResize
 	// Quartz additions:
 	CGContextRef gc;                 // graphics context (NULL when using QD)
 	static void q_fill_context();    // fill a Quartz context with current FLTK state
@@ -136,7 +150,7 @@ public:
 	void destroy(void);
 	void map(void);
 	void unmap(void);
-	int unlink(Fl_X* start = NULL);
+	//int unlink(Fl_X* start = NULL);
 	void collapse(void);
 	void set_key_window(void);
 	static CGImageRef CGImage_from_window_rect(Fl_Window *win, int x, int y, int w, int h);
@@ -149,7 +163,6 @@ public:
 	static const int CoreText_threshold;  // Mac OS version from which the Core Text API is used to display text
 	static Fl_Fontdesc* calc_fl_fonts(void); // computes the fl_fonts global variable
     static int dnd(int use_selection); // call Fl_X::dnd(1) to support text dragging
-	static void set_high_resolution(bool);
 	
 	static void set_default_icons(const Fl_RGB_Image*[], int) {};
 	void set_icons() {};
@@ -157,9 +170,16 @@ public:
 	int set_cursor(const Fl_RGB_Image*, int, int) {return 1;}
     
     static void softkeyboard_work_area(int &X, int &Y, int &W, int &H);
+    // gesture
+    static int gesture_type();
+    static float gesture_pinch_scale();
 private:
-	static void relink(Fl_Window*, Fl_Window*);
-	bool subwindow;
+	//static void relink(Fl_Window*, Fl_Window*);
+	//bool subwindow;
+    CGRect* subRect_;           // makes sure subwindow remains inside its parent window
+    // stores 3 binary flags: whether window is mapped to retina display; whether resolution just changed;
+    // whether window is OpenGL and is currently being resized.
+    unsigned mapped_to_retina_;
 };
 
 extern Window fl_window;

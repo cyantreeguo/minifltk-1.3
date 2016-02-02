@@ -579,7 +579,7 @@ static inline void setitem(const Fl_Menu_Item* i, int m, int n)
 	p->menu_number = m;
 	p->item_number = n;
 
-	//printf("m=%d, n=%d\n", m, n);
+	//printf("setitem1: m=%d, n=%d\n", m, n);
 }
 
 static void setitem(int m, int n)
@@ -589,7 +589,7 @@ static void setitem(int m, int n)
 	pp.menu_number = m;
 	pp.item_number = n;
 
-	//printf("m=%d, n=%d\n", m, n);
+	//printf("setitem2: m=%d, n=%d\n", m, n);
 }
 
 static int forward(int menu)   // go to next item in menu menu if possible
