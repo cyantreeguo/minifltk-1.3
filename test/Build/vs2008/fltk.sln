@@ -13,6 +13,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "checkers", "checkers.vcproj
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "subwindow", "subwindow.vcproj", "{0C964A27-98DE-4241-92FD-876E89CEF00B}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shapedwindow", "shapedwindow.vcproj", "{8C7F7DDD-E5FD-42E5-9C61-D4BCF91979A8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -43,6 +45,10 @@ Global
 		{0C964A27-98DE-4241-92FD-876E89CEF00B}.Debug|Win32.Build.0 = Debug|Win32
 		{0C964A27-98DE-4241-92FD-876E89CEF00B}.Release|Win32.ActiveCfg = Release|Win32
 		{0C964A27-98DE-4241-92FD-876E89CEF00B}.Release|Win32.Build.0 = Release|Win32
+		{8C7F7DDD-E5FD-42E5-9C61-D4BCF91979A8}.Debug|Win32.ActiveCfg = Debug|Win32
+		{8C7F7DDD-E5FD-42E5-9C61-D4BCF91979A8}.Debug|Win32.Build.0 = Debug|Win32
+		{8C7F7DDD-E5FD-42E5-9C61-D4BCF91979A8}.Release|Win32.ActiveCfg = Release|Win32
+		{8C7F7DDD-E5FD-42E5-9C61-D4BCF91979A8}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
