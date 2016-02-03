@@ -1833,8 +1833,8 @@ void Fl_Window::resize(int X,int Y,int W,int H)
 			redraw();
 			// only wait for exposure if this window has a size - a window
 			// with no width or height will never get an exposure event
-			if (i && W>0 && H>0)
-				i->wait_for_expose = 1;
+			if (flx && W>0 && H>0)
+				flx->wait_for_expose = 1;
 		}
 	} else {
 		x(X);
@@ -1857,7 +1857,7 @@ void Fl_Window::resize(int X,int Y,int W,int H)
 		// will cause continouly  new redraw events.
 		if (W<=0) W = 1;
 		if (H<=0) H = 1;
-		SetWindowPos(i->xid, 0, X, Y, W, H, flags);
+		SetWindowPos(flx->xid, 0, X, Y, W, H, flags);
 	}
 }
 
@@ -1899,7 +1899,7 @@ void Fl_Window::fullscreen_x()
 {
 	//printf("Fl_Window::fullscreen_x\n");
 	_set_fullscreen();
-	i->make_fullscreen(x(), y(), w(), h());
+	flx->make_fullscreen(x(), y(), w(), h());
 	Fl::handle(FL_FULLSCREEN, this);
 }
 
@@ -2403,7 +2403,7 @@ void Fl_Window::label(const char *name,const char *iname)
 		unsigned short * lab = (unsigned short*)malloc(sizeof(unsigned short)*wlen);
 		wlen = fl_utf8toUtf16(name, (unsigned) l, lab, wlen);
 		lab[wlen] = 0;
-		SetWindowTextW(i->xid, (WCHAR *)lab);
+		SetWindowTextW(flx->xid, (WCHAR *)lab);
 		free(lab);
 	}
 }
@@ -2661,8 +2661,8 @@ void Fl_Window::icons(HICON big_icon, HICON small_icon)
 	if (small_icon != NULL)
 		icon_->small_icon = CopyIcon(small_icon);
 
-	if (i)
-		i->set_icons();
+	if (flx)
+		flx->set_icons();
 }
 
 ////////////////////////////////////////////////////////////////
@@ -2796,8 +2796,8 @@ void Fl_Window::show()
 	} else {
 		//printf("Fl_Window::show 2\n");
 		// Once again, we would lose the capture if we activated the window.
-		if (IsIconic(i->xid)) OpenIcon(i->xid);
-		if (!fl_capture) BringWindowToTop(i->xid);
+		if (IsIconic(flx->xid)) OpenIcon(flx->xid);
+		if (!fl_capture) BringWindowToTop(flx->xid);
 		//ShowWindow(i->xid,fl_capture?SW_SHOWNOACTIVATE:SW_RESTORE);
 	}
 #ifdef USE_PRINT_BUTTON

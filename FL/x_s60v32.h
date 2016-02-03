@@ -120,13 +120,13 @@ public:
 	// static variables, static functions and member functions
 	static Fl_X* first;
 	static Fl_X* i(const Fl_Window* w) {
-		return w->i;
+		return w->flx;
 	}
 	/* static int fake_X_wm(const Fl_Window* w,int &X, int &Y,
 		                 int &bt,int &bx,int &by); */
 	void setwindow(Fl_Window* wi) {
 		w=wi;
-		wi->i=this;
+		wi->flx=this;
 	}
 	void flush() {
 		w->flush();

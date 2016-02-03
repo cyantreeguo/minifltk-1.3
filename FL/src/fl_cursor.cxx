@@ -199,7 +199,7 @@ void Fl_Window::cursor(Fl_Cursor c, Fl_Color, Fl_Color)
 {
 	//cursor(c);
 #if __FLTK_S60v32__
-	i->xid->SetPointerCursor(0);
+	flx->xid->SetPointerCursor(0);
 #elif __FLTK_ANDROID__
 #else
 	cursor(c);

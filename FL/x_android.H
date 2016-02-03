@@ -48,11 +48,11 @@ public:
 	char backbuffer_bad; // used for XDBE
 	static Fl_X* first;
 	static Fl_X* i(const Fl_Window* wi) {
-		return wi->i;
+		return wi->flx;
 	}
 	void setwindow(Fl_Window* wi) {
 		w=wi;
-		wi->i=this;
+		wi->flx=this;
 	}
 	void sendxjunk();
 	static void set_default_icons(const Fl_RGB_Image*[], int){}
