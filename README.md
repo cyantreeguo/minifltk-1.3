@@ -1,5 +1,5 @@
 # minifltk
-Port of FLTK to ios and android(not work)
+Port of FLTK to ios(almost release) and android(not work)
 
 ![shotsnap](shotsnap1.png)
 ![shotsnap](shotsnap2.png)
