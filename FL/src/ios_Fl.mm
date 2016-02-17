@@ -22,7 +22,6 @@
 #include "Fl_Device.H"
 
 #import <UIKit/UIKit.h>
-#import <UIKit/UIGestureRecognizerSubclass.h>
 #import <Foundation/Foundation.h>
 
 // ======================================================
@@ -51,11 +50,20 @@ static NSDate *endDate = [NSDate dateWithTimeIntervalSinceNow:-0.001];
 
 static Fl_Window *resize_from_system;
 
+static int softkeyboard_isshow_ = 0;
 static int softkeyboard_x=0, softkeyboard_y=0, softkeyboard_w=0, softkeyboard_h=0;
 
-// gesture
-static int gesture_type_ = FL_GESTURE_NONE;
-static float gesture_pinch_scale_ = 1.0;
+// touch
+static int mouse_simulate_by_touch_ = 0;
+static int touch_type_ = FL_TOUCH_NONE;
+static int touch_tapcount_ = 0;
+static int touch_finger_ = 0;
+#define MaxFinger 10
+static int touch_x_[MaxFinger] = {0}, touch_y_[MaxFinger] = {0}, touch_x_root_[MaxFinger] = {0}, touch_y_root_[MaxFinger] = {0};
+static UITouch *touch_class[MaxFinger] = {0};
+static int touch_end_finger_ = 0;
+static int touch_end_x_[MaxFinger] = {0}, touch_end_y_[MaxFinger] = {0}, touch_end_x_root_[MaxFinger] = {0}, touch_end_y_root_[MaxFinger] = {0};
+static UITouch *touch_end_class[MaxFinger] = {0};
 
 // ************************* main begin ****************************************
 static int forward_argc;
@@ -146,7 +154,7 @@ static void SetEventPump(unsigned char enabled)
     } else {
         device_h = real_device_h; device_w = real_device_w;
     }
-    */
+    //*/
     
     [self updateSplashImage:interfaceOrientation];
 }
@@ -439,9 +447,6 @@ int main(int argc, char **argv)
 }
 // ************************* main end ****************************************
 
-// type:0-begin,1-move,2-end
-static void iosMouseHandler(NSSet *touches, UIEvent *event, UIView *view, int type);
-
 //==============================================================================
 @interface FLView : UIView <UITextViewDelegate>
 {
@@ -476,7 +481,7 @@ static void iosMouseHandler(NSSet *touches, UIEvent *event, UIView *view, int ty
 @end
 
 //==============================================================================
-@interface FLViewController : UIViewController <UIGestureRecognizerDelegate>
+@interface FLViewController : UIViewController
 {
 }
 - (NSUInteger) supportedInterfaceOrientations;
@@ -494,7 +499,7 @@ static void iosMouseHandler(NSSet *touches, UIEvent *event, UIView *view, int ty
 - (Fl_Window *)getFl_Window;
 - (void) becomeKeyWindow;
 @end
-
+/*
 // updates Fl::e_x, Fl::e_y, Fl::e_x_root, and Fl::e_y_root
 static void update_e_xy_and_e_xy_root(Fl_Window *win, int x, int y)
 {
@@ -509,111 +514,50 @@ static void update_e_xy_and_e_xy_root(Fl_Window *win, int x, int y)
 }
 static void iosMouseHandler(NSSet *touches, UIEvent *event, UIView *view, Fl_Window *win, int type)
 {
-    static int keysym[] = { 0, FL_Button + 1, FL_Button + 3, FL_Button + 2 };
-    static int px, py;
-    static char suppressed = 0;
+    // type:0-begin,1-move,2-end,3-cancel
+    // if ( type == 3 ) return; // cancel
     
     fl_lock_function();
     
-    Fl_Window *window = win;//(Fl_Window *)[(FLWindow *)[view window] getFl_Window];
-    if (!window->shown()) {
+    if (!win->shown()) {
         fl_unlock_function();
         return;
     }
     
-    //*
     Fl_Window *first = Fl::first_window();
-    if (first != window && !(first->modal() || first->non_modal())) {
-        Fl::first_window(window);
+    if (first != win && !(first->modal() || first->non_modal())) {
+        Fl::first_window(win);
     }
-     //*/
     
     UITouch *touch = [touches anyObject];
     CGPoint pos = [touch locationInView:view];
-    //pos.x = pos.x * view.contentScaleFactor;
-    //pos.y = pos.y * view.contentScaleFactor;
-    NSUInteger taps = [touch tapCount];
-    //pos.y = window->h() - pos.y;
-    NSInteger btn = 1;//[theEvent buttonNumber]  + 1;
-    //NSUInteger mods = [theEvent modifierFlags];
-    int sendEvent = 0;
+    touch_tapcount_ = (int)[touch tapCount];
+    touch_finger_ = (int)[touches count];
     
-    /*
-     NSEventType etype = [theEvent type];
-     if (etype == NSLeftMouseDown || etype == NSRightMouseDown || etype == NSOtherMouseDown) {
-     if (btn == 1) Fl::e_state |= FL_BUTTON1;
-     else if (btn == 3) Fl::e_state |= FL_BUTTON2;
-     else if (btn == 2) Fl::e_state |= FL_BUTTON3;
-     } else if (etype == NSLeftMouseUp || etype == NSRightMouseUp || etype == NSOtherMouseUp) {
-     if (btn == 1) Fl::e_state &= ~FL_BUTTON1;
-     else if (btn == 3) Fl::e_state &= ~FL_BUTTON2;
-     else if (btn == 2) Fl::e_state &= ~FL_BUTTON3;
-     }
-     */
-    if ( type == 0 ) Fl::e_state |= FL_BUTTON1;
-    else if ( type == 2 ) Fl::e_state &= ~FL_BUTTON1;
+    Fl::e_x = int(pos.x);
+    Fl::e_y = int(pos.y);
+    Fl::e_state = 0;
+    update_e_xy_and_e_xy_root(win, Fl::e_x, Fl::e_y);
     
-    printf("x=%d, y=%d\n", (int)pos.x, (int)pos.y);
+    printf("touch location:%d %d, finger:%d [%d]\n", Fl::e_x, Fl::e_y, touch_finger_, type);
     
-    switch (type) {
-        case 0:
-            suppressed = 0;
-            sendEvent = FL_PUSH;
-            Fl::e_is_click = 1;
-            px = (int)pos.x; py = (int)pos.y;
-            if (taps > 1) Fl::e_clicks++;
-            else Fl::e_clicks = 0;
-            // fall through
-        case 2:
-            if (suppressed) {
-                suppressed = 0;
-                break;
-            }
-            //if (!window) break;
-            if (!sendEvent) {
-                sendEvent = FL_RELEASE;
-            }
-            Fl::e_keysym = keysym[btn];
-            // fall through
-        case 1:
-            suppressed = 0;
-            if (!sendEvent) {
-                sendEvent = FL_DRAG;// FL_MOVE;
-            }
-            // fall through
-            /*
-             case NSLeftMouseDragged:
-             case NSRightMouseDragged:
-             case NSOtherMouseDragged:
-             */
-        {
-            if (suppressed) break;
-            if (!sendEvent) {
-                sendEvent = FL_MOVE; // Fl::handle will convert into FL_DRAG
-                if (fabs(pos.x - px) > 5 || fabs(pos.y - py) > 5) Fl::e_is_click = 0;
-            }
-            //            mods_to_e_state(mods);
-            
-            //update_e_xy_and_e_xy_root([view window]);
-            Fl::e_x = int(pos.x);
-            Fl::e_y = int(pos.y);
-            Fl::e_state = 0;
-            update_e_xy_and_e_xy_root(win, Fl::e_x, Fl::e_y);
-            //Fl::e_x_root = int(pos.x);
-            //Fl::e_y_root = int(pos.y);
-            
-            //printf("mouse window:%x\n", window);
-            Fl::handle(sendEvent, window);
-        }
-            break;
-        default:
-            break;
+    if ( type == 0 ) {
+        touch_type_ = FL_TOUCH_BEGIN;
+        Fl::handle(FL_EVENT_TOUCH, win);
+    } else if ( type == 1 ) {
+        touch_type_ = FL_TOUCH_MOVE;
+        Fl::handle(FL_EVENT_TOUCH, win);
+    } else if ( type == 2 ) {
+        touch_type_ = FL_TOUCH_END;
+        Fl::handle(FL_EVENT_TOUCH, win);
+    } else if ( type == 3 ) {
+        touch_type_ = FL_TOUCH_CANCEL;
+        Fl::handle(FL_EVENT_TOUCH, win);
     }
-    
+ 
     fl_unlock_function();
-    
-    return;
 }
+ */
 
 //******************* spot **********************************
 
@@ -650,7 +594,9 @@ void fl_reset_spot()
 
 void fl_set_spot(int font, int size, int X, int Y, int W, int H, Fl_Window *win)
 {
+    //printf("fl_set_spot\n");
     if ( ! win ) {
+        //printf("fl_set_spot cancel\n");
         spot_win_ = 0;
         return;
     }
@@ -700,7 +646,8 @@ double fl_ios_flush_and_wait(double time_to_wait)  //ok
     Fl::flush();
     
     //printf("start\n");
-	[[NSRunLoop currentRunLoop] runMode: NSDefaultRunLoopMode beforeDate: [NSDate dateWithTimeIntervalSinceNow: 0.001]];
+	//[[NSRunLoop currentRunLoop] runMode: NSDefaultRunLoopMode beforeDate: [NSDate dateWithTimeIntervalSinceNow: 0.001]];
+    [[NSRunLoop currentRunLoop] runMode: NSDefaultRunLoopMode beforeDate: [NSDate dateWithTimeIntervalSinceNow: time_to_wait]];
 	/*
     NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
     [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:endDate];
@@ -815,7 +762,7 @@ static void handleUpdateEvent(Fl_Window *window)
     
     Fl_X *i = Fl_X::i( window );
     
-    bool previous = i->mapped_to_retina();
+    //bool previous = i->mapped_to_retina();
     /*
     // rewrite next call that requires 10.7 and therefore triggers a compiler warning on old SDKs
     //NSSize s = [[i->xid contentView] convertSizeToBacking:NSMakeSize(10, 10)];
@@ -1005,7 +952,7 @@ void Fl_X::make(Fl_Window *w)
             winlevel = modal_window_level();
         }
     }
-     */
+     //*/
     
     if (by+bt) {
         wp += 2*bx;
@@ -1020,7 +967,7 @@ void Fl_X::make(Fl_Window *w)
         yp -= by+bt;
     }
     
-    Fl_X* x = new Fl_X;
+    Fl_X* x = new Fl_X();
     x->other_xid = 0; // room for doublebuffering image map. On OS X this is only used by overlay windows
     x->region = 0;
     x->subRect(0);
@@ -1072,6 +1019,7 @@ void Fl_X::make(Fl_Window *w)
     }
      */
 
+    //printf("cw=%x, x=%x\n", cw, x);
     x->xid = cw;
     x->w = w; w->flx = x;
     x->wait_for_expose = 1;
@@ -1177,6 +1125,7 @@ void Fl_X::make(Fl_Window *w)
         [cw setOpaque:NO];
         [cw setBackgroundColor:[UIColor clearColor]]; // transparent background color
         //[cw setSubwindowFrame];
+        //[cw makeKeyAndVisible];
         [cw makeKeyAndVisible];
         
         // needed if top window was first displayed miniaturized
@@ -1372,6 +1321,33 @@ void Fl_Window::label(const char *name, const char *mininame)
  */
 void Fl_Window::show()
 {
+    image(Fl::scheme_bg_);
+    if (Fl::scheme_bg_) {
+        labeltype(FL_NORMAL_LABEL);
+        align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
+    } else {
+        labeltype(FL_NO_LABEL);
+    }
+    Fl_Tooltip::exit(this);
+    Fl_X *top = NULL;
+    if (parent()) top = top_window()->flx;
+    if (!shown() && (!parent() || (top))) {
+        Fl_X::make(this);
+    } else {
+        if (!parent()) {
+            /*
+            if ([flx->xid isMiniaturized]) {
+                flx->w->redraw();
+                [flx->xid deminiaturize: nil];
+            }
+             */
+            if (!fl_capture) {
+                //[flx->xid makeKeyAndOrderFront: nil];
+                [flx->xid makeKeyAndVisible];
+            }
+        } else set_visible();
+    }
+    /*
 	image(Fl::scheme_bg_);
 	if (Fl::scheme_bg_) {
 		labeltype(FL_NORMAL_LABEL);
@@ -1391,6 +1367,7 @@ void Fl_Window::show()
 		//if (!fl_capture) BringWindowToTop(i->xid);
 		//ShowWindow(i->xid,fl_capture?SW_SHOWNOACTIVATE:SW_RESTORE);
 	}
+     */
 }
 
 /*
@@ -1408,7 +1385,7 @@ void Fl_Window::resize(int X, int Y, int W, int H)
 		//else get_window_frame_sizes(bx, by, bt);
         x(X); y(Y);w(W);h(H);
         
-        printf("resize(), x=%d, y=%d, w=%d, h=%d\n", X, Y, W, H);
+        //printf("resize(), x=%d, y=%d, w=%d, h=%d\n", X, Y, W, H);
 		CGRect dim;
 		dim.origin.x = 0;//X;
 		dim.origin.y = 0;//Y;//main_screen_height - (Y + H);
@@ -1885,22 +1862,56 @@ void Fl_X::destroy()
 {
     // subwindows share their xid with their parent window, so should not close it
     if (xid) {
-        //*
-        //[xid.superview release];
-//        [xid.rootViewController.view release];
+        /*
+        printf("xid autorelease start\n");
+        [xid autorelease];
+        printf("xid autorelease stop\n");
+         */
         
+        /*
+        [xid.rootViewController.view resignFirstResponder];
         xid.rootViewController.view.hidden = YES;
-        //*
+      
         [xid.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
-        xid.rootViewController = nil;
+        [xid.rootViewController release];
+        //xid.rootViewController = nil;
         [xid resignKeyWindow];
         [xid removeFromSuperview];
+        [xid release];
+         */
+        
+        /*
+        [xid.rootViewController.view resignFirstResponder];
+        xid.rootViewController.view.hidden = YES;
+        [xid resignKeyWindow];
+        xid.hidden = YES;
+        
+        [[NSRunLoop currentRunLoop] runMode: NSDefaultRunLoopMode beforeDate: [NSDate dateWithTimeIntervalSinceNow: 0.001]];
+        
+        [xid.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
+        //[xid.rootViewController release];
+        [xid removeFromSuperview];
+        [xid release];
+         */
+        [xid.rootViewController.view removeFromSuperview];
+        //[xid.rootViewController.view release];
+        [xid removeFromSuperview];
+        [xid release];
+        
+        //Fl_Window *first = Fl::first_window();
+        //[fl_xid(first) makeKeyAndVisible];
+        
          //*/
         
         //[xid resignKeyWindow];
-        [xid release];
-        //xid = 0;
-        //printf("delete xid:%x\n", xid);
+        //[xid release];
+        
+        /*
+        Fl_Window *first = Fl::first_window();
+        [fl_xid(first) makeKeyAndVisible];
+        [[[fl_xid(first) rootViewController] view] becomeFirstResponder];
+        first->take_focus();
+         */
     }
     delete subRect();
 }
@@ -1908,6 +1919,7 @@ void Fl_X::destroy()
 void Fl_X::map()
 {
     if (w && xid) {
+        //printf("map\n");
         [xid setHidden:NO];
     }
 }
@@ -1915,6 +1927,7 @@ void Fl_X::map()
 void Fl_X::unmap()
 {
     if (w && xid) {
+        //printf("unmap\n");
         [xid setHidden:YES];
     }
 }
@@ -1955,7 +1968,7 @@ CFDataRef Fl_X::CGBitmapContextToTIFF(CGContextRef c)
 void Fl_X::set_key_window()
 {
     [xid makeKeyAndVisible];
-    [xid becomeFirstResponder];
+    [[[xid rootViewController] view] becomeFirstResponder];
 }
 
 int Fl::dnd()
@@ -2171,8 +2184,8 @@ static CGRect convertToCGRect (const RectType& r)
 
 - (void) willRotateToInterfaceOrientation: (UIInterfaceOrientation) toInterfaceOrientation duration: (NSTimeInterval) duration
 {
-    (void) toInterfaceOrientation;
-    (void) duration;
+    //(void) toInterfaceOrientation;
+    //(void) duration;
     
     if ( SYSTEM_VERSION_LESS_THAN(@"8.0") ) {
         if ( toInterfaceOrientation == UIInterfaceOrientationLandscapeLeft || toInterfaceOrientation == UIInterfaceOrientationLandscapeRight ) {
@@ -2180,13 +2193,6 @@ static CGRect convertToCGRect (const RectType& r)
         } else {
             device_h = real_device_h; device_w = real_device_w;
         }
-        printf("w=%d, h=%d\n", device_w, device_h);
-        FLView *view = (FLView *)[self view];
-        Fl_Window *w = [view getFl_Window];
-        int X = w->x(), Y = w->y(), W = w->w(), H = w->h();
-        //fl_lock_function();
-        //w->resize(0, 0, device_w, device_h);
-        //fl_unlock_function();
     }
     
     [UIView setAnimationsEnabled: NO]; // disable this because it goes the wrong way and looks like crap.
@@ -2194,29 +2200,18 @@ static CGRect convertToCGRect (const RectType& r)
 
 - (void) didRotateFromInterfaceOrientation: (UIInterfaceOrientation) fromInterfaceOrientation
 {
-    (void) fromInterfaceOrientation;
-
-	//FLView *view = (FLView *)[self view];
-	//Fl_Window *w = [view getFl_Window];
-	/*
-    JuceUIView* juceView = (JuceUIView*) [self view];
-    jassert (juceView != nil && juceView->owner != nullptr);
-    juceView->owner->updateTransformAndScreenBounds();
-	*/
+    //(void) fromInterfaceOrientation;
     
     if ( SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"8.0") ) {
-    if ( fromInterfaceOrientation == UIInterfaceOrientationLandscapeLeft || fromInterfaceOrientation == UIInterfaceOrientationLandscapeRight ) {
-        device_h = real_device_h; device_w = real_device_w;
-    } else {
-        device_h = real_device_w; device_w = real_device_h;
-    }
-    printf("w=%d, h=%d\n", device_w, device_h);
-    FLView *view = (FLView *)[self view];
-    Fl_Window *w = [view getFl_Window];
-        int X = w->x(), Y = w->y(), W = w->w(), H = w->h();
-        //fl_lock_function();
-        //w->resize(0, 0, device_w, device_h);
-        //fl_unlock_function();
+        if ( fromInterfaceOrientation == UIInterfaceOrientationLandscapeLeft || fromInterfaceOrientation == UIInterfaceOrientationLandscapeRight ) {
+            device_h = real_device_h; device_w = real_device_w;
+        } else {
+            device_h = real_device_w; device_w = real_device_h;
+        }
+        //printf("w=%d, h=%d\n", device_w, device_h);
+        FLView *view = (FLView *)[self view];
+        Fl_Window *w = [view getFl_Window];
+        Fl::handle(FL_EVENT_SCREEN_ROTATION, w);
     }
     
     [UIView setAnimationsEnabled: YES];
@@ -2236,63 +2231,7 @@ static CGRect convertToCGRect (const RectType& r)
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    
-    UITapGestureRecognizer *singleTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tap1:)];
-    singleTap.delegate = self;
-    singleTap.numberOfTapsRequired = 1;
-    singleTap.numberOfTouchesRequired = 1;
-    [self.view addGestureRecognizer:singleTap];
-    [singleTap release];
-    
-    UITapGestureRecognizer *doubleTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tap2:)];
-    doubleTap.numberOfTapsRequired = 2;
-    doubleTap.numberOfTouchesRequired = 1;
-    [self.view addGestureRecognizer:doubleTap];
-    [singleTap requireGestureRecognizerToFail:doubleTap];
-    [doubleTap release];
 }
-
-- (void)tap1:(UITapGestureRecognizer *)recognizer
-{
-    CGPoint pos = [recognizer locationInView:self.view];
-    Fl::e_x = Fl::e_x_root = (int)pos.x;
-    Fl::e_y = Fl::e_x_root = (int)pos.y;
-    gesture_type_ = FL_GESTURE_TAP1;
-    FLView *view = (FLView *)[self view];
-    Fl_Window *w = [view getFl_Window];
-    Fl::handle(FL_GESTURE, w);
-    printf("tap 1\n");
-    //    singleLabel.text = @"Single Tap Detected";
-    //   [self performSelector:@selector(eraseMe:)
-    //                                                       withObject:singleLabel afterDelay:1.6f];
-}
-- (void)tap2:(UITapGestureRecognizer *)recognizer
-{
-    CGPoint pos = [recognizer locationInView:self.view];
-    Fl::e_x = Fl::e_x_root = (int)pos.x;
-    Fl::e_y = Fl::e_x_root = (int)pos.y;
-    gesture_type_ = FL_GESTURE_TAP2;
-    FLView *view = (FLView *)[self view];
-    Fl_Window *w = [view getFl_Window];
-    Fl::handle(FL_GESTURE, w);
-    printf("tap 2\n");
-    //doubleLabel.text = @"Double Tap Detected"; [self performSelector:@selector(eraseMe:)
-    //                                                    withObject:doubleLabel afterDelay:1.6f];
-}
-
-/*
-#pragma mark--
-#pragma mark--UIGestureRecognizerDelegate
--(BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldReceiveTouch:(UITouch *)touch
-{
-    return YES;
-    if([touch.view isKindOfClass:[UIButton class]])
-    {
-        return NO;
-    }
-    return YES;
-}
- */
 
 @end
 
@@ -2326,6 +2265,215 @@ static void BTKB_PressContinue_Stop()
 static char *e_text_buffer_=NULL;
 static int e_text_buffer_size_=0;
 
+// =====================================================================
+// type:0-begin,1-move,2-end,3-cancel
+static void iosMouseHandler(NSSet *touches, UIEvent *event, UIView *view, Fl_Window *win, int type)
+{
+    // type:0-begin,1-move,2-end,3-cancel
+    // if ( type == 3 ) return; // cancel
+    
+    fl_lock_function();
+    
+    if (!win->shown()) {
+        fl_unlock_function();
+        return;
+    }
+    
+    Fl_Window *first = Fl::first_window();
+    if (first != win && !(first->modal() || first->non_modal())) {
+        Fl::first_window(win);
+    }
+    
+    UITouch *touch = [touches anyObject];
+    touch_tapcount_ = (int)[touch tapCount];
+    
+    int wx=win->x(), wy=win->y();
+    for (Fl_Window* w = win->window(); w; w = w->window()) {
+        wx += w->x();
+        wy += w->y();
+    }
+
+    CGPoint pos;
+    NSEnumerator *enumerator = [touches objectEnumerator];
+    int i;
+    if ( type == 0 ) {
+        while (touch = [enumerator nextObject]) {
+            for (i=0; i<MaxFinger; i++) {
+                if (touch_class[i] == 0) {
+                    touch_class[i] = touch;
+                    break;
+                }
+            }
+        }
+        
+        //for (i=0; i<MaxFinger; i++) touch_end_class[i] = 0;
+    }
+    
+    if ( type > 1 ) {
+        while (touch = [enumerator nextObject]) {
+            for (i=0; i<MaxFinger; i++) {
+                if (touch_class[i] == touch) {
+                    touch_class[i] = 0;
+                    break;
+                }
+            }
+            for (i=0; i<MaxFinger; i++) {
+                if (touch_end_class[i] == 0) {
+                    touch_end_class[i] = touch;
+                    break;
+                }
+            }
+        }
+    }
+    
+    touch_finger_ = 0;
+    for (i=0; i<MaxFinger; i++) {
+        if (touch_class[i] != 0) {
+            touch_finger_++;
+        }
+    }
+    
+    int n = 0;
+    for (i=0; i<MaxFinger; i++) {
+        if ( touch_class[i] == 0 ) continue;
+        touch = touch_class[i];
+        pos = [touch locationInView:view];
+        touch_x_[n] = (int)pos.x;
+        touch_y_[n] = (int)pos.y;
+        touch_x_root_[n] = wx + touch_x_[n];
+        touch_y_root_[n] = wy + touch_y_[n];
+        n++;
+    }
+    
+    touch_end_finger_ = 0;
+    for (i=0; i<MaxFinger; i++) {
+        if (touch_end_class[i] != 0) {
+            touch_end_finger_++;
+        }
+    }
+    
+    n = 0;
+    for (i=0; i<MaxFinger; i++) {
+        if ( touch_end_class[i] == 0 ) continue;
+        touch = touch_end_class[i];
+        pos = [touch locationInView:view];
+        touch_end_x_[n] = (int)pos.x;
+        touch_end_y_[n] = (int)pos.y;
+        touch_end_x_root_[n] = wx + touch_x_[n];
+        touch_end_y_root_[n] = wy + touch_y_[n];
+        n++;
+    }
+    /*
+    while (touch = [enumerator nextObject]) {
+        pos = [touch locationInView:view];
+        touch_x_[touch_finger_] = (int)pos.x;
+        touch_y_[touch_finger_] = (int)pos.y;
+        touch_x_root_[touch_finger_] = wx + touch_x_[touch_finger_];
+        touch_y_root_[touch_finger_] = wy + touch_y_[touch_finger_];
+        touch_finger_++;
+    }
+     */
+    
+    if ( type == 0 ) {
+        touch_type_ = FL_TOUCH_BEGIN;
+        Fl::handle(FL_EVENT_TOUCH, win);
+		touch_type_ = FL_TOUCH_NONE;
+    } else if ( type == 1 ) {
+        touch_type_ = FL_TOUCH_MOVE;
+        Fl::handle(FL_EVENT_TOUCH, win);
+		touch_type_ = FL_TOUCH_NONE;
+    } else if ( type == 2 ) {
+        touch_type_ = FL_TOUCH_END;
+        Fl::handle(FL_EVENT_TOUCH, win);
+		touch_type_ = FL_TOUCH_NONE;
+        for (i=0; i<MaxFinger; i++) touch_end_class[i] = 0;
+    } else if ( type == 3 ) {
+        touch_type_ = FL_TOUCH_CANCEL;
+        Fl::handle(FL_EVENT_TOUCH, win);
+		touch_type_ = FL_TOUCH_NONE;
+        for (i=0; i<MaxFinger; i++) touch_end_class[i] = 0;
+    }
+    
+    if ( touch_finger_ == 1 && type == 0 ) { // begin
+        Fl::e_is_click = 1;
+        Fl::e_clicks = 0;
+        Fl::e_state = 0;
+        Fl::e_keysym = FL_Button + 1;
+        Fl::e_x = touch_x_[0];
+        Fl::e_y = touch_y_[0];
+        Fl::e_x_root = touch_x_root_[0];
+        Fl::e_y_root = touch_y_root_[0];
+        
+        mouse_simulate_by_touch_ = 1;
+        Fl::handle(FL_PUSH, win);
+        mouse_simulate_by_touch_ = 0;
+    }
+    
+    if ( touch_finger_ == 1 && type == 1 && touch_end_finger_ == 0 ) { // move
+        Fl::e_is_click = 1;
+        Fl::e_clicks = 0;
+        Fl::e_state = 0;
+        Fl::e_keysym = FL_Button + 1;
+        Fl::e_x = touch_x_[0];
+        Fl::e_y = touch_y_[0];
+        Fl::e_x_root = touch_x_root_[0];
+        Fl::e_y_root = touch_y_root_[0];
+        
+        mouse_simulate_by_touch_ = 1;
+        Fl::handle(FL_DRAG, win);
+        mouse_simulate_by_touch_ = 0;
+    }
+    
+    if ( touch_finger_ == 0 && type > 1 && touch_end_finger_ == 1 ) { // end and cancel
+        Fl::e_is_click = 1;
+        Fl::e_clicks = 0;
+        Fl::e_state = 0;
+        Fl::e_keysym = FL_Button + 1;
+        Fl::e_x = touch_end_x_[0];
+        Fl::e_y = touch_end_y_[0];
+        Fl::e_x_root = touch_end_x_root_[0];
+        Fl::e_y_root = touch_end_y_root_[0];
+        
+        mouse_simulate_by_touch_ = 1;
+        Fl::handle(FL_RELEASE, win);
+        mouse_simulate_by_touch_ = 0;
+    }
+    
+    /*
+    if ( touch_finger_ == 1 ) {
+        Fl::e_is_click = 1;
+        Fl::e_clicks = 0;
+        Fl::e_state = 0;
+        Fl::e_keysym = FL_Button + 1;
+        Fl::e_x = touch_x_[0];
+        Fl::e_y = touch_y_[0];
+        Fl::e_x_root = touch_x_root_[0];
+        Fl::e_y_root = touch_y_root_[0];
+        
+        if ( type == 0 ) {
+            mouse_simulate_by_touch_ = 1;
+            Fl::handle(FL_PUSH, win);
+            mouse_simulate_by_touch_ = 0;
+        } else if ( type == 1 ) {
+            mouse_simulate_by_touch_ = 1;
+            Fl::handle(FL_DRAG, win);
+            mouse_simulate_by_touch_ = 0;
+        } else if ( type == 2 ) {
+            mouse_simulate_by_touch_ = 1;
+            Fl::handle(FL_RELEASE, win);
+            mouse_simulate_by_touch_ = 0;
+        } else if ( type == 3 ) {
+            mouse_simulate_by_touch_ = 1;
+            Fl::handle(FL_RELEASE, win);
+            mouse_simulate_by_touch_ = 0;
+        }
+    }
+     */
+    
+    fl_unlock_function();
+}
+
+// =====================================================================
 @implementation FLView
 
 - (FLView*) initWithFlWindow: (Fl_Window*)win contentRect: (CGRect) rect;
@@ -2334,8 +2482,6 @@ static int e_text_buffer_size_=0;
 	
 	flwindow = win;
     in_key_event = NO;
-    
-    printf("initWithFlWindow window:%x\n", win);
     
     CGRect r;
     r.origin.x = 10; r.origin.y = 140; r.size.width = 120; r.size.height = 50;
@@ -2351,56 +2497,6 @@ static int e_text_buffer_size_=0;
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillShow:) name:UIKeyboardWillShowNotification object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillHide:) name:UIKeyboardWillHideNotification object:nil];
-    
-    //*
-    /*
-    UITapGestureRecognizer *singleTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tap1:)];
-    singleTap.delegate = self;
-    singleTap.numberOfTapsRequired = 1;
-    singleTap.numberOfTouchesRequired = 1;
-    [self addGestureRecognizer:singleTap];
-    
-    UITapGestureRecognizer *doubleTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tap2:)];
-    doubleTap.numberOfTapsRequired = 2;
-    doubleTap.numberOfTouchesRequired = 1;
-    [self addGestureRecognizer:doubleTap];
-    [singleTap requireGestureRecognizerToFail:doubleTap];
-     //*/
-    
-    /*
-    UITapGestureRecognizer *tripleTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tap3)];
-    tripleTap.numberOfTapsRequired = 3;
-    tripleTap.numberOfTouchesRequired = 1;
-    [self addGestureRecognizer:tripleTap];
-    [doubleTap requireGestureRecognizerToFail:tripleTap];
-    
-    UITapGestureRecognizer *quadrupleTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tap4)];
-    quadrupleTap.numberOfTapsRequired = 4;
-    quadrupleTap.numberOfTouchesRequired = 1;
-    [self addGestureRecognizer:quadrupleTap];
-    [tripleTap requireGestureRecognizerToFail:quadrupleTap];
-     //*/
-    
-    // pinch
-    UIPinchGestureRecognizer *pinch = [[UIPinchGestureRecognizer alloc] initWithTarget:self action:@selector(doPinch:)];
-    [self addGestureRecognizer:pinch];
-    
-    /*
-    // swipe
-    for (NSUInteger touchCount = 1; touchCount <= 5; touchCount++) {
-        UISwipeGestureRecognizer *vertical;
-        vertical = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(reportVerticalSwipe:)];
-        vertical.direction = UISwipeGestureRecognizerDirectionUp | UISwipeGestureRecognizerDirectionDown;
-        vertical.numberOfTouchesRequired = touchCount;
-        [self addGestureRecognizer:vertical];
-        
-        UISwipeGestureRecognizer *horizontal;
-        horizontal = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(reportHorizontalSwipe:)];
-        horizontal.direction = UISwipeGestureRecognizerDirectionLeft | UISwipeGestureRecognizerDirectionRight;
-        horizontal.numberOfTouchesRequired = touchCount;
-        [self addGestureRecognizer:horizontal];
-    }
-     */
     
     return self;
 }
@@ -2420,7 +2516,6 @@ static int e_text_buffer_size_=0;
     [super dealloc];
 }
 
-//==============================================================================
 - (void) drawRect: (CGRect) r
 {
     fl_lock_function();
@@ -2430,185 +2525,66 @@ static int e_text_buffer_size_=0;
     handleUpdateEvent(w);
     through_drawRect = NO;
     fl_unlock_function();
-    
-    /*
-    //if (owner != nullptr) owner->drawRect (r);
-	
-	fl_lock_function();
-	through_drawRect = YES;
-	if (fl_x_to_redraw) fl_x_to_redraw->flush();
-	else handleUpdateEvent(flwindow);
-	through_drawRect = NO;
-	fl_unlock_function();
-     */
 }
 
 //==============================================================================
-- (void)tap1:(UITapGestureRecognizer *)recognizer
-{
-    CGPoint pos = [recognizer locationInView:self];
-    Fl::e_x = Fl::e_x_root = (int)pos.x;
-    Fl::e_y = Fl::e_x_root = (int)pos.y;
-    gesture_type_ = FL_GESTURE_TAP1;
-    Fl::handle(FL_GESTURE, flwindow);
-    printf("tap 1\n");
-//    singleLabel.text = @"Single Tap Detected";
- //   [self performSelector:@selector(eraseMe:)
-   //                                                       withObject:singleLabel afterDelay:1.6f];
-}
-- (void)tap2:(UITapGestureRecognizer *)recognizer
-{
-    CGPoint pos = [recognizer locationInView:self];
-    Fl::e_x = Fl::e_x_root = (int)pos.x;
-    Fl::e_y = Fl::e_x_root = (int)pos.y;
-    gesture_type_ = FL_GESTURE_TAP2;
-    Fl::handle(FL_GESTURE, flwindow);
-    printf("tap 2\n");
-    //doubleLabel.text = @"Double Tap Detected"; [self performSelector:@selector(eraseMe:)
-      //                                                    withObject:doubleLabel afterDelay:1.6f];
-}
-- (void)tap3 {
-    printf("tap 3\n");
-    //tripleLabel.text = @"Triple Tap Detected"; [self performSelector:@selector(eraseMe:)
-      //                                                    withObject:tripleLabel afterDelay:1.6f];
-}
-- (void)tap4 {
-    printf("tap 4\n");
-    //quadrupleLabel.text = @"Quadruple Tap Detected"; [self performSelector:@selector(eraseMe:)
-      //                                                          withObject:quadrupleLabel afterDelay:1.6f];
-}
-
-- (void)doPinch:(UIPinchGestureRecognizer *)pinch
-{
-    if ( pinch.state == UIGestureRecognizerStateChanged ) {
-        gesture_type_ = FL_GESTURE_PINCH;
-        gesture_pinch_scale_ = (float)pinch.scale;
-        Fl::handle(FL_GESTURE, flwindow);
-        printf("pinch scale:%f\n", pinch.scale);
-    }
-    
-    if (pinch.state == UIGestureRecognizerStateBegan) {
-        gesture_type_ = FL_GESTURE_PINCH_BEGIN;
-        gesture_pinch_scale_ = (float)pinch.scale;
-        Fl::handle(FL_GESTURE, flwindow);
-        return;
-    }
-    
-    gesture_type_ = FL_GESTURE_PINCH_END;
-    gesture_pinch_scale_ = (float)pinch.scale;
-    Fl::handle(FL_GESTURE, flwindow);
-}
-
-- (void)reportHorizontalSwipe:(UIGestureRecognizer *)recognizer
-{
-    printf("Horizontal swipe detected\n");
-    /*
-    if ( recognizer.state.direction == UISwipeGestureRecognizerDirectionRight) {
-        printf("Horizontal swipe detected, right\n");
-    }
-    if ( recognizer.state == UISwipeGestureRecognizerDirectionLeft) {
-        printf("Horizontal swipe detected, left\n");
-    }
-    if ( recognizer.state == UISwipeGestureRecognizerDirectionUp) {
-        printf("Horizontal swipe detected, up\n");
-    }
-    if ( recognizer.state == UISwipeGestureRecognizerDirectionDown) {
-        printf("Horizontal swipe detected, down\n");
-    }
-     */
-    
-//    label.text = [NSString stringWithFormat:@"%@Horizontal swipe detected",
-//                  [self descriptionForTouchCount:[recognizer numberOfTouches]]];
- //   [self performSelector:@selector(eraseText) withObject:nil afterDelay:2];
-}
-- (void)reportVerticalSwipe:(UIGestureRecognizer *)recognizer
-{
-    printf("Vertical swipe detected\n");
-//    label.text = [NSString stringWithFormat:@"%@Vertical swipe detected",
-  //                [self descriptionForTouchCount:[recognizer numberOfTouches]]];;
-    //[self performSelector:@selector(eraseText) withObject:nil afterDelay:2];
-}
-
-- (void)Tap1Down
-{
-    printf("tap 1 down\n");
-}
-
-- (void)singleTap
-{
-    [self performSelector:@selector(Tap1Down) withObject:nil afterDelay:0.6f];
-}
-
-- (void)Tap2Down
-{
-    printf("tap 2 down\n");
-}
-
-- (void)doubleTap
-{
-    [self performSelector:@selector(Tap2Down) withObject:nil afterDelay:0.6f];
-}
-
 - (void) touchesBegan: (NSSet*) touches withEvent: (UIEvent*) event
 {
-    UITouch *touch = [touches anyObject];
-    NSUInteger tapcount = [touch tapCount];
-    NSUInteger finger = [touches count];
-    if ( tapcount == 1 && finger == 1 ) {
-        printf("touch begin\n");
-        iosMouseHandler(touches, event, self, flwindow, 0);
-    }
+    iosMouseHandler(touches, event, self, flwindow, 0);
 }
 
 - (void) touchesMoved: (NSSet*) touches withEvent: (UIEvent*) event
 {
-    UITouch *touch = [touches anyObject];
-    NSUInteger tapcount = [touch tapCount];
-    NSUInteger finger = [touches count];
-    if ( tapcount == 1 && finger == 1 ) {
-        printf("touch move\n");
-        iosMouseHandler(touches, event, self, flwindow, 1);
-    }
+    iosMouseHandler(touches, event, self, flwindow, 1);
 }
 
 - (void) touchesEnded: (NSSet*) touches withEvent: (UIEvent*) event
 {
-    UITouch *touch = [touches anyObject];
-    NSUInteger tapcount = [touch tapCount];
-    NSUInteger finger = [touches count];
-    if ( tapcount == 1 && finger == 1 ) {
-        printf("touch end\n");
-        iosMouseHandler(touches, event, self, flwindow, 2);
-    }
+    iosMouseHandler(touches, event, self, flwindow, 2);
 }
 
 - (void) touchesCancelled: (NSSet*) touches withEvent: (UIEvent*) event
 {
-    //if (owner != nullptr)
-    //    owner->handleTouches (event, false, true, true);
+    //printf("touch cancel\n");
+    
+    iosMouseHandler(touches, event, self, flwindow, 3);
 
-    [self touchesEnded: touches withEvent: event];
+    //[self touchesEnded: touches withEvent: event];
 }
 
 //==============================================================================
 - (BOOL) becomeFirstResponder
 {
-    return true;
+    return YES;
+    if (Fl::modal_ && (Fl::modal_ != flwindow)) return NO;  // prevent the caption to be redrawn as active on click
+    //  when another modal window is currently the key win
+    return !(flwindow->tooltip_window() || flwindow->menu_window() || flwindow->parent());
+    //return true;
 }
 
 - (BOOL) resignFirstResponder
 {
-    return true;
+    return YES;
 }
 
 - (BOOL) canBecomeFirstResponder
 {
-    if ( Fl::modal_ && (Fl::modal_ != flwindow) ) return NO;
-    return !(flwindow->tooltip_window() || flwindow->menu_window());
+    return YES;
+    if (Fl::modal_ && (Fl::modal_ != flwindow)) return NO;  // prevent the caption to be redrawn as active on click
+                                                     //  when another modal window is currently the key win
+    return !(flwindow->tooltip_window() || flwindow->menu_window() || flwindow->parent());
+    
+    //if ( Fl::modal_ && (Fl::modal_ != flwindow) ) return NO;
+    //return !(flwindow->tooltip_window() || flwindow->menu_window());
 }
 
 - (void)textViewDidChange:(UITextView *)textView
 {
+    Fl_Widget *focus = Fl::focus();
+    Fl_Window *wfocus = [(FLWindow *)[self window] getFl_Window];
+    if (!focus) focus = wfocus;
+    //[self becomeFirstResponder];
+    
     const char *ss;// = [textView.text UTF8String];
     //int cursorPosition = textView.selectedRange.location;
     //int len = textView.selectedRange.length;
@@ -2692,6 +2668,8 @@ static int e_text_buffer_size_=0;
         Fl::e_text = e_text_buffer_;
         
         if ( 0 == strcmp(e_text_buffer_, "\n") || 0 == strcmp(e_text_buffer_, "\r") || 0 == strcmp(e_text_buffer_, "\r\n") ) {
+            //printf("=>send enter\n");
+            Fl::e_text = "";
             Fl::e_length = 0;
             Fl::e_keysym = FL_Enter;
             Fl::handle(FL_KEYBOARD, target);
@@ -2704,6 +2682,7 @@ static int e_text_buffer_size_=0;
         
         if ( 0 == strcmp(e_text_buffer_, "\t") ) {
             Fl::e_length = 0;
+            Fl::e_text = "";
             Fl::e_keysym = FL_Tab;
             Fl::handle(FL_KEYBOARD, target);
             Fl::e_length = 0;
@@ -2727,7 +2706,7 @@ static int e_text_buffer_size_=0;
 }
 
 - (void)escapeKeyPressed:(UIKeyCommand *)keyCommand {
-    printf("esc\n");
+    //printf("esc\n");
     //UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"UIKeyCommand Demo" message:[NSString stringWithFormat:@"%@ pressed", keyCommand.input] delegate:nil cancelButtonTitle:@"Ok" otherButtonTitles:nil];
     //[alertView show];
 }
@@ -3073,6 +3052,11 @@ static int e_text_buffer_size_=0;
 
 - (void) keyboardWillShow:(NSNotification *)notification
 {
+    softkeyboard_isshow_ = 1;
+    Fl_Window *win = Fl::first_window();
+    if ( win ) Fl::handle(FL_EVENT_SOFTKB_CHANGE, win);//flwindow);
+    
+    /*
     //printf("keyboard show\n");
     
     int x = flwindow->x();
@@ -3082,10 +3066,16 @@ static int e_text_buffer_size_=0;
     //fl_lock_function();
     //flwindow->resize(x, y, w, h);//0, 0, device_w, device_h);
     //fl_unlock_function();
+     */
 }
 
 - (void) keyboardWillHide:(NSNotification *)notification
 {
+    softkeyboard_isshow_ = 0;
+    Fl_Window *win = Fl::first_window();
+    if ( win ) Fl::handle(FL_EVENT_SOFTKB_CHANGE, win);//flwindow);
+    
+    /*
     //printf("keyboard hide\n");
     
     int x = flwindow->x();
@@ -3095,6 +3085,7 @@ static int e_text_buffer_size_=0;
     //fl_lock_function();
     //flwindow->resize(x, y, w, h);//0, 0, device_w, device_h);
     //fl_unlock_function();
+     */
 }
 
 @end
@@ -3123,6 +3114,11 @@ static int e_text_buffer_size_=0;
 @end
 
 //==============================================================================
+int Fl_X::softkeyboard_isshow()
+{
+    return softkeyboard_isshow_;
+}
+
 void Fl_X::softkeyboard_work_area(int &X, int &Y, int &W, int &H)
 {
     X = softkeyboard_x;
@@ -3131,14 +3127,77 @@ void Fl_X::softkeyboard_work_area(int &X, int &Y, int &W, int &H)
     H = softkeyboard_h;    
 }
 
-int Fl_X::gesture_type()
+int Fl_X::mouse_simulate_by_touch()
 {
-    return gesture_type_;
+    return mouse_simulate_by_touch_;
 }
 
-float Fl_X::gesture_pinch_scale()
+int Fl_X::touch_type()
 {
-    return gesture_pinch_scale_;
+    return touch_type_;
+}
+
+int Fl_X::touch_tapcount()
+{
+    return touch_tapcount_;
+}
+
+int Fl_X::touch_finger()
+{
+    return touch_finger_;
+}
+
+int Fl_X::touch_x(int finger)
+{
+    if ( finger < 0 || finger >= MaxFinger ) return 0;
+    return touch_x_[finger];
+}
+
+int Fl_X::touch_y(int finger)
+{
+    if ( finger < 0 || finger >= MaxFinger ) return 0;
+    return touch_y_[finger];
+}
+
+int Fl_X::touch_x_root(int finger)
+{
+    if ( finger < 0 || finger >= MaxFinger ) return 0;
+    return touch_x_root_[finger];
+}
+
+int Fl_X::touch_y_root(int finger)
+{
+    if ( finger < 0 || finger >= MaxFinger ) return 0;
+    return touch_y_root_[finger];
+}
+
+int Fl_X::touch_end_finger()
+{
+    return touch_end_finger_;
+}
+
+int Fl_X::touch_end_x(int finger)
+{
+    if ( finger < 0 || finger >= MaxFinger ) return 0;
+    return touch_end_x_[finger];
+}
+
+int Fl_X::touch_end_y(int finger)
+{
+    if ( finger < 0 || finger >= MaxFinger ) return 0;
+    return touch_end_y_[finger];
+}
+
+int Fl_X::touch_end_x_root(int finger)
+{
+    if ( finger < 0 || finger >= MaxFinger ) return 0;
+    return touch_end_x_root_[finger];
+}
+
+int Fl_X::touch_end_y_root(int finger)
+{
+    if ( finger < 0 || finger >= MaxFinger ) return 0;
+    return touch_end_y_root_[finger];
 }
 
 //

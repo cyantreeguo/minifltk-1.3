@@ -83,6 +83,11 @@ Fl_Window *Fl_Tooltip::current_window(void)
 {
 	return (Fl_Window*)window;
 }
+#elif __FLTK_IPHONEOS__
+Fl_Window *Fl_Tooltip::current_window(void)
+{
+    return (Fl_Window*)window;
+}
 #endif
 
 void Fl_TooltipBox::layout()

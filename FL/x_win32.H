@@ -105,6 +105,16 @@ public:
 	int set_cursor(Fl_Cursor);
 	int set_cursor(const Fl_RGB_Image*, int, int);
 	static Fl_X* make(Fl_Window*);
+	
+	// touch
+    static int mouse_simulate_by_touch();
+    static int touch_type();
+    static int touch_tapcount();
+    static int touch_finger();
+    static int touch_x(int finger);
+    static int touch_y(int finger);
+    static int touch_x_root(int finger);
+    static int touch_y_root(int finger);
 };
 extern FL_EXPORT UINT fl_wake_msg;
 extern FL_EXPORT char fl_override_redirect; // hack into Fl_Window::make_xid()

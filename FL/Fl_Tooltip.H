@@ -151,6 +151,8 @@ public:
 #if __FLTK_MACOSX__
 	// the unique tooltip window
 	static Fl_Window* current_window(void);
+#elif __FLTK_IPHONEOS__
+    static Fl_Window* current_window(void);
 #endif
 
 	// These should not be public, but Fl_Widget::tooltip() needs them...

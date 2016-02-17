@@ -1413,11 +1413,23 @@ public:
     
 // add by cyantree
 public:
+    static int softkeyboard_isshow(); // 0-hide, 1-show
     static void softkeyboard_work_area(int &X, int &Y, int &W, int &H);
     
-    // gesture
-    static int gesture_type();
-    static float gesture_pinch_scale();
+    // touch
+    static int mouse_simulate_by_touch();
+    static int touch_type();
+    static int touch_tapcount();
+    static int touch_finger();
+    static int touch_x(int finger);
+    static int touch_y(int finger);
+    static int touch_x_root(int finger);
+    static int touch_y_root(int finger);
+    static int touch_end_finger();
+    static int touch_end_x(int finger);
+    static int touch_end_y(int finger);
+    static int touch_end_x_root(int finger);
+    static int touch_end_y_root(int finger);
 };
 
 /**

@@ -429,18 +429,18 @@ enum Fl_Event {	// events
 	FL_ZOOM_GESTURE	= 26,
     
     // add by cyantree
-    FL_GESTURE = 1000
+    FL_EVENT_SOFTKB_CHANGE = 1000, // soft keyboard status changed, for ios/android/wp/win8,win10,etc
+    FL_EVENT_SCREEN_ROTATION = 1001, // screen rotation, app need resize by new screen size and soft keyboard size
+    FL_EVENT_TOUCH = 1002,
 };
 
-enum Fl_Gesture_Type {
-    FL_GESTURE_NONE = 0,
+enum Fl_Touch_Type {
+    FL_TOUCH_NONE = 0,
     
-    FL_GESTURE_TAP1,
-    FL_GESTURE_TAP2,
-    
-    FL_GESTURE_PINCH_BEGIN,
-    FL_GESTURE_PINCH,
-    FL_GESTURE_PINCH_END,
+    FL_TOUCH_BEGIN,
+    FL_TOUCH_MOVE,
+    FL_TOUCH_END,
+    FL_TOUCH_CANCEL,
 };
 
 /** \name When Conditions */

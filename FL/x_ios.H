@@ -40,6 +40,9 @@ typedef FLWindow *Window;
 #import <UIKit/UIKit.h>
 #import <Foundation/Foundation.h>
 
+//Import AudioToolbox.framework
+#import <AudioToolbox/AudioToolbox.h>
+
 #undef check // because of Fl::check()
 
 // ======================================================
@@ -169,10 +172,23 @@ public:
 	int set_cursor(Fl_Cursor){return 1;}
 	int set_cursor(const Fl_RGB_Image*, int, int) {return 1;}
     
+    static int softkeyboard_isshow();
     static void softkeyboard_work_area(int &X, int &Y, int &W, int &H);
-    // gesture
-    static int gesture_type();
-    static float gesture_pinch_scale();
+    // touch
+    static int mouse_simulate_by_touch();
+    static int touch_type();
+    static int touch_tapcount();
+    static int touch_finger();
+    static int touch_x(int finger);
+    static int touch_y(int finger);
+    static int touch_x_root(int finger);
+    static int touch_y_root(int finger);
+    
+    static int touch_end_finger();
+    static int touch_end_x(int finger);
+    static int touch_end_y(int finger);
+    static int touch_end_x_root(int finger);
+    static int touch_end_y_root(int finger);
 private:
 	//static void relink(Fl_Window*, Fl_Window*);
 	//bool subwindow;
@@ -180,6 +196,15 @@ private:
     // stores 3 binary flags: whether window is mapped to retina display; whether resolution just changed;
     // whether window is OpenGL and is currently being resized.
     unsigned mapped_to_retina_;
+    
+public:
+    static void beep()
+    {
+        //SystemSoundID soundID;
+        //NSString *strSoundFile =  @"alertsound.wav";
+        //AudioServicesCreateSystemSoundID((__bridge CFURLRef)[NSURL fileURLWithPath:strSoundFile],&soundID);
+        AudioServicesPlaySystemSound(1104);
+    }
 };
 
 extern Window fl_window;

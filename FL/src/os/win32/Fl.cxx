@@ -62,8 +62,22 @@
 #include <ole2.h>
 #include <shellapi.h>
 
+// touch
+static int mouse_simulate_by_touch_ = 0;
+static int touch_type_ = FL_TOUCH_NONE;
+static int touch_tapcount_ = 0;
+static int touch_finger_ = 0;
+#define MaxFinger 10
+static int touch_x_[MaxFinger] = {0}, touch_y_[MaxFinger] = {0}, touch_x_root_[MaxFinger] = {0}, touch_y_root_[MaxFinger] = {0};
+
 #ifndef WM_TOUCH
 #define WM_TOUCH 0x0240
+
+//#define TWF_FINETOUCH       (0x00000001)
+//#define TWF_WANTPALM        (0x00000002)
+
+#define MOUSEEVENT_FROMTOUCH 0xFF515700
+
 #define TOUCH_COORD_TO_PIXEL(l)  ((l) / 100)
 #define TOUCHEVENTF_MOVE    0x0001
 #define TOUCHEVENTF_DOWN    0x0002
@@ -114,20 +128,21 @@ enum Process_DPI_Awareness {
 };
 #endif
 
+// Shcore.dll
+typedef BOOL (WINAPI* SetProcessDPIAwareFunc)();
+typedef BOOL (WINAPI* SetProcessDPIAwarenessFunc) (Process_DPI_Awareness);
+static SetProcessDPIAwareFunc     setProcessDPIAware = NULL;
+static SetProcessDPIAwarenessFunc setProcessDPIAwareness = NULL;
 typedef BOOL (WINAPI* RegisterTouchWindowFunc) (HWND, ULONG);
 typedef BOOL (WINAPI* GetTouchInputInfoFunc) (HTOUCHINPUT, UINT, TOUCHINPUT*, int);
 typedef BOOL (WINAPI* CloseTouchInputHandleFunc) (HTOUCHINPUT);
 typedef BOOL (WINAPI* GetGestureInfoFunc) (HGESTUREINFO, GESTUREINFO*);
-typedef BOOL (WINAPI* SetProcessDPIAwareFunc)();
-typedef BOOL (WINAPI* SetProcessDPIAwarenessFunc) (Process_DPI_Awareness);
 typedef HRESULT (WINAPI* GetDPIForMonitorFunc) (HMONITOR, Monitor_DPI_Type, UINT*, UINT*);
 
 static RegisterTouchWindowFunc    registerTouchWindow = NULL;
 static GetTouchInputInfoFunc      getTouchInputInfo = NULL;
 static CloseTouchInputHandleFunc  closeTouchInputHandle = NULL;
 static GetGestureInfoFunc         getGestureInfo = NULL;
-static SetProcessDPIAwareFunc     setProcessDPIAware = NULL;
-static SetProcessDPIAwarenessFunc setProcessDPIAwareness = NULL;
 static GetDPIForMonitorFunc       getDPIForMonitor = NULL;
 
 static bool hasCheckedForMultiTouch = false;
@@ -139,6 +154,12 @@ static void* getUser32Function (const char* functionName)
 	return (void*) GetProcAddress (module, functionName);
 }
 
+static void* getUxThemeFunction(const char* functionName)
+{
+	HMODULE module = GetModuleHandleA("UxTheme.dll");
+	if (module == 0) return 0;
+	return (void*) GetProcAddress (module, functionName);
+}
 static bool canUseMultiTouch()
 {
 	if (registerTouchWindow == NULL && ! hasCheckedForMultiTouch) {
@@ -153,6 +174,32 @@ static bool canUseMultiTouch()
 	return registerTouchWindow != NULL;
 }
 
+static void* getShcoreFunction(const char* functionName)
+{
+	HMODULE module = GetModuleHandleA("Shcore.dll");
+	if (module == 0) return 0;
+	return (void*) GetProcAddress (module, functionName);
+}
+
+static bool LoadHDPI()
+{
+	if ( setProcessDPIAware == NULL ) {
+		setProcessDPIAware     = (SetProcessDPIAwareFunc)     getUser32Function("SetProcessDPIAware");
+		setProcessDPIAwareness = (SetProcessDPIAwarenessFunc) getShcoreFunction("SetProcessDpiAwareness");
+
+		if ( setProcessDPIAware != NULL ) {
+			//printf("1\n");
+			setProcessDPIAware();
+			return setProcessDPIAware != NULL;
+		}
+		if ( setProcessDPIAwareness != NULL ) {
+			//printf("2\n");
+			setProcessDPIAwareness(Process_Per_Monitor_DPI_Aware);
+		}
+	}
+
+	return setProcessDPIAwareness != NULL;
+}
 //
 // USE_ASYNC_SELECT - define it if you have WSAAsyncSelect()...
 // USE_ASYNC_SELECT is OBSOLETED in 1.3 for the following reasons:
@@ -1270,6 +1317,11 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 	//fl_msg.pt = ???
 	//fl_msg.lPrivate = ???
 
+	unsigned int info = GetMessageExtraInfo();
+	if ((info & MOUSEEVENT_FROMTOUCH) == MOUSEEVENT_FROMTOUCH) {
+		return DefWindowProcW(hWnd, uMsg, wParam, lParam);
+	}
+
 	Fl_Window *window = fl_find(hWnd);
 
 	if (window) switch (uMsg) {
@@ -1671,13 +1723,114 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 
 			return 0;
 
-		case WM_TOUCH:
-			//printf("touch\n");
-			//if (getTouchInputInfo != NULL) return doTouchEvent((int)wParam, (HTOUCHINPUT)lParam);
-			break;
+		case WM_TOUCH: {
+			Fl_Window *touchwin = window;
+			while (touchwin->parent()) {
+				//Fl::e_x += window->x();
+				//Fl::e_y += window->y();
+				touchwin = touchwin->window();
+			}
+
+			if (getTouchInputInfo == NULL || closeTouchInputHandle == NULL) break;
+			// WM_TOUCH message can contain several messages from different contacts
+			// packed together.
+			// Message parameters need to be decoded:
+			UINT  cInputs  = (int) wParam;      // Number of actual per-contact messages
+			TOUCHINPUT* pInputs = new TOUCHINPUT[cInputs]; // Allocate the storage for the parameters of the per-contact messages
+			if (pInputs == NULL) break;
+			// Unpack message parameters into the array of TOUCHINPUT structures, each
+			// representing a message for one single contact.
+
+			touch_tapcount_ = 1;
+			int wx= touchwin->x(), wy= touchwin->y();
+			for (Fl_Window* w = touchwin->window(); w; w = w->window()) {
+				wx += w->x();
+				wy += w->y();
+			}
+			touch_finger_ = cInputs;
+
+			int type = 0;
+			if (getTouchInputInfo((HTOUCHINPUT)lParam, cInputs, pInputs, sizeof(TOUCHINPUT))) {
+				// For each contact, dispatch the message to the appropriate message handler.
+				for (unsigned int i = 0; i < cInputs; i++) {
+					touch_x_root_[i] = pInputs[i].x/100;
+					touch_y_root_[i] = pInputs[i].y/100;
+					touch_x_[i] = touch_x_root_[i] - wx;
+					touch_y_[i] = touch_y_root_[i] - wy;
+					if (pInputs[i].dwFlags & TOUCHEVENTF_DOWN) {
+						//g_pIManipProc->ProcessDown(pInputs[i].dwID, (FLOAT)pInputs[i].x, (FLOAT)pInputs[i].y);
+						touch_type_ = FL_TOUCH_BEGIN;
+						type = 0;
+					}
+					if (pInputs[i].dwFlags & TOUCHEVENTF_UP) {
+						//g_pIManipProc->ProcessUp(pInputs[i].dwID, (FLOAT)pInputs[i].x, (FLOAT)pInputs[i].y);
+						touch_type_ = FL_TOUCH_END;
+						type = 2;
+					}
+					if (pInputs[i].dwFlags & TOUCHEVENTF_MOVE) {
+						//g_pIManipProc->ProcessMove(pInputs[i].dwID, (FLOAT)pInputs[i].x, (FLOAT)pInputs[i].y);
+						touch_type_ = FL_TOUCH_MOVE;
+						type = 1;
+					}
+				}
+			} else {
+				// error handling, presumably out of memory
+				//ASSERT(FALSE && L"Error: failed to execute GetTouchInputInfo");
+				delete [] pInputs;
+				break;
+			}
+			if (!closeTouchInputHandle((HTOUCHINPUT)lParam)) {
+				// error handling, presumably out of memory
+				//ASSERT(FALSE && L"Error: failed to execute CloseTouchInputHandle");
+				delete [] pInputs;
+				break;
+			}
+			delete [] pInputs;
+
+			
+			Fl::handle(FL_EVENT_TOUCH, touchwin);
+			touch_type_ = FL_TOUCH_NONE;
+
+			if ( touch_finger_ == 1 ) {
+				Fl::e_is_click = 1;
+				Fl::e_clicks = 0;
+				Fl::e_state = 0;
+				Fl::e_keysym = FL_Button + 1;
+				Fl::e_x = touch_x_[0];
+				Fl::e_y = touch_y_[0];
+				Fl::e_x_root = touch_x_root_[0];
+				Fl::e_y_root = touch_y_root_[0];
+
+				if ( type == 0 ) {
+					printf("fl push\n");
+					mouse_simulate_by_touch_ = 1;
+					Fl::handle(FL_PUSH, touchwin);
+					mouse_simulate_by_touch_ = 0;
+				} else if ( type == 1 ) {
+					printf("fl drag\n");
+					mouse_simulate_by_touch_ = 1;
+					Fl::handle(FL_DRAG, touchwin);
+					mouse_simulate_by_touch_ = 0;
+				} else if ( type == 2 ) {
+					printf("fl release\n");
+					mouse_simulate_by_touch_ = 1;
+					Fl::handle(FL_RELEASE, touchwin);
+					mouse_simulate_by_touch_ = 0;
+				} else if ( type == 3 ) {
+					mouse_simulate_by_touch_ = 1;
+					Fl::handle(FL_RELEASE, touchwin);
+					mouse_simulate_by_touch_ = 0;
+				}
+			}
+
+			// Force redraw of the rectangle
+			//InvalidateRect(hWnd, NULL, TRUE);
+		}
+		//if (getTouchInputInfo != NULL) return doTouchEvent((int)wParam, (HTOUCHINPUT)lParam);
+		break;
 
 		case 0x119: /* WM_GESTURE */
-			//printf("gesture\n");
+			printf("gesture\n");
 			//if (doGestureEvent (lParam)) return 0;
 			break;
 
@@ -2217,7 +2370,9 @@ Fl_X* Fl_X::make(Fl_Window* w)
 	RegisterDragDrop(x->xid, flIDropTarget);
 
 	if (canUseMultiTouch())
-		registerTouchWindow(x->xid, 0);
+		registerTouchWindow(x->xid, 0);// TWF_FINETOUCH);// TWF_WANTPALM);
+
+	LoadHDPI();
 
 	if (!im_enabled)
 		flImmAssociateContextEx(x->xid, 0, 0);
@@ -3128,6 +3283,66 @@ void preparePrintFront(void)
 	w.show();
 }
 #endif // USE_PRINT_BUTTON
+
+//==============================================================================
+/*
+int Fl_X::softkeyboard_isshow()
+{
+    return softkeyboard_isshow_;
+}
+
+void Fl_X::softkeyboard_work_area(int &X, int &Y, int &W, int &H)
+{
+    X = softkeyboard_x;
+    Y = softkeyboard_y;
+    W = softkeyboard_w;
+    H = softkeyboard_h;
+}
+*/
+
+int Fl_X::mouse_simulate_by_touch()
+{
+	return mouse_simulate_by_touch_;
+}
+
+int Fl_X::touch_type()
+{
+	return touch_type_;
+}
+
+int Fl_X::touch_tapcount()
+{
+	return touch_tapcount_;
+}
+
+int Fl_X::touch_finger()
+{
+	return touch_finger_;
+}
+
+int Fl_X::touch_x(int finger)
+{
+	if ( finger < 0 || finger >= MaxFinger ) return 0;
+	return touch_x_[finger];
+}
+
+int Fl_X::touch_y(int finger)
+{
+	if ( finger < 0 || finger >= MaxFinger ) return 0;
+	return touch_y_[finger];
+}
+
+int Fl_X::touch_x_root(int finger)
+{
+	if ( finger < 0 || finger >= MaxFinger ) return 0;
+	return touch_x_root_[finger];
+}
+
+int Fl_X::touch_y_root(int finger)
+{
+	if ( finger < 0 || finger >= MaxFinger ) return 0;
+	return touch_y_root_[finger];
+}
 
 #endif // FL_DOXYGEN
 
