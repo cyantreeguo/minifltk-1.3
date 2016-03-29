@@ -215,7 +215,7 @@ int Fl_Tree::extend_selection(Fl_Tree_Item *from, Fl_Tree_Item *to,
                               int val, bool visible)
 {
 #else
-/// \notes Made public in 1.3.3 ABI
+/// \note Made public in 1.3.3 ABI
 // Adding overload if not at least one overload breaks ABI, so avoid
 // by making a private function until ABI can change..
 int Fl_Tree::extend_selection__(Fl_Tree_Item *from, Fl_Tree_Item *to,
@@ -293,7 +293,7 @@ int Fl_Tree::handle(int e)
 	// NEW: data inside Fl_Tree
 #else /*FLTK_ABI_VERSION*/
 	// OLD:
-	static Fl_Tree_Item *_lastselect = 0;
+	static Fl_Tree_Item *_lastselect = 0;		// used to extend selections
 #endif /*FLTK_ABI_VERSION*/
 	// Developer note: Fl_Browser_::handle() used for reference here..
 	// #include <names.h>	// for event debugging
@@ -968,7 +968,7 @@ int Fl_Tree::draw_tree()
 			int SY = Y + _prefs.marginbottom();
 #else /*FLTK_ABI_VERSION*/
 // OLD
-int SY = Y;
+			int SY = Y;
 #endif /*FLTK_ABI_VERSION*/
 			int ydiff = (SY+_prefs.margintop())-Ysave;		// ydiff=size of tree
 			int ytoofar = (cy+ch) - SY;				// ytoofar -- if >0, scrolled beyond bottom
@@ -1165,6 +1165,9 @@ int Fl_Tree::remove(Fl_Tree_Item *item)
 {
 	// Item being removed is focus item? zero focus
 	if ( item == _item_focus ) _item_focus = 0;
+#if FLTK_ABI_VERSION >= 10301
+	if ( item == _lastselect ) _lastselect = 0;
+#endif /*FLTK_ABI_VERSION*/
 	if ( item == _root ) {
 		clear();
 	} else {
@@ -1184,6 +1187,10 @@ void Fl_Tree::clear()
 	_root->clear_children();
 	delete _root;
 	_root = 0;
+	_item_focus = 0;
+#if FLTK_ABI_VERSION >= 10301
+	_lastselect = 0;
+#endif /*FLTK_ABI_VERSION*/
 }
 
 /// Clear all the children for \p 'item'.
@@ -1228,7 +1235,7 @@ Fl_Tree_Item *Fl_Tree::find_item(const char *path)
 {
 	// "Effective C++, 3rd Ed", p.23. Sola fide, Amen.
 	return(const_cast<Fl_Tree_Item*>(
-	               static_cast<const Fl_Tree&>(*this).find_item(path)));
+	           static_cast<const Fl_Tree&>(*this).find_item(path)));
 }
 
 // Handle safe 'reverse string concatenation'.
@@ -1281,7 +1288,10 @@ int Fl_Tree::item_pathname(char *pathname, int pathnamelen, const Fl_Tree_Item *
 		SAFE_RCAT('/');						// rcat leading slash
 		item = item->parent();					// move up tree (NULL==root)
 	}
-	if ( *(++s) == '/' ) ++s;				// leave off leading slash from pathname
+	if ( *(++s) == '/' ) {
+		++s;    // leave off leading slash from pathname
+		--slen;
+	}
 	if ( s != pathname ) memmove(pathname, s, slen);	// Shift down right-aligned string
 	return(0);
 }
@@ -1315,7 +1325,7 @@ Fl_Tree_Item *Fl_Tree::find_clicked(int yonly)
 {
 	// "Effective C++, 3rd Ed", p.23. Sola fide, Amen.
 	return(const_cast<Fl_Tree_Item*>(
-	               static_cast<const Fl_Tree&>(*this).find_clicked(yonly)));
+	           static_cast<const Fl_Tree&>(*this).find_clicked(yonly)));
 }
 #else
 /// Find the item that was last clicked on.
@@ -1343,7 +1353,7 @@ Fl_Tree_Item *Fl_Tree::find_clicked()
 {
 	// "Effective C++, 3rd Ed", p.23. Sola fide, Amen.
 	return(const_cast<Fl_Tree_Item*>(
-	               static_cast<const Fl_Tree&>(*this).find_clicked()));
+	           static_cast<const Fl_Tree&>(*this).find_clicked()));
 }
 #endif
 

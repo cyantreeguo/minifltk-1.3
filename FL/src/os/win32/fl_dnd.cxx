@@ -62,7 +62,8 @@ class FLDropTarget : public IDropTarget
 public:
 	FLDropTarget() : m_cRefCount(0) { } // initialize
 	virtual ~FLDropTarget() { }
-	HRESULT STDMETHODCALLTYPE QueryInterface( REFIID riid, LPVOID *ppvObject ) {
+	HRESULT STDMETHODCALLTYPE QueryInterface( REFIID riid, LPVOID *ppvObject )
+	{
 		if (IID_IUnknown==riid || IID_IDropTarget==riid) {
 			*ppvObject=this;
 			((LPUNKNOWN)*ppvObject)->AddRef();
@@ -71,17 +72,20 @@ public:
 		*ppvObject = NULL;
 		return E_NOINTERFACE;
 	}
-	ULONG STDMETHODCALLTYPE AddRef() {
+	ULONG STDMETHODCALLTYPE AddRef()
+	{
 		return ++m_cRefCount;
 	}
-	ULONG STDMETHODCALLTYPE Release() {
+	ULONG STDMETHODCALLTYPE Release()
+	{
 		long nTemp;
 		nTemp = --m_cRefCount;
 		if(nTemp==0)
 			delete this;
 		return nTemp;
 	}
-	HRESULT STDMETHODCALLTYPE DragEnter( IDataObject *pDataObj, DWORD /*grfKeyState*/, POINTL pt, DWORD *pdwEffect) {
+	HRESULT STDMETHODCALLTYPE DragEnter( IDataObject *pDataObj, DWORD /*grfKeyState*/, POINTL pt, DWORD *pdwEffect)
+	{
 		if( !pDataObj ) return E_INVALIDARG;
 		// set e_modifiers here from grfKeyState, set e_x and e_root_x
 		// check if FLTK handles this drag and return if it can't (i.e. BMP drag without filename)
@@ -109,7 +113,8 @@ public:
 		lastEffect = *pdwEffect;
 		return S_OK;
 	}
-	HRESULT STDMETHODCALLTYPE DragOver( DWORD /*grfKeyState*/, POINTL pt, DWORD *pdwEffect) {
+	HRESULT STDMETHODCALLTYPE DragOver( DWORD /*grfKeyState*/, POINTL pt, DWORD *pdwEffect)
+	{
 		if ( px==pt.x && py==pt.y ) {
 			*pdwEffect = lastEffect;
 			return S_OK;
@@ -137,9 +142,12 @@ public:
 		px = pt.x;
 		py = pt.y;
 		lastEffect = *pdwEffect;
+		// show insert position if dnd'ing in the same window/process (STR #3209)
+		Fl::flush();
 		return S_OK;
 	}
-	HRESULT STDMETHODCALLTYPE DragLeave() {
+	HRESULT STDMETHODCALLTYPE DragLeave()
+	{
 		if ( fl_dnd_target_window && fillCurrentDragData(0)) {
 			Fl::handle( FL_DND_LEAVE, fl_dnd_target_window );
 			fl_dnd_target_window = 0;
@@ -147,7 +155,8 @@ public:
 		}
 		return S_OK;
 	}
-	HRESULT STDMETHODCALLTYPE Drop( IDataObject *data, DWORD /*grfKeyState*/, POINTL pt, DWORD* /*pdwEffect*/) {
+	HRESULT STDMETHODCALLTYPE Drop( IDataObject *data, DWORD /*grfKeyState*/, POINTL pt, DWORD* /*pdwEffect*/)
+	{
 		if ( !fl_dnd_target_window )
 			return S_OK;
 		Fl_Window *target = fl_dnd_target_window;
@@ -191,14 +200,16 @@ private:
 	static int currDragSize;
 	static char currDragResult;
 
-	static void clearCurrentDragData() {
+	static void clearCurrentDragData()
+	{
 		currDragRef = 0;
 		if (currDragData) free(currDragData);
 		currDragData = 0;
 		currDragSize = 0;
 		currDragResult = 0;
 	}
-	static char fillCurrentDragData(IDataObject *data) {
+	static char fillCurrentDragData(IDataObject *data)
+	{
 		// shortcut through this whole procedure if there is no fresh data
 		if (!data)
 			return currDragResult;
@@ -313,11 +324,13 @@ class FLDropSource : public IDropSource
 {
 	DWORD m_cRefCount;
 public:
-	FLDropSource() {
+	FLDropSource()
+	{
 		m_cRefCount = 0;
 	}
 	virtual ~FLDropSource() { }
-	HRESULT STDMETHODCALLTYPE QueryInterface( REFIID riid, LPVOID *ppvObject ) {
+	HRESULT STDMETHODCALLTYPE QueryInterface( REFIID riid, LPVOID *ppvObject )
+	{
 		if (IID_IUnknown==riid || IID_IDropSource==riid) {
 			*ppvObject=this;
 			((LPUNKNOWN)*ppvObject)->AddRef();
@@ -326,20 +339,24 @@ public:
 		*ppvObject = NULL;
 		return E_NOINTERFACE;
 	}
-	ULONG STDMETHODCALLTYPE AddRef() {
+	ULONG STDMETHODCALLTYPE AddRef()
+	{
 		return ++m_cRefCount;
 	}
-	ULONG STDMETHODCALLTYPE Release() {
+	ULONG STDMETHODCALLTYPE Release()
+	{
 		long nTemp;
 		nTemp = --m_cRefCount;
 		if(nTemp==0)
 			delete this;
 		return nTemp;
 	}
-	STDMETHODIMP GiveFeedback( DWORD ) {
+	STDMETHODIMP GiveFeedback( DWORD )
+	{
 		return DRAGDROP_S_USEDEFAULTCURSORS;
 	}
-	STDMETHODIMP QueryContinueDrag( BOOL esc, DWORD keyState ) {
+	STDMETHODIMP QueryContinueDrag( BOOL esc, DWORD keyState )
+	{
 		if ( esc )
 			return DRAGDROP_S_CANCEL;
 		if ( !(keyState & (MK_LBUTTON|MK_MBUTTON|MK_RBUTTON)) )
@@ -353,11 +370,13 @@ public:
 	int n;
 	LONG m_lRefCount;
 
-	ULONG __stdcall AddRef(void) {
+	ULONG __stdcall AddRef(void)
+	{
 		return InterlockedIncrement(&m_lRefCount);
 	}
 
-	ULONG __stdcall Release(void) {
+	ULONG __stdcall Release(void)
+	{
 		LONG count = InterlockedDecrement(&m_lRefCount);
 		if(count == 0) {
 			delete this;
@@ -368,7 +387,8 @@ public:
 	}
 
 
-	HRESULT __stdcall QueryInterface(REFIID iid, void **ppvObject) {
+	HRESULT __stdcall QueryInterface(REFIID iid, void **ppvObject)
+	{
 		if(iid == IID_IEnumFORMATETC || iid == IID_IUnknown) {
 			AddRef();
 			*ppvObject = this;
@@ -379,7 +399,8 @@ public:
 		}
 	}
 
-	HRESULT __stdcall Next(ULONG celt, FORMATETC * rgelt, ULONG *pceltFetched) {
+	HRESULT __stdcall Next(ULONG celt, FORMATETC * rgelt, ULONG *pceltFetched)
+	{
 		if (n > 0) return S_FALSE;
 		for (ULONG i = 0; i < celt; i++) {
 			n++;
@@ -393,27 +414,32 @@ public:
 		return S_OK;
 	}
 
-	HRESULT __stdcall Skip(ULONG celt) {
+	HRESULT __stdcall Skip(ULONG celt)
+	{
 		n += celt;
 		return  (n == 0) ? S_OK : S_FALSE;
 	}
 
-	HRESULT __stdcall Reset(void) {
+	HRESULT __stdcall Reset(void)
+	{
 		n = 0;
 		return S_OK;
 	}
 
-	HRESULT __stdcall Clone(IEnumFORMATETC  **ppenum) {
+	HRESULT __stdcall Clone(IEnumFORMATETC  **ppenum)
+	{
 		*ppenum = new FLEnum();
 		return S_OK;
 	}
 
-	FLEnum(void) {
+	FLEnum(void)
+	{
 		m_lRefCount   = 1;
 		n = 0;
 	}
 
-	virtual ~FLEnum(void) {
+	virtual ~FLEnum(void)
+	{
 		n = 0;
 	}
 };
@@ -429,11 +455,13 @@ class FLDataObject : public IDataObject
 	DWORD m_cRefCount;
 	FLEnum *m_EnumF;
 public:
-	FLDataObject() {
+	FLDataObject()
+	{
 		m_cRefCount = 1;
 	}// m_EnumF = new FLEnum();}
 	virtual ~FLDataObject() { }
-	HRESULT STDMETHODCALLTYPE QueryInterface( REFIID riid, LPVOID *ppvObject ) {
+	HRESULT STDMETHODCALLTYPE QueryInterface( REFIID riid, LPVOID *ppvObject )
+	{
 		if (IID_IUnknown==riid || IID_IDataObject==riid) {
 			*ppvObject=this;
 			((LPUNKNOWN)*ppvObject)->AddRef();
@@ -442,10 +470,12 @@ public:
 		*ppvObject = NULL;
 		return E_NOINTERFACE;
 	}
-	ULONG STDMETHODCALLTYPE AddRef() {
+	ULONG STDMETHODCALLTYPE AddRef()
+	{
 		return ++m_cRefCount;
 	}
-	ULONG STDMETHODCALLTYPE Release() {
+	ULONG STDMETHODCALLTYPE Release()
+	{
 		long nTemp;
 		nTemp = --m_cRefCount;
 		if(nTemp==0)
@@ -453,7 +483,8 @@ public:
 		return nTemp;
 	}
 	// GetData currently allows UNICODE text through Global Memory only
-	HRESULT STDMETHODCALLTYPE GetData( FORMATETC *pformatetcIn, STGMEDIUM *pmedium ) {
+	HRESULT STDMETHODCALLTYPE GetData( FORMATETC *pformatetcIn, STGMEDIUM *pmedium )
+	{
 		if ((pformatetcIn->dwAspect & DVASPECT_CONTENT) &&
 		    (pformatetcIn->tymed & TYMED_HGLOBAL) &&
 		    (pformatetcIn->cfFormat == CF_UNICODETEXT)) {
@@ -498,7 +529,8 @@ public:
 		}
 		return DV_E_FORMATETC;
 	}
-	HRESULT STDMETHODCALLTYPE QueryGetData( FORMATETC *pformatetc ) {
+	HRESULT STDMETHODCALLTYPE QueryGetData( FORMATETC *pformatetc )
+	{
 		if ((pformatetc->dwAspect & DVASPECT_CONTENT) &&
 		    (pformatetc->tymed & TYMED_HGLOBAL) &&
 		    (pformatetc->cfFormat == CF_UNICODETEXT))
@@ -511,27 +543,34 @@ public:
 //  }
 
 	// all the following methods are not really needed for a DnD object
-	HRESULT STDMETHODCALLTYPE GetDataHere( FORMATETC* /*pformatetcIn*/, STGMEDIUM* /*pmedium*/) {
+	HRESULT STDMETHODCALLTYPE GetDataHere( FORMATETC* /*pformatetcIn*/, STGMEDIUM* /*pmedium*/)
+	{
 		return E_NOTIMPL;
 	}
-	HRESULT STDMETHODCALLTYPE GetCanonicalFormatEtc( FORMATETC* /*in*/, FORMATETC* /*out*/) {
+	HRESULT STDMETHODCALLTYPE GetCanonicalFormatEtc( FORMATETC* /*in*/, FORMATETC* /*out*/)
+	{
 		return E_NOTIMPL;
 	}
-	HRESULT STDMETHODCALLTYPE SetData( FORMATETC* /*pformatetc*/, STGMEDIUM* /*pmedium*/, BOOL /*fRelease*/) {
+	HRESULT STDMETHODCALLTYPE SetData( FORMATETC* /*pformatetc*/, STGMEDIUM* /*pmedium*/, BOOL /*fRelease*/)
+	{
 		return E_NOTIMPL;
 	}
-	HRESULT STDMETHODCALLTYPE EnumFormatEtc( DWORD /*dir*/, IEnumFORMATETC** /*ppenumFormatEtc*/) {
+	HRESULT STDMETHODCALLTYPE EnumFormatEtc( DWORD /*dir*/, IEnumFORMATETC** /*ppenumFormatEtc*/)
+	{
 		return E_NOTIMPL;
 	}
 //  HRESULT STDMETHODCALLTYPE EnumFormatEtc( DWORD dir, IEnumFORMATETC** ppenumFormatEtc) {*ppenumFormatEtc = m_EnumF; return S_OK;}
 	HRESULT STDMETHODCALLTYPE DAdvise( FORMATETC* /*pformatetc*/, DWORD /*advf*/,
-	                                   IAdviseSink* /*pAdvSink*/, DWORD* /*pdwConnection*/) {
+	                                   IAdviseSink* /*pAdvSink*/, DWORD* /*pdwConnection*/)
+	{
 		return E_NOTIMPL;
 	}
-	HRESULT STDMETHODCALLTYPE DUnadvise( DWORD /*dwConnection*/) {
+	HRESULT STDMETHODCALLTYPE DUnadvise( DWORD /*dwConnection*/)
+	{
 		return E_NOTIMPL;
 	}
-	HRESULT STDMETHODCALLTYPE EnumDAdvise( IEnumSTATDATA** /*ppenumAdvise*/) {
+	HRESULT STDMETHODCALLTYPE EnumDAdvise( IEnumSTATDATA** /*ppenumAdvise*/)
+	{
 		return E_NOTIMPL;
 	}
 };

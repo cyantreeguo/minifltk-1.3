@@ -126,7 +126,9 @@ Fl_File_Icon::~Fl_File_Icon()
 	// Find the icon in the list...
 	for (current = first_, prev = (Fl_File_Icon *)0;
 	     current != this && current != (Fl_File_Icon *)0;
-	     prev = current, current = current->next_);
+	     prev = current, current = current->next_) {
+		/*empty*/
+	}
 
 	// Remove the icon from the list as needed...
 	if (current) {
@@ -254,9 +256,9 @@ Fl_File_Icon::draw(int      x,		// I - Upper-lefthand X
                    int      active)	// I - Active or inactive?
 {
 	Fl_Color	c,		// Current color
-	                oc;		// Outline color
+	            oc;		// Outline color
 	short		*d,		// Pointer to data
-	             *dend;		// End of data...
+	            *dend;		// End of data...
 	short		*prim;		// Pointer to start of primitive...
 	double	scale;		// Scale of icon
 
@@ -451,11 +453,11 @@ void Fl_File_Icon::label(Fl_Widget *w)	// I - Widget to label
   \param[in] a label alignment [not used]
 */
 void Fl_File_Icon::labeltype(const Fl_Label *o,	// I - Label data
-                        int            x,	// I - X position of label
-                        int            y,	// I - Y position of label
-                        int            w,	// I - Width of label
-                        int            h,	// I - Height of label
-                        Fl_Align       a)	// I - Label alignment (not used)
+                             int            x,	// I - X position of label
+                             int            y,	// I - Y position of label
+                             int            w,	// I - Width of label
+                             int            h,	// I - Height of label
+                             Fl_Align       a)	// I - Label alignment (not used)
 {
 	Fl_File_Icon *icon;			// Pointer to icon data
 

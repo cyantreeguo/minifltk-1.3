@@ -178,12 +178,14 @@ static void screen_init()
 	}
 	num_screens = count;
      */
+    int X, Y, W, H;
+    Fl_X::screen_work_area(X, Y, W, H, 0);
     num_screens = 1;
 	dpi_h[0] = dpi_v[0] = 75.;
-	screens[0].x      = 0;
-	screens[0].y      = 0;
-	screens[0].width  = Fl::w();
-	screens[0].height = Fl::h();
+	screens[0].x      = X;
+	screens[0].y      = Y;
+	screens[0].width  = W;
+	screens[0].height = H;
 }
 
 #elif __FLTK_LINUX__
@@ -481,11 +483,14 @@ void Fl::screen_xywh(int &X, int &Y, int &W, int &H, int n)
 	Y = screens[n].y;
 	W = screens[n].width;
 	H = screens[n].height;
-#elif __FLTK_IPHONEOS__	
+#elif __FLTK_IPHONEOS__
+    Fl_X::screen_work_area(X, Y, W, H, 0);
+    /*
 	X = screens[n].x;
 	Y = screens[n].y;
-	W = screens[n].width;
+    W = screens[n].width;
 	H = screens[n].height;
+     */
 #elif __FLTK_LINUX__
 	if (num_screens > 0) {
 		X = screens[n].x_org;

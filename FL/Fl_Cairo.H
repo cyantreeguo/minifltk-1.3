@@ -29,15 +29,7 @@
 
 # include "Fl_Export.H"
 
-# if defined(USE_X11) // X11
-#  include <cairo-xlib.h>
-# elif defined(WIN32)
-#  include <cairo-win32.h>
-# elif defined(__APPLE_QUARTZ__)
-#  include <cairo-quartz.h>
-# else
-#  error Cairo is not supported on that platform.
-# endif
+# include <cairo.h>
 
 /**
    \addtogroup group_cairo
@@ -57,37 +49,52 @@ public:
 	Fl_Cairo_State() : cc_(0), own_cc_(false), autolink_(false), window_(0), gc_(0) {}
 
 	// access attributes
-	cairo_t* cc() const {
+	cairo_t* cc() const
+	{
 		return cc_;       ///< Gets the current cairo context
 	}
-	bool autolink() const {
+	bool autolink() const
+	{
 		return autolink_;       ///< Gets the autolink option. See Fl::cairo_autolink_context(bool)
 	}
-	/** Sets the current cairo context, \p own indicates cc deletion is handle externally by user */
-	void cc(cairo_t* c, bool own=true)  {
+	/** Sets the current cairo context.
+
+	\p own == \e true (the default) indicates that the cairo context \p c
+	will be deleted by FLTK internally when another cc is set later.
+
+	\p own == \e false indicates cc deletion is handled externally
+	by the user program.
+	*/
+	void cc(cairo_t* c, bool own=true)
+	{
 		if (cc_ && own_cc_) cairo_destroy(cc_);
 		cc_=c;
 		if (!cc_) window_=0;
 		own_cc_=own;
 	}
 	void  autolink(bool b);                     ///< Sets the autolink option, only available with --enable-cairoext
-	void  window(void* w)  {
+	void  window(void* w)
+	{
 		window_=w;       ///< Sets the window \p w to keep track on
 	}
-	void* window() const {
+	void* window() const
+	{
 		return window_;       ///< Gets the last window attached to a cc
 	}
-	void  gc(void* c)  {
+	void  gc(void* c)
+	{
 		gc_=c;       ///< Sets the gc \p c to keep track on
 	}
-	void* gc() const {
+	void* gc() const
+	{
 		return gc_;       ///< Gets the last gc attached to a cc
 	}
 
 private:
 	cairo_t * cc_;	 // contains the unique autoupdated cairo context
 	bool own_cc_;	 // indicates whether we must delete the cc, useful for internal cleanup
-	bool autolink_;	 // true by default, permits to prevent the automatic cairo mapping on fltk windows for custom cairo implementations
+	bool autolink_;	 // false by default, prevents the automatic cairo mapping on fltk windows
+	// for custom cairo implementations.
 	void* window_, *gc_; // for keeping track internally of last win+gc treated
 };
 

@@ -1,9 +1,9 @@
 //
-// "$Id: Fl_Valuator.H 8864 2011-07-19 04:49:30Z greg.ercolano $"
+// "$Id: Fl_Valuator.H 11316 2016-03-08 13:42:59Z AlbrechtS $"
 //
 // Valuator header file for the Fast Light Tool Kit (FLTK).
 //
-// Copyright 1998-2010 by Bill Spitzak and others.
+// Copyright 1998-2016 by Bill Spitzak and others.
 //
 // This library is free software. Distribution and use rights are outlined in
 // the file "COPYING" which should have been included with this file.  If this
@@ -34,12 +34,15 @@
   The Fl_Valuator class controls a single floating-point value
   and provides a consistent interface to set the value, range, and step,
   and insures that callbacks are done the same for every object.
-  <P>There are probably more of these classes in FLTK than any others:
-  <P ALIGN=CENTER>\image html  valuators.png</P>
-  \image latex   valuators.png "Valuators derived from Fl_Valuators" width=10cm
-  <P>In the above diagram each box surrounds an actual subclass.  These
-  are further differentiated by setting the type() of the widget t
-  o the symbolic value labeling the widget.
+
+  There are probably more of these classes in FLTK than any others:
+
+  <P ALIGN=CENTER>\image html valuators.png</P>
+  \image latex valuators.png "Valuators derived from Fl_Valuators" width=10cm
+
+  In the above diagram each box surrounds an actual subclass.  These
+  are further differentiated by setting the type() of the widget to
+  the symbolic value labeling the widget.
   The ones labelled "0" are the default versions with a type(0).
   For consistency the symbol FL_VERTICAL is defined as zero.
 */
@@ -54,17 +57,20 @@ class FL_EXPORT Fl_Valuator : public Fl_Widget
 
 protected:
 	/** Tells if the valuator is an FL_HORIZONTAL one */
-	int horizontal() const {
+	int horizontal() const
+	{
 		return type()& FL_HORIZONTAL;
 	}
 	Fl_Valuator(int X, int Y, int W, int H, const char* L);
 
 	/** Gets the previous floating point value before an event changed it */
-	double previous_value() const {
+	double previous_value() const
+	{
 		return previous_value_;
 	}
 	/** Stores the current value in the previous value */
-	void handle_push() {
+	void handle_push()
+	{
 		previous_value_ = value_;
 	}
 	double softclamp(double);
@@ -72,31 +78,37 @@ protected:
 	void handle_release(); // use drag() value
 	virtual void value_damage(); // cause damage() due to value() changing
 	/** Sets the current floating point value. */
-	void set_value(double v) {
+	void set_value(double v)
+	{
 		value_ = v;
 	}
 
 public:
 
 	/**    Sets the minimum (a) and maximum (b) values for the valuator widget. */
-	void bounds(double a, double b) {
+	void bounds(double a, double b)
+	{
 		min=a;
 		max=b;
 	}
 	/**    Gets the minimum value for the valuator.  */
-	double minimum() const {
+	double minimum() const
+	{
 		return min;
 	}
 	/**    Sets the minimum value for the valuator.  */
-	void minimum(double a) {
+	void minimum(double a)
+	{
 		min = a;
 	}
 	/**    Gets the maximum value for the valuator.  */
-	double maximum() const {
+	double maximum() const
+	{
 		return max;
 	}
 	/**    Sets the maximum value for the valuator.  */
-	void maximum(double a) {
+	void maximum(double a)
+	{
 		max = a;
 	}
 	/**
@@ -106,30 +118,33 @@ public:
 	  value (this makes a difference if the range is not a multiple of
 	  the step).
 
-	  <P>The minimum may be greater than the maximum. This has the
+	  The minimum may be greater than the maximum. This has the
 	  effect of "reversing" the object so the larger values
 	  are in the opposite direction. This also switches which end of
-	  the filled sliders is filled.</P>
+	  the filled sliders is filled.
 
-	  <P>Some widgets consider this a "soft" range.  This
+	  Some widgets consider this a "soft" range.  This
 	  means they will stop at the range, but if the user releases and
 	  grabs the control again and tries to move it further, it is
-	  allowed.</P>
+	  allowed.
 
-	  <P>The range may affect the display. You must redraw()
+	  The range may affect the display. You must redraw()
 	  the widget after changing the range.
 	*/
-	void range(double a, double b) {
+	void range(double a, double b)
+	{
 		min = a;
 		max = b;
 	}
 	/**    See double Fl_Valuator::step() const   */
-	void step(int a) {
+	void step(int a)
+	{
 		A = a;
 		B = 1;
 	}
 	/**    See double Fl_Valuator::step() const   */
-	void step(double a, int b) {
+	void step(double a, int b)
+	{
 		A = a;
 		B = b;
 	}
@@ -137,21 +152,23 @@ public:
 	/**
 	  Gets or sets the step value. As the user moves the mouse the
 	  value is rounded to the nearest multiple of the step value. This
-	  is done <I>before</I> clamping it to the range. For most widgets
+	  is done \e before clamping it to the range. For most widgets
 	  the default step is zero.
 
-	  <P>For precision the step is stored as the ratio of two
-	  integers, A/B. You can set these integers directly. Currently
+	  For precision the step is stored as the ratio of a double \p A and
+	  an integer \p B = A/B. You can set these values directly. Currently
 	  setting a floating point value sets the nearest A/1 or 1/B value
 	  possible.
 	*/
-	double step() const {
+	double step() const
+	{
 		return A/B;
 	}
-	void precision(int);
+	void precision(int digits);
 
 	/** Gets the floating point(double) value. See int value(double) */
-	double value() const {
+	double value() const
+	{
 		return value_;
 	}
 	int value(double);
@@ -165,5 +182,5 @@ public:
 #endif
 
 //
-// End of "$Id: Fl_Valuator.H 8864 2011-07-19 04:49:30Z greg.ercolano $".
+// End of "$Id: Fl_Valuator.H 11316 2016-03-08 13:42:59Z AlbrechtS $".
 //

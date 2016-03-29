@@ -1,0 +1,425 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="blocks" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/Debug/blocks" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="0" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-g" />
+					<Add directory="../../../" />
+					<Add directory="../../../FL" />
+					<Add directory="../../../FL/src" />
+				</Compiler>
+				<Linker>
+					<Add library="libole32.a" />
+					<Add library="libadvapi32" />
+					<Add library="libcomctl32" />
+					<Add library="libuuid" />
+					<Add library="libcomdlg32" />
+					<Add library="winmm" />
+				</Linker>
+			</Target>
+			<Target title="Release">
+				<Option output="bin/Release/blocks" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="0" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+		</Compiler>
+		<Linker>
+			<Add library="gdi32" />
+			<Add library="user32" />
+			<Add library="kernel32" />
+			<Add library="comctl32" />
+		</Linker>
+		<Unit filename="../../../FL/Enumerations.H" />
+		<Unit filename="../../../FL/Fl.H" />
+		<Unit filename="../../../FL/Fl_Adjuster.H" />
+		<Unit filename="../../../FL/Fl_BMP_Image.H" />
+		<Unit filename="../../../FL/Fl_Bitmap.H" />
+		<Unit filename="../../../FL/Fl_Box.H" />
+		<Unit filename="../../../FL/Fl_Browser.H" />
+		<Unit filename="../../../FL/Fl_Browser_.H" />
+		<Unit filename="../../../FL/Fl_Button.H" />
+		<Unit filename="../../../FL/Fl_Cairo.H" />
+		<Unit filename="../../../FL/Fl_Cairo_Window.H" />
+		<Unit filename="../../../FL/Fl_Chart.H" />
+		<Unit filename="../../../FL/Fl_Check_Browser.H" />
+		<Unit filename="../../../FL/Fl_Check_Button.H" />
+		<Unit filename="../../../FL/Fl_Choice.H" />
+		<Unit filename="../../../FL/Fl_Clock.H" />
+		<Unit filename="../../../FL/Fl_Color_Chooser.H" />
+		<Unit filename="../../../FL/Fl_ComboBox.h" />
+		<Unit filename="../../../FL/Fl_Copy_Surface.H" />
+		<Unit filename="../../../FL/Fl_Counter.H" />
+		<Unit filename="../../../FL/Fl_Device.H" />
+		<Unit filename="../../../FL/Fl_Dial.H" />
+		<Unit filename="../../../FL/Fl_Double_Window.H" />
+		<Unit filename="../../../FL/Fl_Export.H" />
+		<Unit filename="../../../FL/Fl_File_Browser.H" />
+		<Unit filename="../../../FL/Fl_File_Chooser.H" />
+		<Unit filename="../../../FL/Fl_File_Icon.H" />
+		<Unit filename="../../../FL/Fl_File_Input.H" />
+		<Unit filename="../../../FL/Fl_Fill_Dial.H" />
+		<Unit filename="../../../FL/Fl_Fill_Slider.H" />
+		<Unit filename="../../../FL/Fl_Float_Input.H" />
+		<Unit filename="../../../FL/Fl_FormsBitmap.H" />
+		<Unit filename="../../../FL/Fl_FormsPixmap.H" />
+		<Unit filename="../../../FL/Fl_Free.H" />
+		<Unit filename="../../../FL/Fl_GIF_Image.H" />
+		<Unit filename="../../../FL/Fl_Group.H" />
+		<Unit filename="../../../FL/Fl_Help_Dialog.H" />
+		<Unit filename="../../../FL/Fl_Help_View.H" />
+		<Unit filename="../../../FL/Fl_Hold_Browser.H" />
+		<Unit filename="../../../FL/Fl_Hor_Fill_Slider.H" />
+		<Unit filename="../../../FL/Fl_Hor_Nice_Slider.H" />
+		<Unit filename="../../../FL/Fl_Hor_Slider.H" />
+		<Unit filename="../../../FL/Fl_Hor_Value_Slider.H" />
+		<Unit filename="../../../FL/Fl_Image.H" />
+		<Unit filename="../../../FL/Fl_Image_Surface.H" />
+		<Unit filename="../../../FL/Fl_Input.H" />
+		<Unit filename="../../../FL/Fl_Input_.H" />
+		<Unit filename="../../../FL/Fl_Input_Choice.H" />
+		<Unit filename="../../../FL/Fl_Int_Input.H" />
+		<Unit filename="../../../FL/Fl_JPEG_Image.H" />
+		<Unit filename="../../../FL/Fl_Light_Button.H" />
+		<Unit filename="../../../FL/Fl_Line_Dial.H" />
+		<Unit filename="../../../FL/Fl_Menu.H" />
+		<Unit filename="../../../FL/Fl_Menu_.H" />
+		<Unit filename="../../../FL/Fl_Menu_Bar.H" />
+		<Unit filename="../../../FL/Fl_Menu_Button.H" />
+		<Unit filename="../../../FL/Fl_Menu_Item.H" />
+		<Unit filename="../../../FL/Fl_Menu_Window.H" />
+		<Unit filename="../../../FL/Fl_Multi_Browser.H" />
+		<Unit filename="../../../FL/Fl_Multi_Label.H" />
+		<Unit filename="../../../FL/Fl_Multiline_Input.H" />
+		<Unit filename="../../../FL/Fl_Multiline_Output.H" />
+		<Unit filename="../../../FL/Fl_Native_File_Chooser.H" />
+		<Unit filename="../../../FL/Fl_Nice_Slider.H" />
+		<Unit filename="../../../FL/Fl_Object.H" />
+		<Unit filename="../../../FL/Fl_Output.H" />
+		<Unit filename="../../../FL/Fl_Overlay_Window.H" />
+		<Unit filename="../../../FL/Fl_PNG_Image.H" />
+		<Unit filename="../../../FL/Fl_PNM_Image.H" />
+		<Unit filename="../../../FL/Fl_Pack.H" />
+		<Unit filename="../../../FL/Fl_Paged_Device.H" />
+		<Unit filename="../../../FL/Fl_Pixmap.H" />
+		<Unit filename="../../../FL/Fl_Platform.h" />
+		<Unit filename="../../../FL/Fl_Plugin.H" />
+		<Unit filename="../../../FL/Fl_Positioner.H" />
+		<Unit filename="../../../FL/Fl_PostScript.H" />
+		<Unit filename="../../../FL/Fl_Preferences.H" />
+		<Unit filename="../../../FL/Fl_Printer.H" />
+		<Unit filename="../../../FL/Fl_Progress.H" />
+		<Unit filename="../../../FL/Fl_RGB_Image.H" />
+		<Unit filename="../../../FL/Fl_Radio_Button.H" />
+		<Unit filename="../../../FL/Fl_Radio_Light_Button.H" />
+		<Unit filename="../../../FL/Fl_Radio_Round_Button.H" />
+		<Unit filename="../../../FL/Fl_Repeat_Button.H" />
+		<Unit filename="../../../FL/Fl_Return_Button.H" />
+		<Unit filename="../../../FL/Fl_Roller.H" />
+		<Unit filename="../../../FL/Fl_Round_Button.H" />
+		<Unit filename="../../../FL/Fl_Round_Clock.H" />
+		<Unit filename="../../../FL/Fl_Scroll.H" />
+		<Unit filename="../../../FL/Fl_Scrollbar.H" />
+		<Unit filename="../../../FL/Fl_Secret_Input.H" />
+		<Unit filename="../../../FL/Fl_Select_Browser.H" />
+		<Unit filename="../../../FL/Fl_Shared_Image.H" />
+		<Unit filename="../../../FL/Fl_Simple_Counter.H" />
+		<Unit filename="../../../FL/Fl_Single_Window.H" />
+		<Unit filename="../../../FL/Fl_Slider.H" />
+		<Unit filename="../../../FL/Fl_Spinner.H" />
+		<Unit filename="../../../FL/Fl_Sys_Menu_Bar.H" />
+		<Unit filename="../../../FL/Fl_Table.H" />
+		<Unit filename="../../../FL/Fl_Table_Row.H" />
+		<Unit filename="../../../FL/Fl_Tabs.H" />
+		<Unit filename="../../../FL/Fl_Text_Buffer.H" />
+		<Unit filename="../../../FL/Fl_Text_Display.H" />
+		<Unit filename="../../../FL/Fl_Text_Editor.H" />
+		<Unit filename="../../../FL/Fl_Tile.H" />
+		<Unit filename="../../../FL/Fl_Tiled_Image.H" />
+		<Unit filename="../../../FL/Fl_Timer.H" />
+		<Unit filename="../../../FL/Fl_Toggle_Button.H" />
+		<Unit filename="../../../FL/Fl_Toggle_Light_Button.H" />
+		<Unit filename="../../../FL/Fl_Toggle_Round_Button.H" />
+		<Unit filename="../../../FL/Fl_Tooltip.H" />
+		<Unit filename="../../../FL/Fl_Tree.H" />
+		<Unit filename="../../../FL/Fl_Tree_Item.H" />
+		<Unit filename="../../../FL/Fl_Tree_Item_Array.H" />
+		<Unit filename="../../../FL/Fl_Tree_Prefs.H" />
+		<Unit filename="../../../FL/Fl_Valuator.H" />
+		<Unit filename="../../../FL/Fl_Value_Input.H" />
+		<Unit filename="../../../FL/Fl_Value_Output.H" />
+		<Unit filename="../../../FL/Fl_Value_Slider.H" />
+		<Unit filename="../../../FL/Fl_Widget.H" />
+		<Unit filename="../../../FL/Fl_Window.H" />
+		<Unit filename="../../../FL/Fl_Wizard.H" />
+		<Unit filename="../../../FL/Fl_XBM_Image.H" />
+		<Unit filename="../../../FL/Fl_XPM_Image.H" />
+		<Unit filename="../../../FL/filename.H" />
+		<Unit filename="../../../FL/fl_ask.H" />
+		<Unit filename="../../../FL/fl_draw.H" />
+		<Unit filename="../../../FL/fl_message.H" />
+		<Unit filename="../../../FL/fl_show_colormap.H" />
+		<Unit filename="../../../FL/fl_show_input.H" />
+		<Unit filename="../../../FL/fl_types.h" />
+		<Unit filename="../../../FL/fl_utf8.h" />
+		<Unit filename="../../../FL/fltk.h" />
+		<Unit filename="../../../FL/fltk_config.h" />
+		<Unit filename="../../../FL/fltk_config_android.h" />
+		<Unit filename="../../../FL/fltk_config_ios.h" />
+		<Unit filename="../../../FL/fltk_config_linux.h" />
+		<Unit filename="../../../FL/fltk_config_osx.h" />
+		<Unit filename="../../../FL/fltk_config_s60v32.h" />
+		<Unit filename="../../../FL/fltk_config_win32.h" />
+		<Unit filename="../../../FL/fltk_config_wince.h" />
+		<Unit filename="../../../FL/fltkdirent.h" />
+		<Unit filename="../../../FL/fltkmath.h" />
+		<Unit filename="../../../FL/forms.H" />
+		<Unit filename="../../../FL/jpgd.h" />
+		<Unit filename="../../../FL/libnsgif.h" />
+		<Unit filename="../../../FL/lodepng.h" />
+		<Unit filename="../../../FL/names.h" />
+		<Unit filename="../../../FL/src/Fl.cxx" />
+		<Unit filename="../../../FL/src/Fl_Adjuster.cxx" />
+		<Unit filename="../../../FL/src/Fl_BMP_Image.cxx" />
+		<Unit filename="../../../FL/src/Fl_Bitmap.cxx" />
+		<Unit filename="../../../FL/src/Fl_Box.cxx" />
+		<Unit filename="../../../FL/src/Fl_Browser.cxx" />
+		<Unit filename="../../../FL/src/Fl_Browser_.cxx" />
+		<Unit filename="../../../FL/src/Fl_Browser_load.cxx" />
+		<Unit filename="../../../FL/src/Fl_Button.cxx" />
+		<Unit filename="../../../FL/src/Fl_Chart.cxx" />
+		<Unit filename="../../../FL/src/Fl_Check_Browser.cxx" />
+		<Unit filename="../../../FL/src/Fl_Clock.cxx" />
+		<Unit filename="../../../FL/src/Fl_Color_Chooser.cxx" />
+		<Unit filename="../../../FL/src/Fl_Copy_Surface.cxx" />
+		<Unit filename="../../../FL/src/Fl_Counter.cxx" />
+		<Unit filename="../../../FL/src/Fl_Device.cxx" />
+		<Unit filename="../../../FL/src/Fl_Double_Window.cxx" />
+		<Unit filename="../../../FL/src/Fl_File_Browser.cxx" />
+		<Unit filename="../../../FL/src/Fl_File_Chooser.cxx" />
+		<Unit filename="../../../FL/src/Fl_File_Chooser2.cxx" />
+		<Unit filename="../../../FL/src/Fl_File_Icon.cxx" />
+		<Unit filename="../../../FL/src/Fl_File_Icon2.cxx" />
+		<Unit filename="../../../FL/src/Fl_File_Input.cxx" />
+		<Unit filename="../../../FL/src/Fl_Font.H" />
+		<Unit filename="../../../FL/src/Fl_Group.cxx" />
+		<Unit filename="../../../FL/src/Fl_Help_Dialog.cxx" />
+		<Unit filename="../../../FL/src/Fl_Help_Dialog_Dox.cxx" />
+		<Unit filename="../../../FL/src/Fl_Help_View.cxx" />
+		<Unit filename="../../../FL/src/Fl_Image.cxx" />
+		<Unit filename="../../../FL/src/Fl_Image_Surface.cxx" />
+		<Unit filename="../../../FL/src/Fl_Input.cxx" />
+		<Unit filename="../../../FL/src/Fl_Input_.cxx" />
+		<Unit filename="../../../FL/src/Fl_Light_Button.cxx" />
+		<Unit filename="../../../FL/src/Fl_Menu.cxx" />
+		<Unit filename="../../../FL/src/Fl_Menu_.cxx" />
+		<Unit filename="../../../FL/src/Fl_Menu_Bar.cxx" />
+		<Unit filename="../../../FL/src/Fl_Menu_Button.cxx" />
+		<Unit filename="../../../FL/src/Fl_Menu_Window.cxx" />
+		<Unit filename="../../../FL/src/Fl_Menu_add.cxx" />
+		<Unit filename="../../../FL/src/Fl_Menu_global.cxx" />
+		<Unit filename="../../../FL/src/Fl_Multi_Label.cxx" />
+		<Unit filename="../../../FL/src/Fl_Native_File_Chooser.cxx" />
+		<Unit filename="../../../FL/src/Fl_Native_File_Chooser_common.cxx" />
+		<Unit filename="../../../FL/src/Fl_Overlay_Window.cxx" />
+		<Unit filename="../../../FL/src/Fl_PNM_Image.cxx" />
+		<Unit filename="../../../FL/src/Fl_Pack.cxx" />
+		<Unit filename="../../../FL/src/Fl_Paged_Device.cxx" />
+		<Unit filename="../../../FL/src/Fl_Pixmap.cxx" />
+		<Unit filename="../../../FL/src/Fl_Positioner.cxx" />
+		<Unit filename="../../../FL/src/Fl_PostScript.cxx" />
+		<Unit filename="../../../FL/src/Fl_Preferences.cxx" />
+		<Unit filename="../../../FL/src/Fl_Printer.cxx" />
+		<Unit filename="../../../FL/src/Fl_Progress.cxx" />
+		<Unit filename="../../../FL/src/Fl_Round_Button.cxx" />
+		<Unit filename="../../../FL/src/Fl_Scroll.cxx" />
+		<Unit filename="../../../FL/src/Fl_Scrollbar.cxx" />
+		<Unit filename="../../../FL/src/Fl_Shared_Image.cxx" />
+		<Unit filename="../../../FL/src/Fl_Slider.cxx" />
+		<Unit filename="../../../FL/src/Fl_Table.cxx" />
+		<Unit filename="../../../FL/src/Fl_Table_Row.cxx" />
+		<Unit filename="../../../FL/src/Fl_Tabs.cxx" />
+		<Unit filename="../../../FL/src/Fl_Text_Buffer.cxx" />
+		<Unit filename="../../../FL/src/Fl_Text_Display.cxx" />
+		<Unit filename="../../../FL/src/Fl_Text_Editor.cxx" />
+		<Unit filename="../../../FL/src/Fl_Tile.cxx" />
+		<Unit filename="../../../FL/src/Fl_Tiled_Image.cxx" />
+		<Unit filename="../../../FL/src/Fl_Tooltip.cxx" />
+		<Unit filename="../../../FL/src/Fl_Tree.cxx" />
+		<Unit filename="../../../FL/src/Fl_Tree_Item.cxx" />
+		<Unit filename="../../../FL/src/Fl_Tree_Item_Array.cxx" />
+		<Unit filename="../../../FL/src/Fl_Tree_Prefs.cxx" />
+		<Unit filename="../../../FL/src/Fl_Valuator.cxx" />
+		<Unit filename="../../../FL/src/Fl_Value_Input.cxx" />
+		<Unit filename="../../../FL/src/Fl_Value_Output.cxx" />
+		<Unit filename="../../../FL/src/Fl_Value_Slider.cxx" />
+		<Unit filename="../../../FL/src/Fl_Widget.cxx" />
+		<Unit filename="../../../FL/src/Fl_Window.cxx" />
+		<Unit filename="../../../FL/src/Fl_Window_fullscreen.cxx" />
+		<Unit filename="../../../FL/src/Fl_Window_hotspot.cxx" />
+		<Unit filename="../../../FL/src/Fl_Window_iconize.cxx" />
+		<Unit filename="../../../FL/src/Fl_Window_shape.cxx" />
+		<Unit filename="../../../FL/src/Fl_Wizard.cxx" />
+		<Unit filename="../../../FL/src/Fl_XBM_Image.cxx" />
+		<Unit filename="../../../FL/src/Fl_XColor.H" />
+		<Unit filename="../../../FL/src/Fl_XPM_Image.cxx" />
+		<Unit filename="../../../FL/src/Fl_abort.cxx" />
+		<Unit filename="../../../FL/src/Fl_add_idle.cxx" />
+		<Unit filename="../../../FL/src/Fl_arg.cxx" />
+		<Unit filename="../../../FL/src/Fl_compose.cxx" />
+		<Unit filename="../../../FL/src/Fl_display.cxx" />
+		<Unit filename="../../../FL/src/Fl_get_key.cxx" />
+		<Unit filename="../../../FL/src/Fl_get_system_colors.cxx" />
+		<Unit filename="../../../FL/src/Fl_grab.cxx" />
+		<Unit filename="../../../FL/src/Fl_lock.cxx" />
+		<Unit filename="../../../FL/src/Fl_own_colormap.cxx" />
+		<Unit filename="../../../FL/src/Fl_visual.cxx" />
+		<Unit filename="../../../FL/src/Xutf8.h" />
+		<Unit filename="../../../FL/src/cgdebug.h" />
+		<Unit filename="../../../FL/src/dingbats_.h" />
+		<Unit filename="../../../FL/src/fastarrow.h" />
+		<Unit filename="../../../FL/src/filename_absolute.cxx" />
+		<Unit filename="../../../FL/src/filename_expand.cxx" />
+		<Unit filename="../../../FL/src/filename_ext.cxx" />
+		<Unit filename="../../../FL/src/filename_isdir.cxx" />
+		<Unit filename="../../../FL/src/filename_list.cxx" />
+		<Unit filename="../../../FL/src/filename_match.cxx" />
+		<Unit filename="../../../FL/src/filename_setext.cxx" />
+		<Unit filename="../../../FL/src/fl_arc.cxx" />
+		<Unit filename="../../../FL/src/fl_arci.cxx" />
+		<Unit filename="../../../FL/src/fl_ask.cxx" />
+		<Unit filename="../../../FL/src/fl_boxtype.cxx" />
+		<Unit filename="../../../FL/src/fl_call_main.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../FL/src/fl_cmap.h" />
+		<Unit filename="../../../FL/src/fl_color.cxx" />
+		<Unit filename="../../../FL/src/fl_cursor.cxx" />
+		<Unit filename="../../../FL/src/fl_curve.cxx" />
+		<Unit filename="../../../FL/src/fl_diamond_box.cxx" />
+		<Unit filename="../../../FL/src/fl_dnd.cxx" />
+		<Unit filename="../../../FL/src/fl_draw.cxx" />
+		<Unit filename="../../../FL/src/fl_draw_image.cxx" />
+		<Unit filename="../../../FL/src/fl_draw_pixmap.cxx" />
+		<Unit filename="../../../FL/src/fl_encoding_latin1.cxx" />
+		<Unit filename="../../../FL/src/fl_encoding_mac_roman.cxx" />
+		<Unit filename="../../../FL/src/fl_engraved_label.cxx" />
+		<Unit filename="../../../FL/src/fl_file_dir.cxx" />
+		<Unit filename="../../../FL/src/fl_font.cxx" />
+		<Unit filename="../../../FL/src/fl_gleam.cxx" />
+		<Unit filename="../../../FL/src/fl_gtk.cxx" />
+		<Unit filename="../../../FL/src/fl_images_core.cxx" />
+		<Unit filename="../../../FL/src/fl_labeltype.cxx" />
+		<Unit filename="../../../FL/src/fl_line_style.cxx" />
+		<Unit filename="../../../FL/src/fl_open_uri.cxx" />
+		<Unit filename="../../../FL/src/fl_oval_box.cxx" />
+		<Unit filename="../../../FL/src/fl_overlay.cxx" />
+		<Unit filename="../../../FL/src/fl_overlay_visual.cxx" />
+		<Unit filename="../../../FL/src/fl_plastic.cxx" />
+		<Unit filename="../../../FL/src/fl_read_image.cxx" />
+		<Unit filename="../../../FL/src/fl_rect.cxx" />
+		<Unit filename="../../../FL/src/fl_round_box.cxx" />
+		<Unit filename="../../../FL/src/fl_rounded_box.cxx" />
+		<Unit filename="../../../FL/src/fl_scroll_area.cxx" />
+		<Unit filename="../../../FL/src/fl_set_font.cxx" />
+		<Unit filename="../../../FL/src/fl_set_fonts.cxx" />
+		<Unit filename="../../../FL/src/fl_shadow_box.cxx" />
+		<Unit filename="../../../FL/src/fl_shortcut.cxx" />
+		<Unit filename="../../../FL/src/fl_show_colormap.cxx" />
+		<Unit filename="../../../FL/src/fl_symbols.cxx" />
+		<Unit filename="../../../FL/src/fl_utf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../FL/src/fl_utf8.cxx" />
+		<Unit filename="../../../FL/src/fl_vertex.cxx" />
+		<Unit filename="../../../FL/src/flstring.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../FL/src/flstring.h" />
+		<Unit filename="../../../FL/src/forms_bitmap.cxx" />
+		<Unit filename="../../../FL/src/forms_compatability.cxx" />
+		<Unit filename="../../../FL/src/forms_free.cxx" />
+		<Unit filename="../../../FL/src/forms_fselect.cxx" />
+		<Unit filename="../../../FL/src/forms_pixmap.cxx" />
+		<Unit filename="../../../FL/src/forms_timer.cxx" />
+		<Unit filename="../../../FL/src/jpgd.cxx" />
+		<Unit filename="../../../FL/src/keysym2Ucs.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../FL/src/libnsgif.cxx" />
+		<Unit filename="../../../FL/src/lodepng.cxx" />
+		<Unit filename="../../../FL/src/mediumarrow.h" />
+		<Unit filename="../../../FL/src/numericsort.cxx" />
+		<Unit filename="../../../FL/src/ps_image.cxx" />
+		<Unit filename="../../../FL/src/scandir.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../FL/src/screen_xywh.cxx" />
+		<Unit filename="../../../FL/src/slowarrow.h" />
+		<Unit filename="../../../FL/src/symbol_.h" />
+		<Unit filename="../../../FL/src/ucs2fontmap.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../FL/src/utf8Input.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../FL/src/utf8Utils.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../FL/src/utf8Wrap.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../FL/src/utf8_case.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../FL/src/utf8_case.h" />
+		<Unit filename="../../../FL/src/utf8_is_right2left.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../FL/src/utf8_is_spacing.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../FL/src/utf8_mk_wcwidth.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../FL/src/utf8_spacing.h" />
+		<Unit filename="../../../FL/src/vsnprintf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../FL/src/wince_compate.cxx" />
+		<Unit filename="../../../FL/wince_compate.h" />
+		<Unit filename="../../../FL/x.H" />
+		<Unit filename="../../../FL/x_android.H" />
+		<Unit filename="../../../FL/x_dummy.h" />
+		<Unit filename="../../../FL/x_ios.H" />
+		<Unit filename="../../../FL/x_linux.h" />
+		<Unit filename="../../../FL/x_osx.H" />
+		<Unit filename="../../../FL/x_s60v32.h" />
+		<Unit filename="../../../FL/x_win32.H" />
+		<Unit filename="../../../FL/x_wince.H" />
+		<Unit filename="../../src/blocks.cxx" />
+		<Extensions>
+			<code_completion />
+			<envvars />
+			<debugger />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>

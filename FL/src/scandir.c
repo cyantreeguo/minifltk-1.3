@@ -29,6 +29,9 @@
 #  endif /* HAVE_SCANDIR */
 #endif
 
+/* Avoid "ISO C forbids an empty translation unit" warning */
+typedef int dummy;
+
 /*
  * End of "$Id: scandir.c 9858 2013-04-05 14:14:08Z manolo $".
  */

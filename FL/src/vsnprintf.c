@@ -130,7 +130,7 @@ extern "C" {
 				case 'e' :
 				case 'f' :
 				case 'g' :
-					if ((width + 2) > sizeof(temp)) break;
+					if ((width + 2) > (int)sizeof(temp)) break;
 
 					sprintf(temp, tformat, va_arg(ap, double));
 
@@ -155,7 +155,7 @@ extern "C" {
 				case 'o' :
 				case 'u' :
 				case 'x' :
-					if ((width + 2) > sizeof(temp)) break;
+					if ((width + 2) > (int)sizeof(temp)) break;
 
 #ifdef HAVE_LONG_LONG
 					if (size == 'L')
@@ -181,7 +181,7 @@ extern "C" {
 					break;
 
 				case 'p' : /* Pointer value */
-					if ((width + 2) > sizeof(temp)) break;
+					if ((width + 2) > (int)sizeof(temp)) break;
 
 					sprintf(temp, tformat, va_arg(ap, void *));
 

@@ -31,7 +31,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <FL/math.h>
+#include <FL/fltkmath.h>
 
 #ifdef WIN32
 #  include "sudokurc.h"
@@ -40,7 +40,7 @@
 #endif // WIN32
 
 // Audio headers...
-#include <config.h>
+#include <fltk_config.h>
 
 #ifndef WIN32
 #  include <unistd.h>

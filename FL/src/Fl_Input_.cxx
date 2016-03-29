@@ -125,10 +125,10 @@ const char* Fl_Input_::expand(const char* p, char* buf) const
   \return width of string in pixels
 */
 double Fl_Input_::expandpos(
-        const char* p,	// real string
-        const char* e,	// pointer into real string
-        const char* buf,	// conversion of real string by expand()
-        int* returnn		// return offset into buf here
+    const char* p,	// real string
+    const char* e,	// pointer into real string
+    const char* buf,	// conversion of real string by expand()
+    int* returnn		// return offset into buf here
 ) const
 {
 	int n = 0;
@@ -395,9 +395,9 @@ CONTINUE2:
 		// draw the cursor:
 		if (Fl::focus() == this && (
 #ifdef __APPLE__
-		            Fl::compose_state ||
+		        Fl::compose_state ||
 #endif
-		            selstart == selend) && position() >= p-value() && position() <= e-value()) {
+		        selstart == selend) && position() >= p-value() && position() <= e-value()) {
 			fl_color(cursor_color());
 			// cursor position may need to be recomputed (see STR #2486)
 			curx = int(expandpos(p, value()+position(), buf, 0)+.5);
@@ -454,8 +454,9 @@ CONTINUE:
   Simple function that determines if a character could be part of a word.
   \todo This function is not UTF-8-aware.
 */
-static int isword(char c) {
-  return (c&128 || isalnum(c) || strchr("#%-@_~", c));
+static int isword(char c)
+{
+	return (c&128 || isalnum(c) || strchr("#%-@_~", c));
 }
 
 /**
@@ -1342,7 +1343,9 @@ int Fl_Input_::static_value(const char* str, int len)
 			int i = 0;
 			// find first different character:
 			if (value_) {
-				for (; i<size_ && i<len && str[i]==value_[i]; i++);
+				for (; i<size_ && i<len && str[i]==value_[i]; i++) {
+					/*empty*/
+				}
 				if (i==size_ && i==len) return 0;
 			}
 			minimal_update(i);
@@ -1438,7 +1441,7 @@ void Fl_Input_::resize(int X, int Y, int W, int H)
 */
 Fl_Input_::~Fl_Input_()
 {
-	//if ( caret_ > 0 ) 
+	//if ( caret_ > 0 )
 	if ( caret_time_exists_ ) Fl::remove_timeout(tick, this);
 	if (undowidget == this) undowidget = 0;
 	if (bufsize) free((void*)buffer);

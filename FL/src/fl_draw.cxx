@@ -150,11 +150,11 @@ fl_expand_text(const char* from, char* buf, int maxbuf, double maxw, int& n,
   function such as fl_draw(const char*, int, int, int) to do the real work
 */
 void fl_draw(
-        const char* str,	// the (multi-line) string
-        int x, int y, int w, int h,	// bounding box
-        Fl_Align align,
-        void (*callthis)(const char*,int,int,int),
-        Fl_Image* img, int draw_symbols)
+    const char* str,	// the (multi-line) string
+    int x, int y, int w, int h,	// bounding box
+    Fl_Align align,
+    void (*callthis)(const char*,int,int,int),
+    Fl_Image* img, int draw_symbols)
 {
 	char *linebuf = NULL;
 	const char* p;
@@ -181,7 +181,9 @@ void fl_draw(
 			// Start with a symbol...
 			for (symptr = symbol[0];
 			     *str && !isspace(*str) && symptr < (symbol[0] + sizeof(symbol[0]) - 1);
-			     *symptr++ = *str++);
+			     *symptr++ = *str++) {
+				/*empty*/
+			}
 			*symptr = '\0';
 			if (isspace(*str)) str++;
 			symwidth[0] = (w < h ? w : h);
@@ -341,11 +343,11 @@ void fl_draw(
   names starting with the '\@' character'
 */
 void fl_draw(
-        const char* str,
-        int x, int y, int w, int h,
-        Fl_Align align,
-        Fl_Image* img,
-        int draw_symbols)
+    const char* str,
+    int x, int y, int w, int h,
+    Fl_Align align,
+    Fl_Image* img,
+    int draw_symbols)
 {
 	if ((!str || !*str) && !img) return;
 	if (w && h && !fl_not_clipped(x, y, w, h) && (align & FL_ALIGN_INSIDE)) return;

@@ -193,7 +193,7 @@ int Fl::arg(int argc, char **argv, int &i)
 		i++;
 		return 1;
 	}
-#ifdef __APPLE__
+#if __FLTK_MACOSX__
 	// The Finder application in MacOS X passes the "-psn_N_NNNNN" option
 	// to all apps...
 	else if (strcmp(s, "NSDocumentRevisionsDebugMode") == 0) {
@@ -432,7 +432,12 @@ const char * const Fl::help = helpmsg+13;
 void Fl::args(int argc, char **argv)
 {
 	int i;
-	if (Fl::args(argc,argv,i) < argc) Fl::error(helpmsg);
+	if (Fl::args(argc,argv,i) < argc) {
+#if __FLTK_IPHONEOS__
+#else
+		Fl::error(helpmsg);
+#endif
+	}
 }
 
 //#if defined(WIN32) || defined(__APPLE__) || defined(__S60_32__)

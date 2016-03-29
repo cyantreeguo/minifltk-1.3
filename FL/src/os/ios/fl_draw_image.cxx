@@ -53,45 +53,57 @@ static void innards(const uchar *buf, int X, int Y, int W, int H,
                     int delta, int linedelta, int mono,
                     Fl_Draw_Image_Cb cb, void* userdata)
 {
-	if (!linedelta) linedelta = W*delta;
+	if (!linedelta) linedelta = W*abs(delta);
 
-	const void *array = buf;
 	uchar *tmpBuf = 0;
+	if (!cb) {
+		if (delta < 0) buf -= (W-1)*(-delta);
+		if (linedelta < 0) buf -= (H-1)*(-linedelta);
+	}
+	const void *array = buf;
 	if (cb || Fl_Surface_Device::surface() != Fl_Display_Device::display_device()) {
-		tmpBuf = new uchar[ H*W*delta ];
+		tmpBuf = new uchar[ H*W*abs(delta) ];
 		if (cb) {
 			for (int i=0; i<H; i++) {
-				cb(userdata, 0, i, W, tmpBuf+i*W*delta);
+				cb(userdata, 0, i, W, tmpBuf+i*W*abs(delta));
 			}
 		} else {
 			uchar *p = tmpBuf;
 			for (int i=0; i<H; i++) {
-				memcpy(p, buf+i*linedelta, W*delta);
-				p += W*delta;
+				memcpy(p, buf+i*abs(linedelta), W*abs(delta));
+				p += W*abs(delta);
 			}
 		}
 		array = (void*)tmpBuf;
-		linedelta = W*delta;
+		linedelta = W*abs(delta);
 	}
 	// create an image context
 	CGColorSpaceRef   lut = 0;
-	if (delta<=2)
+	if (abs(delta) <= 2)
 		lut = CGColorSpaceCreateDeviceGray();
 	else
 		lut = CGColorSpaceCreateDeviceRGB();
 	// a release callback is necessary when the fl_gc is a print context because the image data
 	// must be kept until the page is closed. Thus tmpBuf can't be deleted here. It's too early.
-	CGDataProviderRef src = CGDataProviderCreateWithData( 0L, array, linedelta*H,
+	CGDataProviderRef src = CGDataProviderCreateWithData( 0L, array, abs(linedelta)*H,
 	                        tmpBuf ? dataReleaseCB : NULL
 	                                                    );
-	CGImageRef        img = CGImageCreate( W, H, 8, 8*delta, linedelta,
-	                                       lut, delta&1?kCGImageAlphaNone:kCGImageAlphaNoneSkipLast,
+	CGImageRef        img = CGImageCreate( W, H, 8, 8*abs(delta), abs(linedelta),
+	                                       lut, abs(delta)&1?kCGImageAlphaNone:kCGImageAlphaNoneSkipLast,
 	                                       //lut, delta&1?kCGImageAlphaNone:kCGImageAlphaLast,
 	                                       src, 0L, false, kCGRenderingIntentDefault);
 	// draw the image into the destination context
 	if (img) {
-		CGRect rect = { { (CGFloat)X, (CGFloat)Y }, { (CGFloat)W, (CGFloat)H } };
+		CGRect rect = CGRectMake( X, Y,  W, H);
 		Fl_X::q_begin_image(rect, 0, 0, W, H);
+		if (linedelta < 0) {
+			CGContextTranslateCTM(fl_gc, 0, H);
+			CGContextScaleCTM(fl_gc, 1, -1);
+		}
+		if (delta < 0) {
+			CGContextTranslateCTM(fl_gc, W, 0);
+			CGContextScaleCTM(fl_gc, -1, 1);
+		}
 		CGContextDrawImage(fl_gc, rect, img);
 		Fl_X::q_end_image();
 		// release all allocated resources
@@ -143,7 +155,7 @@ void Fl_Quartz_Graphics_Driver::draw_image(const uchar* buf, int x, int y, int w
 	innards(buf,x,y,w,h,d,l,(d<3&&d>-3),0,0);
 }
 void Fl_Quartz_Graphics_Driver::draw_image(Fl_Draw_Image_Cb cb, void* data,
-int x, int y, int w, int h,int d)
+        int x, int y, int w, int h,int d)
 {
 	innards(0,x,y,w,h,d,0,(d<3&&d>-3),cb,data);
 }
@@ -152,7 +164,7 @@ void Fl_Quartz_Graphics_Driver::draw_image_mono(const uchar* buf, int x, int y, 
 	innards(buf,x,y,w,h,d,l,1,0,0);
 }
 void Fl_Quartz_Graphics_Driver::draw_image_mono(Fl_Draw_Image_Cb cb, void* data,
-int x, int y, int w, int h,int d)
+        int x, int y, int w, int h,int d)
 {
 	innards(0,x,y,w,h,d,0,1,cb,data);
 }

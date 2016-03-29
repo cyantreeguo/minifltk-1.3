@@ -134,14 +134,23 @@ public:
 	typedef void (*Unfinished_Style_Cb)(int, void *);
 
 	/**
-	 This structure associates the color, font, andsize of a string to draw
-	 with an attribute mask matching attr
-	 */
+	This structure associates the color, font, and font size of a string to draw
+	with an attribute mask matching attr.
+
+	There must be one entry for each style that can be used in an
+	Fl_Text_Display for displaying text. The style table is an array of
+	struct Style_Table_Entry.
+
+	The style table is associated with an Fl_Text_Display by using
+	Fl_Text_Display::highlight_data().
+
+	\see Fl_Text_Display::highlight_data()
+	*/
 	struct Style_Table_Entry {
-		Fl_Color    color;
-		Fl_Font     font;
-		Fl_Fontsize size;
-		unsigned    attr;
+		Fl_Color    color;	///< text color
+		Fl_Font     font;	///< text font
+		Fl_Fontsize size;	///< text font size
+		unsigned    attr;	///< currently unused (this may be change in the future)
 	};
 
 	Fl_Text_Display(int X, int Y, int W, int H, const char *l = 0);
@@ -156,7 +165,8 @@ public:
 	 Multiple text widgets can be associated with the same text buffer.
 	 \param buf new text buffer
 	 */
-	void buffer(Fl_Text_Buffer& buf) {
+	void buffer(Fl_Text_Buffer& buf)
+	{
 		buffer(&buf);
 	}
 
@@ -165,7 +175,8 @@ public:
 	 Multiple text widgets can be associated with the same text buffer.
 	 \return current text buffer
 	 */
-	Fl_Text_Buffer* buffer() const {
+	Fl_Text_Buffer* buffer() const
+	{
 		return mBuffer;
 	}
 
@@ -179,7 +190,8 @@ public:
 	 Gets the position of the text insertion cursor for text display.
 	 \return insert position index into text buffer
 	 */
-	int insert_position() const {
+	int insert_position() const
+	{
 		return mCursorPos;
 	}
 	int position_to_xy(int pos, int* x, int* y) const;
@@ -204,7 +216,8 @@ public:
 	/**
 	 Hides the text cursor.
 	 */
-	void hide_cursor() {
+	void hide_cursor()
+	{
 		show_cursor(0);
 	}
 
@@ -214,7 +227,8 @@ public:
 	 Gets the text cursor color.
 	 \return cursor color
 	 */
-	Fl_Color cursor_color() const {
+	Fl_Color cursor_color() const
+	{
 		return mCursor_color;
 	}
 
@@ -222,7 +236,8 @@ public:
 	 Sets the text cursor color.
 	 \param n new cursor color
 	 */
-	void cursor_color(Fl_Color n) {
+	void cursor_color(Fl_Color n)
+	{
 		mCursor_color = n;
 	}
 
@@ -230,7 +245,8 @@ public:
 	 Gets the width/height of the scrollbars.
 	 /return width of scrollbars
 	 */
-	int scrollbar_width() const {
+	int scrollbar_width() const
+	{
 		return scrollbar_width_;
 	}
 
@@ -238,7 +254,8 @@ public:
 	 Sets the width/height of the scrollbars.
 	 \param W width of scrollbars
 	 */
-	void scrollbar_width(int W) {
+	void scrollbar_width(int W)
+	{
 		scrollbar_width_ = W;
 	}
 
@@ -246,7 +263,8 @@ public:
 	 Gets the scrollbar alignment type.
 	 \return scrollbar alignment
 	 */
-	Fl_Align scrollbar_align() const {
+	Fl_Align scrollbar_align() const
+	{
 		return scrollbar_align_;
 	}
 
@@ -254,7 +272,8 @@ public:
 	 Sets the scrollbar alignment type.
 	 \param a new scrollbar alignment
 	 */
-	void scrollbar_align(Fl_Align a) {
+	void scrollbar_align(Fl_Align a)
+	{
 		scrollbar_align_ = a;
 	}
 
@@ -263,7 +282,8 @@ public:
 	 \param pos start calculation at this index
 	 \return beginning of the words
 	 */
-	int word_start(int pos) const {
+	int word_start(int pos) const
+	{
 		return buffer()->word_start(pos);
 	}
 
@@ -272,7 +292,8 @@ public:
 	 \param pos start calculation at this index
 	 \return index of first character after the end of the word
 	 */
-	int word_end(int pos) const {
+	int word_end(int pos) const
+	{
 		return buffer()->word_end(pos);
 	}
 
@@ -290,7 +311,8 @@ public:
 	 have no effects as shortcut_ is unused in this class and derived!
 	 \return the current shortcut key
 	 */
-	int shortcut() const {
+	int shortcut() const
+	{
 		return shortcut_;
 	}
 
@@ -299,7 +321,8 @@ public:
 	 have no effects as shortcut_ is unused in this class and derived!
 	 \param s the new shortcut key
 	 */
-	void shortcut(int s) {
+	void shortcut(int s)
+	{
 		shortcut_ = s;
 	}
 
@@ -307,7 +330,8 @@ public:
 	 Gets the default font used when drawing text in the widget.
 	 \return current text font face unless overridden by a style
 	 */
-	Fl_Font textfont() const {
+	Fl_Font textfont() const
+	{
 		return textfont_;
 	}
 
@@ -315,7 +339,8 @@ public:
 	 Sets the default font used when drawing text in the widget.
 	 \param s default text font face
 	 */
-	void textfont(Fl_Font s) {
+	void textfont(Fl_Font s)
+	{
 		textfont_ = s;
 		mColumnScale = 0;
 	}
@@ -324,7 +349,8 @@ public:
 	 Gets the default size of text in the widget.
 	 \return current text height unless overridden by a style
 	 */
-	Fl_Fontsize textsize() const {
+	Fl_Fontsize textsize() const
+	{
 		return textsize_;
 	}
 
@@ -332,7 +358,8 @@ public:
 	 Sets the default size of text in the widget.
 	 \param s new text size
 	 */
-	void textsize(Fl_Fontsize s) {
+	void textsize(Fl_Fontsize s)
+	{
 		textsize_ = s;
 		mColumnScale = 0;
 	}
@@ -341,7 +368,8 @@ public:
 	 Gets the default color of text in the widget.
 	 \return text color unless overridden by a style
 	 */
-	Fl_Color textcolor() const {
+	Fl_Color textcolor() const
+	{
 		return textcolor_;
 	}
 
@@ -349,7 +377,8 @@ public:
 	 Sets the default color of text in the widget.
 	 \param n new text color
 	 */
-	void textcolor(Fl_Color n) {
+	void textcolor(Fl_Color n)
+	{
 		textcolor_ = n;
 	}
 

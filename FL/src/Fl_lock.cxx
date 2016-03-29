@@ -365,7 +365,7 @@ void* Fl::thread_message()
 
 ////////////////////////////////////////////////////////////////
 // POSIX threading...
-#elif HAVE_PTHREAD
+#elif defined(HAVE_PTHREAD)
 #  include <unistd.h>
 #  include <fcntl.h>
 #  include <pthread.h>

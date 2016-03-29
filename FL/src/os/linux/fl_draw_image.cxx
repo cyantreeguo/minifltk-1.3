@@ -160,9 +160,9 @@ static void color16_converter(const uchar *from, uchar *to, int w, int delta)
 		b = (b&~fl_bluemask) +from[2];
 		if (b>255) b = 255;
 		OUTASSIGN((
-		                  ((r&fl_redmask)<<fl_redshift)+
-		                  ((g&fl_greenmask)<<fl_greenshift)+
-		                  ((b&fl_bluemask)<<fl_blueshift)
+		              ((r&fl_redmask)<<fl_redshift)+
+		              ((g&fl_greenmask)<<fl_greenshift)+
+		              ((b&fl_bluemask)<<fl_blueshift)
 		          ) >> fl_extrashift);
 	}
 	ri = r;
@@ -192,9 +192,9 @@ static void mono16_converter(const uchar *from,uchar *to,int w, int delta)
 		if (r > 255) r = 255;
 		uchar m = r&mask;
 		OUTASSIGN((
-		                  (m<<fl_redshift)+
-		                  (m<<fl_greenshift)+
-		                  (m<<fl_blueshift)
+		              (m<<fl_redshift)+
+		              (m<<fl_greenshift)+
+		              (m<<fl_blueshift)
 		          ) >> fl_extrashift);
 	}
 	ri = r;
@@ -355,14 +355,14 @@ static void
 color32_converter(const uchar *from, uchar *to, int w, int delta)
 {
 	INNARDS32(
-	        (from[0]<<fl_redshift)+(from[1]<<fl_greenshift)+(from[2]<<fl_blueshift));
+	    (from[0]<<fl_redshift)+(from[1]<<fl_greenshift)+(from[2]<<fl_blueshift));
 }
 
 static void
 mono32_converter(const uchar *from,uchar *to,int w, int delta)
 {
 	INNARDS32(
-	        (*from << fl_redshift)+(*from << fl_greenshift)+(*from << fl_blueshift));
+	    (*from << fl_redshift)+(*from << fl_greenshift)+(*from << fl_blueshift));
 }
 
 ////////////////////////////////////////////////////////////////
@@ -487,7 +487,7 @@ static void innards(const uchar *buf, int X, int Y, int W, int H,
                     Fl_Draw_Image_Cb cb, void* userdata,
                     const bool alpha)
 {
-	if (!linedelta) linedelta = W*delta;
+	if (!linedelta) linedelta = W*abs(delta);
 
 	int dx, dy, w, h;
 	fl_clip_box(X,Y,W,H,dx,dy,w,h);
@@ -527,15 +527,15 @@ static void innards(const uchar *buf, int X, int Y, int W, int H,
 	// I tested it on Linux, but it may fail on other Xlib implementations:
 	if (buf && (
 #  if 0	// set this to 1 to allow 32-bit shortcut
-	            delta == 4 &&
+	        delta == 4 &&
 #    if WORDS_BIGENDIAN
-	            conv == rgbx_converter
+	        conv == rgbx_converter
 #    else
-	            conv == xbgr_converter
+	        conv == xbgr_converter
 #    endif
-	            ||
+	        ||
 #  endif
-	            conv == rgb_converter && delta==3
+	        conv == rgb_converter && delta==3
 	    ) && !(linedelta&scanline_add)) {
 		xi.data = (char *)(buf+delta*dx+linedelta*dy);
 		xi.bytes_per_line = linedelta;
@@ -601,18 +601,19 @@ static void innards(const uchar *buf, int X, int Y, int W, int H,
 
 void Fl_Xlib_Graphics_Driver::draw_image(const uchar* buf, int x, int y, int w, int h, int d, int l)
 {
+	const bool alpha = !!(abs(d) & FL_IMAGE_WITH_ALPHA);
+	if (alpha) d ^= FL_IMAGE_WITH_ALPHA;
+	const int mono = (d>-3 && d<3);
 
-	const bool alpha = !!(d & FL_IMAGE_WITH_ALPHA);
-	d &= ~FL_IMAGE_WITH_ALPHA;
-
-	innards(buf,x,y,w,h,d,l,(d<3&&d>-3),0,0,alpha);
+	innards(buf,x,y,w,h,d,l,mono,0,0,alpha);
 }
 void Fl_Xlib_Graphics_Driver::draw_image(Fl_Draw_Image_Cb cb, void* data, int x, int y, int w, int h,int d)
 {
-	const bool alpha = !!(d & FL_IMAGE_WITH_ALPHA);
-	d &= ~FL_IMAGE_WITH_ALPHA;
+	const bool alpha = !!(abs(d) & FL_IMAGE_WITH_ALPHA);
+	if (alpha) d ^= FL_IMAGE_WITH_ALPHA;
+	const int mono = (d>-3 && d<3);
 
-	innards(0,x,y,w,h,d,0,(d<3&&d>-3),cb,data,alpha);
+	innards(0,x,y,w,h,d,0,mono,cb,data,alpha);
 }
 void Fl_Xlib_Graphics_Driver::draw_image_mono(const uchar* buf, int x, int y, int w, int h, int d, int l)
 {

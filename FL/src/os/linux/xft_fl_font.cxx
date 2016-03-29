@@ -58,6 +58,8 @@
 
 #include <math.h>
 
+#define USE_OVERLAY 0
+
 // The predefined fonts that FLTK has:
 static Fl_Fontdesc built_in_table[] = {
 #if 1

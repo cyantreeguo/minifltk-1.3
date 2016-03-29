@@ -114,11 +114,12 @@ void Fl_Browser_::resize(int X, int Y, int W, int H)
 	// move the scrollbars so they can respond to events:
 	bbox(X,Y,W,H);
 	scrollbar.resize(
-	        scrollbar.align()&FL_ALIGN_LEFT ? X-scrollsize : X+W,
-	        Y, scrollsize, H);
+	    scrollbar.align()&FL_ALIGN_LEFT ? X-scrollsize : X+W,
+	    Y, scrollsize, H);
 	hscrollbar.resize(
-	        X, scrollbar.align()&FL_ALIGN_TOP ? Y-scrollsize : Y+H,
-	        W, scrollsize);
+	    X, scrollbar.align()&FL_ALIGN_TOP ? Y-scrollsize : Y+H,
+	    W, scrollsize);
+	max_width = 0;
 }
 
 // Cause minimal update to redraw the given item:
@@ -379,7 +380,7 @@ J1:
 	}
 	// see if scrollbar needs to be switched on/off:
 	if ((has_scrollbar_ & VERTICAL) && (
-	            (has_scrollbar_ & ALWAYS_ON) || position_ || full_height_ > H)) {
+	        (has_scrollbar_ & ALWAYS_ON) || position_ || full_height_ > H)) {
 		if (!scrollbar.visible()) {
 			scrollbar.set_visible();
 			drawsquare = 1;
@@ -395,7 +396,7 @@ J1:
 	}
 
 	if ((has_scrollbar_ & HORIZONTAL) && (
-	            (has_scrollbar_ & ALWAYS_ON) || hposition_ || full_width_ > W)) {
+	        (has_scrollbar_ & ALWAYS_ON) || hposition_ || full_width_ > W)) {
 		if (!hscrollbar.visible()) {
 			hscrollbar.set_visible();
 			drawsquare = 1;
@@ -413,7 +414,7 @@ J1:
 	// because the horizontal one is drawn.  There should be a cleaner way
 	// to do this besides copying the same code...
 	if ((has_scrollbar_ & VERTICAL) && (
-	            (has_scrollbar_ & ALWAYS_ON) || position_ || full_height_ > H)) {
+	        (has_scrollbar_ & ALWAYS_ON) || position_ || full_height_ > H)) {
 		if (!scrollbar.visible()) {
 			scrollbar.set_visible();
 			drawsquare = 1;
@@ -512,8 +513,8 @@ J1:
 	if (dy < 10) dy = 10;
 	if (scrollbar.visible()) {
 		scrollbar.damage_resize(
-		        scrollbar.align()&FL_ALIGN_LEFT ? X-scrollsize : X+W,
-		        Y, scrollsize, H);
+		    scrollbar.align()&FL_ALIGN_LEFT ? X-scrollsize : X+W,
+		    Y, scrollsize, H);
 		scrollbar.value(position_, H, 0, full_height_);
 		scrollbar.linesize(dy);
 		if (drawsquare) draw_child(scrollbar);
@@ -521,8 +522,8 @@ J1:
 	}
 	if (hscrollbar.visible()) {
 		hscrollbar.damage_resize(
-		        X, scrollbar.align()&FL_ALIGN_TOP ? Y-scrollsize : Y+H,
-		        W, scrollsize);
+		    X, scrollbar.align()&FL_ALIGN_TOP ? Y-scrollsize : Y+H,
+		    W, scrollsize);
 		hscrollbar.value(hposition_, W, 0, full_width_);
 		hscrollbar.linesize(dy);
 		if (drawsquare) draw_child(hscrollbar);
@@ -1001,8 +1002,8 @@ TOGGLE:
 		} else {
 			void* l1 = selection_;
 			void* l =
-			        (Fl::event_x()<x() || Fl::event_x()>x()+w()) ? selection_ :
-			        find_item(my);
+			    (Fl::event_x()<x() || Fl::event_x()>x()+w()) ? selection_ :
+			    find_item(my);
 			change = (l != l1);
 			select_only(l, when() & FL_WHEN_CHANGED);
 			if (wp.deleted()) return 1;

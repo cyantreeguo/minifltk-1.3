@@ -170,8 +170,9 @@ private:
 	int  _btype;			// kind-of browser to show()
 	int  _options;		// general options
 #if FLTK_ABI_VERSION >= 10304
-	fl_OPENFILENAMEW *_ofn_ptr;		// GetOpenFileName() & GetSaveFileName() struct
-	fl_BROWSEINFOW   *_binf_ptr;		// SHBrowseForFolder() struct
+	fl_OPENFILENAMEW *_ofn_ptr;	// GetOpenFileName() & GetSaveFileName() struct
+	fl_BROWSEINFOW   *_binf_ptr;	// SHBrowseForFolder() struct
+	WCHAR            *_wpattern;	// pattern buffer for filter
 #else
 	fl_OPENFILENAMEW _ofn;
 	fl_BROWSEINFOW   _binf;
@@ -359,11 +360,13 @@ private:
 	struct pair {
 		Fl_GTK_File_Chooser* running; // the running Fl_GTK_File_Chooser
 		const char *filter; // a filter string of the chooser
-		pair(Fl_GTK_File_Chooser* c, const char *f) {
+		pair(Fl_GTK_File_Chooser* c, const char *f)
+		{
 			running = c;
 			filter = strdup(f);
 		};
-		~pair() {
+		~pair()
+		{
 			free((char*)filter);
 		};
 	};

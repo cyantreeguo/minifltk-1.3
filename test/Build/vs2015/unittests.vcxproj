@@ -1,0 +1,495 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{5895A839-977B-468B-ADE3-DAF626D83435}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>unittests</RootNamespace>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>NotSet</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>../../../;../../../FL</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <MinimalRebuild>false</MinimalRebuild>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\FL\Enumerations.H" />
+    <ClInclude Include="..\..\..\FL\filename.H" />
+    <ClInclude Include="..\..\..\FL\Fl.H" />
+    <ClInclude Include="..\..\..\FL\fltk.h" />
+    <ClInclude Include="..\..\..\FL\fltkdirent.h" />
+    <ClInclude Include="..\..\..\FL\fltkmath.h" />
+    <ClInclude Include="..\..\..\FL\fltk_config.h" />
+    <ClInclude Include="..\..\..\FL\fltk_config_android.h" />
+    <ClInclude Include="..\..\..\FL\fltk_config_ios.h" />
+    <ClInclude Include="..\..\..\FL\fltk_config_linux.h" />
+    <ClInclude Include="..\..\..\FL\fltk_config_osx.h" />
+    <ClInclude Include="..\..\..\FL\fltk_config_s60v32.h" />
+    <ClInclude Include="..\..\..\FL\fltk_config_win32.h" />
+    <ClInclude Include="..\..\..\FL\fltk_config_wince.h" />
+    <ClInclude Include="..\..\..\FL\Fl_Adjuster.H" />
+    <ClInclude Include="..\..\..\FL\fl_ask.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Bitmap.H" />
+    <ClInclude Include="..\..\..\FL\Fl_BMP_Image.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Box.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Browser.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Browser_.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Button.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Cairo.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Cairo_Window.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Chart.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Check_Browser.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Check_Button.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Choice.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Clock.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Color_Chooser.H" />
+    <ClInclude Include="..\..\..\FL\Fl_ComboBox.h" />
+    <ClInclude Include="..\..\..\FL\Fl_Copy_Surface.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Counter.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Device.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Dial.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Double_Window.H" />
+    <ClInclude Include="..\..\..\FL\fl_draw.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Export.H" />
+    <ClInclude Include="..\..\..\FL\Fl_File_Browser.H" />
+    <ClInclude Include="..\..\..\FL\Fl_File_Chooser.H" />
+    <ClInclude Include="..\..\..\FL\Fl_File_Icon.H" />
+    <ClInclude Include="..\..\..\FL\Fl_File_Input.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Fill_Dial.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Fill_Slider.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Float_Input.H" />
+    <ClInclude Include="..\..\..\FL\Fl_FormsBitmap.H" />
+    <ClInclude Include="..\..\..\FL\Fl_FormsPixmap.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Free.H" />
+    <ClInclude Include="..\..\..\FL\Fl_GIF_Image.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Group.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Help_Dialog.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Help_View.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Hold_Browser.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Hor_Fill_Slider.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Hor_Nice_Slider.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Hor_Slider.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Hor_Value_Slider.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Image.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Image_Surface.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Input.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Input_.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Input_Choice.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Int_Input.H" />
+    <ClInclude Include="..\..\..\FL\Fl_JPEG_Image.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Light_Button.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Line_Dial.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Menu.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Menu_.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Menu_Bar.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Menu_Button.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Menu_Item.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Menu_Window.H" />
+    <ClInclude Include="..\..\..\FL\fl_message.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Multiline_Input.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Multiline_Output.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Multi_Browser.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Multi_Label.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Native_File_Chooser.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Nice_Slider.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Object.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Output.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Overlay_Window.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Pack.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Paged_Device.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Pixmap.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Platform.h" />
+    <ClInclude Include="..\..\..\FL\Fl_Plugin.H" />
+    <ClInclude Include="..\..\..\FL\Fl_PNG_Image.H" />
+    <ClInclude Include="..\..\..\FL\Fl_PNM_Image.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Positioner.H" />
+    <ClInclude Include="..\..\..\FL\Fl_PostScript.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Preferences.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Printer.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Progress.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Radio_Button.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Radio_Light_Button.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Radio_Round_Button.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Repeat_Button.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Return_Button.H" />
+    <ClInclude Include="..\..\..\FL\Fl_RGB_Image.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Roller.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Round_Button.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Round_Clock.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Scroll.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Scrollbar.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Secret_Input.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Select_Browser.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Shared_Image.H" />
+    <ClInclude Include="..\..\..\FL\fl_show_colormap.H" />
+    <ClInclude Include="..\..\..\FL\fl_show_input.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Simple_Counter.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Single_Window.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Slider.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Spinner.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Sys_Menu_Bar.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Table.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Table_Row.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Tabs.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Text_Buffer.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Text_Display.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Text_Editor.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Tile.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Tiled_Image.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Timer.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Toggle_Button.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Toggle_Light_Button.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Toggle_Round_Button.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Tooltip.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Tree.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Tree_Item.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Tree_Item_Array.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Tree_Prefs.H" />
+    <ClInclude Include="..\..\..\FL\fl_types.h" />
+    <ClInclude Include="..\..\..\FL\fl_utf8.h" />
+    <ClInclude Include="..\..\..\FL\Fl_Valuator.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Value_Input.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Value_Output.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Value_Slider.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Widget.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Window.H" />
+    <ClInclude Include="..\..\..\FL\Fl_Wizard.H" />
+    <ClInclude Include="..\..\..\FL\Fl_XBM_Image.H" />
+    <ClInclude Include="..\..\..\FL\Fl_XPM_Image.H" />
+    <ClInclude Include="..\..\..\FL\forms.H" />
+    <ClInclude Include="..\..\..\FL\jpgd.h" />
+    <ClInclude Include="..\..\..\FL\libnsgif.h" />
+    <ClInclude Include="..\..\..\FL\lodepng.h" />
+    <ClInclude Include="..\..\..\FL\names.h" />
+    <ClInclude Include="..\..\..\FL\src\cgdebug.h" />
+    <ClInclude Include="..\..\..\FL\src\dingbats_.h" />
+    <ClInclude Include="..\..\..\FL\src\fastarrow.h" />
+    <ClInclude Include="..\..\..\FL\src\flstring.h" />
+    <ClInclude Include="..\..\..\FL\src\fl_cmap.h" />
+    <ClInclude Include="..\..\..\FL\src\Fl_Font.H" />
+    <ClInclude Include="..\..\..\FL\src\Fl_XColor.H" />
+    <ClInclude Include="..\..\..\FL\src\mediumarrow.h" />
+    <ClInclude Include="..\..\..\FL\src\slowarrow.h" />
+    <ClInclude Include="..\..\..\FL\src\symbol_.h" />
+    <ClInclude Include="..\..\..\FL\src\utf8_case.h" />
+    <ClInclude Include="..\..\..\FL\src\utf8_spacing.h" />
+    <ClInclude Include="..\..\..\FL\src\Xutf8.h" />
+    <ClInclude Include="..\..\..\FL\wince_compate.h" />
+    <ClInclude Include="..\..\..\FL\x.H" />
+    <ClInclude Include="..\..\..\FL\x_android.H" />
+    <ClInclude Include="..\..\..\FL\x_dummy.h" />
+    <ClInclude Include="..\..\..\FL\x_ios.H" />
+    <ClInclude Include="..\..\..\FL\x_linux.h" />
+    <ClInclude Include="..\..\..\FL\x_osx.H" />
+    <ClInclude Include="..\..\..\FL\x_s60v32.h" />
+    <ClInclude Include="..\..\..\FL\x_win32.H" />
+    <ClInclude Include="..\..\..\FL\x_wince.H" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\FL\src\filename_absolute.cxx" />
+    <ClCompile Include="..\..\..\FL\src\filename_expand.cxx" />
+    <ClCompile Include="..\..\..\FL\src\filename_ext.cxx" />
+    <ClCompile Include="..\..\..\FL\src\filename_isdir.cxx" />
+    <ClCompile Include="..\..\..\FL\src\filename_list.cxx" />
+    <ClCompile Include="..\..\..\FL\src\filename_match.cxx" />
+    <ClCompile Include="..\..\..\FL\src\filename_setext.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl.cxx" />
+    <ClCompile Include="..\..\..\FL\src\flstring.c" />
+    <ClCompile Include="..\..\..\FL\src\Fl_abort.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_add_idle.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Adjuster.cxx" />
+    <ClCompile Include="..\..\..\FL\src\fl_arc.cxx" />
+    <ClCompile Include="..\..\..\FL\src\fl_arci.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_arg.cxx" />
+    <ClCompile Include="..\..\..\FL\src\fl_ask.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Bitmap.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_BMP_Image.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Box.cxx" />
+    <ClCompile Include="..\..\..\FL\src\fl_boxtype.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Browser.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Browser_.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Browser_load.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Button.cxx" />
+    <ClCompile Include="..\..\..\FL\src\fl_call_main.c" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Chart.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Check_Browser.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Clock.cxx" />
+    <ClCompile Include="..\..\..\FL\src\fl_color.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Color_Chooser.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_compose.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Copy_Surface.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Counter.cxx" />
+    <ClCompile Include="..\..\..\FL\src\fl_cursor.cxx" />
+    <ClCompile Include="..\..\..\FL\src\fl_curve.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Device.cxx" />
+    <ClCompile Include="..\..\..\FL\src\fl_diamond_box.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_display.cxx" />
+    <ClCompile Include="..\..\..\FL\src\fl_dnd.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Double_Window.cxx" />
+    <ClCompile Include="..\..\..\FL\src\fl_draw.cxx" />
+    <ClCompile Include="..\..\..\FL\src\fl_draw_image.cxx" />
+    <ClCompile Include="..\..\..\FL\src\fl_draw_pixmap.cxx" />
+    <ClCompile Include="..\..\..\FL\src\fl_encoding_latin1.cxx" />
+    <ClCompile Include="..\..\..\FL\src\fl_encoding_mac_roman.cxx" />
+    <ClCompile Include="..\..\..\FL\src\fl_engraved_label.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_File_Browser.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_File_Chooser.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_File_Chooser2.cxx" />
+    <ClCompile Include="..\..\..\FL\src\fl_file_dir.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_File_Icon.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_File_Icon2.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_File_Input.cxx" />
+    <ClCompile Include="..\..\..\FL\src\fl_font.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_get_key.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_get_system_colors.cxx" />
+    <ClCompile Include="..\..\..\FL\src\fl_gleam.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_grab.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Group.cxx" />
+    <ClCompile Include="..\..\..\FL\src\fl_gtk.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Help_Dialog.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Help_Dialog_Dox.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Help_View.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Image.cxx" />
+    <ClCompile Include="..\..\..\FL\src\fl_images_core.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Image_Surface.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Input.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Input_.cxx" />
+    <ClCompile Include="..\..\..\FL\src\fl_labeltype.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Light_Button.cxx" />
+    <ClCompile Include="..\..\..\FL\src\fl_line_style.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_lock.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Menu.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Menu_.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Menu_add.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Menu_Bar.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Menu_Button.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Menu_global.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Menu_Window.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Multi_Label.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Native_File_Chooser.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Native_File_Chooser_common.cxx" />
+    <ClCompile Include="..\..\..\FL\src\fl_open_uri.cxx" />
+    <ClCompile Include="..\..\..\FL\src\fl_oval_box.cxx" />
+    <ClCompile Include="..\..\..\FL\src\fl_overlay.cxx" />
+    <ClCompile Include="..\..\..\FL\src\fl_overlay_visual.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Overlay_Window.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_own_colormap.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Pack.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Paged_Device.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Pixmap.cxx" />
+    <ClCompile Include="..\..\..\FL\src\fl_plastic.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_PNM_Image.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Positioner.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_PostScript.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Preferences.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Printer.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Progress.cxx" />
+    <ClCompile Include="..\..\..\FL\src\fl_read_image.cxx" />
+    <ClCompile Include="..\..\..\FL\src\fl_rect.cxx" />
+    <ClCompile Include="..\..\..\FL\src\fl_rounded_box.cxx" />
+    <ClCompile Include="..\..\..\FL\src\fl_round_box.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Round_Button.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Scroll.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Scrollbar.cxx" />
+    <ClCompile Include="..\..\..\FL\src\fl_scroll_area.cxx" />
+    <ClCompile Include="..\..\..\FL\src\fl_set_font.cxx" />
+    <ClCompile Include="..\..\..\FL\src\fl_set_fonts.cxx" />
+    <ClCompile Include="..\..\..\FL\src\fl_shadow_box.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Shared_Image.cxx" />
+    <ClCompile Include="..\..\..\FL\src\fl_shortcut.cxx" />
+    <ClCompile Include="..\..\..\FL\src\fl_show_colormap.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Slider.cxx" />
+    <ClCompile Include="..\..\..\FL\src\fl_symbols.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Table.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Table_Row.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Tabs.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Text_Buffer.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Text_Display.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Text_Editor.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Tile.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Tiled_Image.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Tooltip.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Tree.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Tree_Item.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Tree_Item_Array.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Tree_Prefs.cxx" />
+    <ClCompile Include="..\..\..\FL\src\fl_utf.c" />
+    <ClCompile Include="..\..\..\FL\src\fl_utf8.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Valuator.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Value_Input.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Value_Output.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Value_Slider.cxx" />
+    <ClCompile Include="..\..\..\FL\src\fl_vertex.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_visual.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Widget.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Window.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Window_fullscreen.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Window_hotspot.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Window_iconize.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Window_shape.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_Wizard.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_XBM_Image.cxx" />
+    <ClCompile Include="..\..\..\FL\src\Fl_XPM_Image.cxx" />
+    <ClCompile Include="..\..\..\FL\src\forms_bitmap.cxx" />
+    <ClCompile Include="..\..\..\FL\src\forms_compatability.cxx" />
+    <ClCompile Include="..\..\..\FL\src\forms_free.cxx" />
+    <ClCompile Include="..\..\..\FL\src\forms_fselect.cxx" />
+    <ClCompile Include="..\..\..\FL\src\forms_pixmap.cxx" />
+    <ClCompile Include="..\..\..\FL\src\forms_timer.cxx" />
+    <ClCompile Include="..\..\..\FL\src\jpgd.cxx" />
+    <ClCompile Include="..\..\..\FL\src\keysym2Ucs.c" />
+    <ClCompile Include="..\..\..\FL\src\libnsgif.cxx" />
+    <ClCompile Include="..\..\..\FL\src\lodepng.cxx" />
+    <ClCompile Include="..\..\..\FL\src\numericsort.cxx" />
+    <ClCompile Include="..\..\..\FL\src\ps_image.cxx" />
+    <ClCompile Include="..\..\..\FL\src\scandir.c" />
+    <ClCompile Include="..\..\..\FL\src\screen_xywh.cxx" />
+    <ClCompile Include="..\..\..\FL\src\ucs2fontmap.c" />
+    <ClCompile Include="..\..\..\FL\src\utf8Input.c" />
+    <ClCompile Include="..\..\..\FL\src\utf8Utils.c" />
+    <ClCompile Include="..\..\..\FL\src\utf8Wrap.c" />
+    <ClCompile Include="..\..\..\FL\src\utf8_case.c" />
+    <ClCompile Include="..\..\..\FL\src\utf8_is_right2left.c" />
+    <ClCompile Include="..\..\..\FL\src\utf8_is_spacing.c" />
+    <ClCompile Include="..\..\..\FL\src\utf8_mk_wcwidth.c" />
+    <ClCompile Include="..\..\..\FL\src\vsnprintf.c" />
+    <ClCompile Include="..\..\..\FL\src\wince_compate.cxx" />
+    <ClCompile Include="..\..\src\unittests.cxx" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

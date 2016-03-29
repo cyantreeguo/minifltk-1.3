@@ -56,6 +56,13 @@ struct Fl_Label;
 # define FL_SOCKET int
 #endif
 
+// Pointers you can use to change FLTK to a foreign language.
+// Note: Similar pointers are defined in FL/fl_ask.H and src/fl_ask.cxx
+extern FL_EXPORT const char* fl_local_ctrl;
+extern FL_EXPORT const char* fl_local_meta;
+extern FL_EXPORT const char* fl_local_alt;
+extern FL_EXPORT const char* fl_local_shift;
+
 /** \defgroup  callback_functions Callback function typedefs
  \brief Typedefs defined in <Fl.H> for callback or handler functions passed as function parameters.
 
@@ -168,7 +175,8 @@ public: // should be private!
 	/**
 	  If true then flush() will do something.
 	*/
-	static void damage(int d) {
+	static void damage(int d)
+	{
 		damage_ = d;
 	}
 
@@ -295,7 +303,8 @@ public:
 
 	  \see Fl::abi_version()
 	*/
-	static inline int abi_check(const int val = FL_ABI_VERSION) {
+	static inline int abi_check(const int val = FL_ABI_VERSION)
+	{
 		return val == abi_version();
 	}
 
@@ -331,7 +340,8 @@ public:
 	// schemes:
 	static int scheme(const char *name);
 	/** See void scheme(const char *name) */
-	static const char* scheme() {
+	static const char* scheme()
+	{
 		return scheme_;
 	}
 
@@ -362,7 +372,8 @@ public:
 
 	  \see Fl::scheme(const char *name)
 	*/
-	static int is_scheme(const char *name) {
+	static int is_scheme(const char *name)
+	{
 		return (scheme_ && name && !strcmp(name,scheme_));
 	}
 	/**
@@ -396,15 +407,19 @@ public:
 	stdout with a fair degree of accuracy:
 
 	\code
-	   void callback(void*) {
-	     puts("TICK");
-	     Fl::repeat_timeout(1.0, callback);
-	   }
-
-	   int main() {
-	     Fl::add_timeout(1.0, callback);
-	     return Fl::run();
-	   }
+	   #include <stdio.h>
+	#include <FL/Fl.H>
+	#include <FL/Fl_Window.H>
+	void callback(void*) {
+	printf("TICK\n");
+	Fl::repeat_timeout(1.0, callback);    // retrigger timeout
+	}
+	int main() {
+	Fl_Window win(100,100);
+	win.show();
+	Fl::add_timeout(1.0, callback);       // set up first timeout
+	return Fl::run();
+	}
 	\endcode
 	*/
 	static void add_timeout(double t, Fl_Timeout_Handler,void* = 0); // platform dependent
@@ -465,7 +480,8 @@ public:
 	static int  has_idle(Fl_Idle_Handler cb, void* data = 0);
 	static void remove_idle(Fl_Idle_Handler cb, void* data = 0);
 	/** If true then flush() will do something. */
-	static int damage() {
+	static int damage()
+	{
 		return damage_;
 	}
 	static void redraw();
@@ -541,7 +557,8 @@ public:
 	  for all events, and no other windows will have handle()
 	  called (grab() overrides this).
 	*/
-	static Fl_Window* modal() {
+	static Fl_Window* modal()
+	{
 		return modal_;
 	}
 	/** Returns the window that currently receives all events.
@@ -549,7 +566,8 @@ public:
 	 \return The window that currently receives all events,
 	 or NULL if event grabbing is currently OFF.
 	*/
-	static Fl_Window* grab() {
+	static Fl_Window* grab()
+	{
 		return grab_;
 	}
 	/** Selects the window to grab.
@@ -589,21 +607,24 @@ public:
 	  to determine if a callback is being done in response to a
 	  keypress, mouse click, etc.
 	*/
-	static int event()		{
+	static int event()
+	{
 		return e_number;
 	}
 	/**
 	  Returns the mouse position of the event relative to the Fl_Window
 	  it was passed to.
 	*/
-	static int event_x()	{
+	static int event_x()
+	{
 		return e_x;
 	}
 	/**
 	  Returns the mouse position of the event relative to the Fl_Window
 	  it was passed to.
 	*/
-	static int event_y()	{
+	static int event_y()
+	{
 		return e_y;
 	}
 	/**
@@ -612,7 +633,8 @@ public:
 	  difference between event_x_root(),event_y_root() and
 	  event_x(),event_y().
 	*/
-	static int event_x_root()	{
+	static int event_x_root()
+	{
 		return e_x_root;
 	}
 	/**
@@ -621,21 +643,24 @@ public:
 	  difference between event_x_root(),event_y_root() and
 	  event_x(),event_y().
 	*/
-	static int event_y_root()	{
+	static int event_y_root()
+	{
 		return e_y_root;
 	}
 	/**
 	  Returns the current horizontal mouse scrolling associated with the
 	  FL_MOUSEWHEEL event. Right is positive.
 	*/
-	static int event_dx()	{
+	static int event_dx()
+	{
 		return e_dx;
 	}
 	/**
 	  Returns the current vertical mouse scrolling associated with the
 	  FL_MOUSEWHEEL event. Down is positive.
 	*/
-	static int event_dy()	{
+	static int event_dy()
+	{
 		return e_dy;
 	}
 	/**
@@ -655,7 +680,8 @@ public:
 	  again while event_is_click() is true.
 
 	 */
-	static int event_clicks()	{
+	static int event_clicks()
+	{
 		return e_clicks;
 	}
 	/**
@@ -665,7 +691,8 @@ public:
 	  \param[in] i corresponds to no double-click if 0, i+1 mouse clicks otherwise
 	  \see int event_clicks()
 	*/
-	static void event_clicks(int i) {
+	static void event_clicks(int i)
+	{
 		e_clicks = i;
 	}
 	/**
@@ -675,7 +702,8 @@ public:
 	"click".  You can test this on FL_DRAG, FL_RELEASE,
 	and FL_MOVE events.
 	*/
-	static int event_is_click()	{
+	static int event_is_click()
+	{
 		return e_is_click;
 	}
 	/**
@@ -684,7 +712,8 @@ public:
 	 click from being counted as a double-click or to make a popup menu
 	 pick an item with a single click.  Don't pass non-zero to this.
 	*/
-	static void event_is_click(int i) {
+	static void event_is_click(int i)
+	{
 		e_is_click = i;
 	}
 	/**
@@ -694,7 +723,8 @@ public:
 	    \retval FL_LEFT_MOUSE \retval FL_MIDDLE_MOUSE \retval FL_RIGHT_MOUSE.
 	    \see Fl::event_buttons()
 	  */
-	static int event_button()	{
+	static int event_button()
+	{
 		return e_keysym-FL_Button;
 	}
 	/**
@@ -722,7 +752,8 @@ public:
 	    so that the shift state is not correctly reported until the first event
 	    <I>after</I> the shift key is pressed or released.
 	  */
-	static int event_state() {
+	static int event_state()
+	{
 		return e_state;
 	}
 
@@ -731,7 +762,8 @@ public:
 	  Use \p mask to pass the event states you're interested in.
 	  The legal event state bits are defined in Fl::event_state().
 	*/
-	static int event_state(int mask) {
+	static int event_state(int mask)
+	{
 		return e_state&mask;
 	}
 	/**
@@ -745,7 +777,8 @@ public:
 	  \returns an integer 'key code', or 0 if the last event was not a key press or release.
 	  \see int event_key(int), event_text(), compose(int&).
 	*/
-	static int event_key()	{
+	static int event_key()
+	{
 		return e_keysym;
 	}
 	/**
@@ -756,7 +789,8 @@ public:
 	  event_key() returns the translated key code, whereas
 	  event_original_key() returns the keycode before NumLock translation.
 	*/
-	static int event_original_key() {
+	static int event_original_key()
+	{
 		return e_original_keysym;
 	}
 	/**
@@ -818,7 +852,8 @@ public:
 
 	  \returns A NULL terminated text string equivalent of the last keystroke.
 	 */
-	static const char* event_text() {
+	static const char* event_text()
+	{
 		return e_text;
 	}
 	/**
@@ -827,20 +862,23 @@ public:
 	  be a nul before that if the keystroke translates to a nul character or
 	  you paste a nul character.
 	*/
-	static int event_length() {
+	static int event_length()
+	{
 		return e_length;
 	}
 
 	/** During an FL_PASTE event of non-textual data, returns a pointer to the pasted data.
 	 The returned data is an Fl_Image * when the result of Fl::event_clipboard_type() is Fl::clipboard_image.
 	 */
-	static void *event_clipboard() {
+	static void *event_clipboard()
+	{
 		return e_clipboard_data;
 	}
 	/** Returns the type of the pasted data during an FL_PASTE event.
 	 This type can be Fl::clipboard_plain_text or Fl::clipboard_image.
 	 */
-	static const char *event_clipboard_type() {
+	static const char *event_clipboard_type()
+	{
 		return e_clipboard_type;
 	}
 
@@ -867,18 +905,21 @@ public:
 	static int handle_(int, Fl_Window*);
 	/**  Gets the widget that is below the mouse.
 	     \see  belowmouse(Fl_Widget*) */
-	static Fl_Widget* belowmouse() {
+	static Fl_Widget* belowmouse()
+	{
 		return belowmouse_;
 	}
 	static void belowmouse(Fl_Widget*);
 	/** Gets the widget that is being pushed.
 	    \see void pushed(Fl_Widget*) */
-	static Fl_Widget* pushed()	{
+	static Fl_Widget* pushed()
+	{
 		return pushed_;
 	}
 	static void pushed(Fl_Widget*);
 	/** Gets the current Fl::focus() widget. \sa Fl::focus(Fl_Widget*) */
-	static Fl_Widget* focus()	{
+	static Fl_Widget* focus()
+	{
 		return focus_;
 	}
 	static void focus(Fl_Widget*);
@@ -1008,7 +1049,8 @@ public:
 	// These are for back-compatibility only:
 	/**  back-compatibility only: Gets the widget owning the current selection
 	     \see Fl_Widget* selection_owner(Fl_Widget*) */
-	static Fl_Widget* selection_owner() {
+	static Fl_Widget* selection_owner()
+	{
 		return selection_owner_;
 	}
 	static void selection_owner(Fl_Widget*);
@@ -1035,7 +1077,8 @@ public:
 	    \param[out]  X,Y,W,H the corresponding screen bounding box
 	    \see void screen_xywh(int &x, int &y, int &w, int &h, int mx, int my)
 	*/
-	static void screen_xywh(int &X, int &Y, int &W, int &H) {
+	static void screen_xywh(int &X, int &Y, int &W, int &H)
+	{
 		int x, y;
 		Fl::get_mouse(x, y);
 		screen_xywh(X, Y, W, H, x, y);
@@ -1053,7 +1096,8 @@ public:
 	 \param[out]  X,Y,W,H the work area bounding box
 	 \see void screen_work_area(int &x, int &y, int &w, int &h, int mx, int my)
 	 */
-	static void screen_work_area(int &X, int &Y, int &W, int &H) {
+	static void screen_work_area(int &X, int &Y, int &W, int &H)
+	{
 		int x, y;
 		Fl::get_mouse(x, y);
 		screen_work_area(X, Y, W, H, x, y);
@@ -1162,7 +1206,8 @@ public:
 	/** \addtogroup fl_windows
 	  @{ */
 	/** For back compatibility, sets the void Fl::fatal handler callback */
-	static void set_abort(Fl_Abort_Handler f) {
+	static void set_abort(Fl_Abort_Handler f)
+	{
 		fatal = f;
 	}
 	static void (*atclose)(Fl_Window*,void*);
@@ -1170,7 +1215,8 @@ public:
 	/** For back compatibility, sets the Fl::atclose handler callback. You
 	    can now simply change the callback for the window instead.
 	    \see Fl_Window::callback(Fl_Callback*) */
-	static void set_atclose(Fl_Atclose_Handler f) {
+	static void set_atclose(Fl_Atclose_Handler f)
+	{
 		atclose = f;
 	}
 	/**   @} */
@@ -1178,19 +1224,23 @@ public:
 	/** \addtogroup fl_events
 	  @{ */
 	/** Returns non-zero if the Shift key is pressed. */
-	static int event_shift() {
+	static int event_shift()
+	{
 		return e_state&FL_SHIFT;
 	}
 	/** Returns non-zero if the Control key is pressed. */
-	static int event_ctrl() {
+	static int event_ctrl()
+	{
 		return e_state&FL_CTRL;
 	}
 	/** Returns non-zero if the FL_COMMAND key is pressed, either FL_CTRL or on OSX FL_META. */
-	static int event_command() {
+	static int event_command()
+	{
 		return e_state&FL_COMMAND;
 	}
 	/** Returns non-zero if the Alt key is pressed. */
-	static int event_alt() {
+	static int event_alt()
+	{
 		return e_state&FL_ALT;
 	}
 	/**
@@ -1201,28 +1251,32 @@ public:
 	  caused an FL_RELEASE event, you can use Fl::event_button() instead.
 	  \return a bit mask value like { [FL_BUTTON1] | [FL_BUTTON2] | [FL_BUTTON3] }
 	*/
-	static int event_buttons() {
+	static int event_buttons()
+	{
 		return e_state&0x7f000000;
 	}
 	/**
 	  Returns non-zero if mouse button 1 is currently held down.
 	  For more details, see Fl::event_buttons().
 	*/
-	static int event_button1() {
+	static int event_button1()
+	{
 		return e_state&FL_BUTTON1;
 	}
 	/**
 	  Returns non-zero if button 2 is currently held down.
 	  For more details, see Fl::event_buttons().
 	*/
-	static int event_button2() {
+	static int event_button2()
+	{
 		return e_state&FL_BUTTON2;
 	}
 	/**
 	  Returns non-zero if button 3 is currently held down.
 	  For more details, see Fl::event_buttons().
 	*/
-	static int event_button3() {
+	static int event_button3()
+	{
 		return e_state&FL_BUTTON3;
 	}
 	/**   @} */
@@ -1232,17 +1286,20 @@ public:
 
 	  \deprecated This method is obsolete - use the add_idle() method instead.
 	*/
-	static void set_idle(Fl_Old_Idle_Handler cb) {
+	static void set_idle(Fl_Old_Idle_Handler cb)
+	{
 		idle = cb;
 	}
 	/** See grab(Fl_Window*) */
-	static void grab(Fl_Window& win) {
+	static void grab(Fl_Window& win)
+	{
 		grab(&win);
 	}
 	/** Releases the current grabbed window, equals grab(0).
 	\deprecated Use Fl::grab(0) instead.
 	\see grab(Fl_Window*) */
-	static void release() {
+	static void release()
+	{
 		grab(0);
 	}
 
@@ -1252,7 +1309,8 @@ public:
 	  non-text widgets. The default mode is to enable keyboard focus
 	  for all widgets.
 	*/
-	static void visible_focus(int v) {
+	static void visible_focus(int v)
+	{
 		option(OPTION_VISIBLE_FOCUS, (v!=0));
 	}
 	/**
@@ -1260,7 +1318,8 @@ public:
 	  non-text widgets. The default mode is to enable keyboard focus
 	  for all widgets.
 	*/
-	static int  visible_focus() {
+	static int  visible_focus()
+	{
 		return option(OPTION_VISIBLE_FOCUS);
 	}
 
@@ -1271,7 +1330,8 @@ public:
 	  be dragged from text fields or dragged within a text field as a
 	  cut/paste shortcut.
 	*/
-	static void dnd_text_ops(int v) {
+	static void dnd_text_ops(int v)
+	{
 		option(OPTION_DND_TEXT, (v!=0));
 	}
 	/**
@@ -1280,7 +1340,8 @@ public:
 	  be dragged from text fields or dragged within a text field as a
 	  cut/paste shortcut.
 	*/
-	static int  dnd_text_ops() {
+	static int  dnd_text_ops()
+	{
 		return option(OPTION_DND_TEXT);
 	}
 	/** \defgroup fl_multithread Multithreading support functions
@@ -1344,7 +1405,8 @@ public:
 	 computers with retina displays
 	 \version 1.3.4
 	 */
-	static void use_high_res_GL(int val) {
+	static void use_high_res_GL(int val)
+	{
 		use_high_res_GL_ = val;
 	}
 	/**  returns whether GL windows should be drawn at high resolution on Apple
@@ -1352,24 +1414,25 @@ public:
 	 Default is no.
 	 \version 1.3.4
 	 */
-	static int use_high_res_GL() {
+	static int use_high_res_GL()
+	{
 		return use_high_res_GL_;
 	}
 
 #ifdef FLTK_HAVE_CAIRO
-	/** \defgroup group_cairo Cairo support functions and classes
+	/** \defgroup group_cairo Cairo Support Functions and Classes
 	    @{
 	*/
 public:
 	// Cairo support API
 	static cairo_t * cairo_make_current(Fl_Window* w);
 	/** when FLTK_HAVE_CAIRO is defined and cairo_autolink_context() is true,
-	   any current window dc is linked to a current context.
+      any current window dc is linked to a current cairo context.
 	   This is not the default, because it may not be necessary
 	   to add cairo support to all fltk supported windows.
 	   When you wish to associate a cairo context in this mode,
 	   you need to call explicitly in your draw() overridden method,
-	   FL::cairo_make_current(Fl_Window*). This will create a cairo context
+	   Fl::cairo_make_current(Fl_Window*). This will create a cairo context
 	   but only for this Window.
 	   Still in custom cairo application it is possible to handle
 	   completely this process automatically by setting \p alink to true.
@@ -1377,7 +1440,8 @@ public:
 	   You can use Fl::cairo_cc() to get the current cairo context anytime.
 	  \note Only available when configure has the --enable-cairo option
 	  */
-	static void cairo_autolink_context(bool alink) {
+	static void cairo_autolink_context(bool alink)
+	{
 		cairo_state_.autolink(alink);
 	}
 	/**
@@ -1387,18 +1451,21 @@ public:
 	  is current. \see void cairo_autolink_context(bool alink)
 	  \note Only available when configure has the --enable-cairo option
 	 */
-	static bool cairo_autolink_context() {
+	static bool cairo_autolink_context()
+	{
 		return cairo_state_.autolink();
 	}
 	/** Gets the current cairo context linked with a fltk window. */
-	static cairo_t * cairo_cc() {
+	static cairo_t * cairo_cc()
+	{
 		return cairo_state_.cc();
 	}
 	/** Sets the current cairo context to \p c.
 	    Set \p own to true if you want fltk to handle this cc deletion.
 	   \note Only available when configure has the --enable-cairo option
 	*/
-	static void cairo_cc(cairo_t * c, bool own=false) {
+	static void cairo_cc(cairo_t * c, bool own=false)
+	{
 		cairo_state_.cc(c, own);
 	}
 
@@ -1408,28 +1475,28 @@ private:
 	static Fl_Cairo_State cairo_state_;
 public:
 	/** @} */
-    
+
 #endif // FLTK_HAVE_CAIRO
-    
+
 // add by cyantree
 public:
-    static int softkeyboard_isshow(); // 0-hide, 1-show
-    static void softkeyboard_work_area(int &X, int &Y, int &W, int &H);
-    
-    // touch
-    static int mouse_simulate_by_touch();
-    static int touch_type();
-    static int touch_tapcount();
-    static int touch_finger();
-    static int touch_x(int finger);
-    static int touch_y(int finger);
-    static int touch_x_root(int finger);
-    static int touch_y_root(int finger);
-    static int touch_end_finger();
-    static int touch_end_x(int finger);
-    static int touch_end_y(int finger);
-    static int touch_end_x_root(int finger);
-    static int touch_end_y_root(int finger);
+	static int softkeyboard_isshow(); // 0-hide, 1-show
+	static void softkeyboard_work_area(int &X, int &Y, int &W, int &H);
+
+	// touch
+	static int mouse_simulate_by_touch();
+	static int touch_type();
+	static int touch_tapcount();
+	static int touch_finger();
+	static int touch_x(int finger);
+	static int touch_y(int finger);
+	static int touch_x_root(int finger);
+	static int touch_y_root(int finger);
+	static int touch_end_finger();
+	static int touch_end_x(int finger);
+	static int touch_end_y(int finger);
+	static int touch_end_x_root(int finger);
+	static int touch_end_y_root(int finger);
 };
 
 /**
@@ -1479,12 +1546,14 @@ class FL_EXPORT Fl_Widget_Tracker
 
 public:
 	// The constructor adds a widget to the watch list.
-	Fl_Widget_Tracker(Fl_Widget *wi) {
+	Fl_Widget_Tracker(Fl_Widget *wi)
+	{
 		wp_ = wi;
 		Fl::watch_widget_pointer(wp_); // add pointer to watch list
 	}
 	// The destructor removes a widget from the watch list.
-	~Fl_Widget_Tracker() {
+	~Fl_Widget_Tracker()
+	{
 		Fl::release_widget_pointer(wp_); // remove pointer from watch list
 	}
 
@@ -1493,7 +1562,8 @@ public:
 
 	  This pointer is \c NULL, if the widget has been deleted.
 	*/
-	Fl_Widget *widget() {
+	Fl_Widget *widget()
+	{
 		return wp_;
 	}
 
@@ -1506,7 +1576,8 @@ public:
 
 	  where \p wp is an Fl_Widget_Tracker object.
 	*/
-	int deleted() {
+	int deleted()
+	{
 		return wp_ == 0;
 	}
 
@@ -1519,7 +1590,8 @@ public:
 
 	  where \p wp is an Fl_Widget_Tracker object.
 	*/
-	int exists()  {
+	int exists()
+	{
 		return wp_ != 0;
 	}
 

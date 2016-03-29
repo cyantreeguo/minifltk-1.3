@@ -110,7 +110,8 @@ protected:
 	    \param[in] a,b the items to be swapped.
 	    \see swap(int,int), item_swap()
 	 */
-	void item_swap(void *a, void *b) {
+	void item_swap(void *a, void *b)
+	{
 		swap((FL_BLINE*)a, (FL_BLINE*)b);
 	}
 	/** Return the item at specified \p line.
@@ -118,7 +119,8 @@ protected:
 	    \returns The item, or NULL if line out of range.
 	    \see item_at(), find_line(), lineno()
 	 */
-	void *item_at(int line) const {
+	void *item_at(int line) const
+	{
 		return (void*)find_line(line);
 	}
 
@@ -143,12 +145,28 @@ public:
 	  The last line number is equal to this.
 	  Returns 0 if browser is empty.
 	*/
-	int size() const {
+	int size() const
+	{
 		return lines;
 	}
-	void size(int W, int H) {
+	void size(int W, int H)
+	{
 		Fl_Widget::size(W, H);
 	}
+
+	/**
+	Gets the default text size (in pixels) for the lines in the browser.
+	*/
+	Fl_Fontsize textsize() const
+	{
+		return Fl_Browser_::textsize();
+	}
+
+	/*
+	  Sets the default text size for the lines in the browser to newSize.
+	  Defined and documented in Fl_Browser.cxx
+	*/
+	void textsize(Fl_Fontsize newSize);
 
 	int topline() const ;
 	/** For internal use only? */
@@ -160,7 +178,8 @@ public:
 	  \param[in] line The line to be displayed at the top.
 	  \see topline(), middleline(), bottomline(), displayed(), lineposition()
 	 */
-	void topline(int line) {
+	void topline(int line)
+	{
 		lineposition(line, TOP);
 	}
 	/**
@@ -169,7 +188,8 @@ public:
 	  \param[in] line The line to be displayed at the bottom.
 	  \see topline(), middleline(), bottomline(), displayed(), lineposition()
 	 */
-	void bottomline(int line) {
+	void bottomline(int line)
+	{
 		lineposition(line, BOTTOM);
 	}
 	/**
@@ -178,7 +198,8 @@ public:
 	  \param[in] line The line to be displayed in the middle.
 	  \see topline(), middleline(), bottomline(), displayed(), lineposition()
 	 */
-	void middleline(int line) {
+	void middleline(int line)
+	{
 		lineposition(line, MIDDLE);
 	}
 
@@ -186,12 +207,14 @@ public:
 	int selected(int line) const ;
 	void show(int line);
 	/** Shows the entire Fl_Browser widget -- opposite of hide(). */
-	void show() {
+	void show()
+	{
 		Fl_Widget::show();
 	}
 	void hide(int line);
 	/** Hides the entire Fl_Browser widget -- opposite of show(). */
-	void hide() {
+	void hide()
+	{
 		Fl_Widget::hide();
 	}
 	int visible(int line) const ;
@@ -202,7 +225,8 @@ public:
 	  This is the same as calling select(line).
 	  \see select(), selected(), value(), item_select(), item_selected()
 	 */
-	void value(int line) {
+	void value(int line)
+	{
 		select(line);
 	}
 	const char* text(int line) const ;
@@ -214,7 +238,8 @@ public:
 	/**
 	  The destructor deletes all list items and destroys the browser.
 	 */
-	~Fl_Browser() {
+	~Fl_Browser()
+	{
 		clear();
 	}
 
@@ -247,7 +272,8 @@ public:
 	  <tt>sprintf("@C%d@.%s", color, string)</tt> and it will work even if the
 	  string starts with a digit or has the format character in it.
 	*/
-	char format_char() const {
+	char format_char() const
+	{
 		return format_char_;
 	}
 	/**
@@ -255,7 +281,8 @@ public:
 	  The default prefix is '\@'.  Set the prefix to 0 to disable formatting.
 	  \see format_char() for list of '\@' codes
 	*/
-	void format_char(char c) {
+	void format_char(char c)
+	{
 		format_char_ = c;
 	}
 	/**
@@ -263,7 +290,8 @@ public:
 	  The default is '\\t' (tab).
 	  \see column_char(), column_widths()
 	*/
-	char column_char() const {
+	char column_char() const
+	{
 		return column_char_;
 	}
 	/**
@@ -272,7 +300,8 @@ public:
 	  The default is '\\t' (tab).
 	  \see column_char(), column_widths()
 	*/
-	void column_char(char c) {
+	void column_char(char c)
+	{
 		column_char_ = c;
 	}
 	/**
@@ -298,14 +327,16 @@ public:
 	  \endcode
 	  \see column_char(), column_widths()
 	*/
-	const int* column_widths() const {
+	const int* column_widths() const
+	{
 		return column_widths_;
 	}
 	/**
 	  Sets the current array to \p arr.  Make sure the last entry is zero.
 	  \see column_char(), column_widths()
 	*/
-	void column_widths(const int* arr) {
+	void column_widths(const int* arr)
+	{
 		column_widths_ = arr;
 	}
 
@@ -318,7 +349,8 @@ public:
 	  \returns 1 if visible, 0 if not visible.
 	  \see topline(), middleline(), bottomline(), displayed(), lineposition()
 	*/
-	int displayed(int line) const {
+	int displayed(int line) const
+	{
 		return Fl_Browser_::displayed(find_line(line));
 	}
 
@@ -329,7 +361,8 @@ public:
 	  \param[in] line The line to be made visible.
 	  \see show(int), hide(int), display(), visible(), make_visible()
 	*/
-	void make_visible(int line) {
+	void make_visible(int line)
+	{
 		if (line < 1) Fl_Browser_::display(find_line(1));
 		else if (line > lines) Fl_Browser_::display(find_line(lines));
 		else Fl_Browser_::display(find_line(line));
@@ -341,7 +374,8 @@ public:
 	void remove_icon(int line);
 
 	/** For back compatibility only. */
-	void replace(int a, const char* b) {
+	void replace(int a, const char* b)
+	{
 		text(a, b);
 	}
 	void display(int line, int val=1);

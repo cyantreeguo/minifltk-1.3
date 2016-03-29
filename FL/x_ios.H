@@ -189,6 +189,8 @@ public:
     static int touch_end_y(int finger);
     static int touch_end_x_root(int finger);
     static int touch_end_y_root(int finger);
+    
+    static void setAlpha(const Fl_Window *win, const float alpha);
 private:
 	//static void relink(Fl_Window*, Fl_Window*);
 	//bool subwindow;
@@ -204,6 +206,7 @@ public:
         //NSString *strSoundFile =  @"alertsound.wav";
         //AudioServicesCreateSystemSoundID((__bridge CFURLRef)[NSURL fileURLWithPath:strSoundFile],&soundID);
         AudioServicesPlaySystemSound(1104);
+        //[[UIDevice currentDevice] playInputClick];
     }
 };
 
@@ -246,6 +249,13 @@ extern void fl_open_display();
  If multiple files were dropped, \e cb will be called multiple times.
  */
 extern void fl_open_callback(void (*cb)(const char *));
+
+// get document dir
+extern char *ios_getcwd(char *b, int l);
+extern char *ios_getworkdir(char *b, int l);
+extern char *ios_getcurrentlang();
+extern char *ios_getversion();
+extern void ios_keyboard_quickclick(unsigned char active);
 
 /** @} */
 

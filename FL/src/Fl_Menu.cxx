@@ -71,12 +71,14 @@ static const Fl_Menu_* button=0;
 // tiny window for title of menu:
 class menutitle : public Fl_Menu_Window
 {
-	void draw() {
+	void draw()
+	{
 		menu->draw(0, 0, w(), h(), button, 2);
 	}
 public:
 	const Fl_Menu_Item* menu;
-	menutitle(int X, int Y, int W, int H, const Fl_Menu_Item* L) : Fl_Menu_Window(X, Y, W, H, 0) {
+	menutitle(int X, int Y, int W, int H, const Fl_Menu_Item* L) : Fl_Menu_Window(X, Y, W, H, 0)
+	{
 		end();
 		set_modal();
 		clear_border();
@@ -91,7 +93,8 @@ public:
 // each vertical menu has one of these:
 class menuwindow : public Fl_Menu_Window
 {
-	void draw() {
+	void draw()
+	{
 		if (damage() != FL_DAMAGE_CHILD) {	// complete redraw
 			fl_draw_box(box(), 0, 0, w(), h(), button ? button->color() : color());
 			if (menu) {
@@ -108,7 +111,8 @@ class menuwindow : public Fl_Menu_Window
 		drawn_selected = selected;
 	}
 
-	void drawentry(const Fl_Menu_Item* m, int n, int eraseit) {
+	void drawentry(const Fl_Menu_Item* m, int n, int eraseit)
+	{
 		if (!m) return; // this happens if -1 is selected item and redrawn
 
 		int BW = Fl::box_dx(box());
@@ -139,12 +143,13 @@ class menuwindow : public Fl_Menu_Window
 			        button ? button->textsize() : FL_NORMAL_SIZE);
 			const char *k, *s = fl_shortcut_label(m->shortcut_, &k);
 			if (fl_utf_nb_char((const unsigned char*)k, (int) strlen(k))<=4) {
-				// righ-align the modifiers and left-align the key
-				char buf[32];
-				strcpy(buf, s);
+				// right-align the modifiers and left-align the key
+				char *buf = (char*)malloc(k-s+1);
+				memcpy(buf, s, k-s);
 				buf[k-s] = 0;
 				fl_draw(buf, xx, yy, ww-shortcutWidth, hh, FL_ALIGN_RIGHT);
 				fl_draw(  k, xx+ww-shortcutWidth, yy, shortcutWidth, hh, FL_ALIGN_LEFT);
+				free(buf);
 			} else {
 				// right-align to the menu
 				fl_draw(s, xx, yy, ww-4, hh, FL_ALIGN_RIGHT);
@@ -172,7 +177,8 @@ public:
 	const Fl_Menu_Item* menu;
 	//menuwindow(const Fl_Menu_Item* m, int X, int Y, int W, int H, const Fl_Menu_Item* picked, const Fl_Menu_Item* title, int menubar = 0, int menubar_title = 0, int right_edge = 0);
 	menuwindow(const Fl_Menu_Item* m, int X, int Y, int Wp, int Hp, const Fl_Menu_Item* picked, const Fl_Menu_Item* t,
-	           int menubar=0, int menubar_title=0, int right_edge=0) : Fl_Menu_Window(X, Y, Wp, Hp, 0) {
+	           int menubar=0, int menubar_title=0, int right_edge=0) : Fl_Menu_Window(X, Y, Wp, Hp, 0)
+	{
 		int scr_x, scr_y, scr_w, scr_h;
 		int tx = X, ty = Y;
 
@@ -313,19 +319,22 @@ public:
 		}
 	}
 
-	~menuwindow() {
+	~menuwindow()
+	{
 		hide();
 		delete title;
 	}
 
-	void set_selected(int n) {
+	void set_selected(int n)
+	{
 		if (n != selected) {
 			selected = n;
 			damage(FL_DAMAGE_CHILD);
 		}
 	}
 
-	int find_selected(int mx, int my) {
+	int find_selected(int mx, int my)
+	{
 		if (!menu || !menu->text) return -1;
 		mx -= x();
 		my -= y();
@@ -348,7 +357,8 @@ public:
 	}
 
 	// return horizontal position for item n in a menubar:
-	int titlex(int n) {
+	int titlex(int n)
+	{
 		const Fl_Menu_Item* m;
 		int xx = 3;
 		for (m=menu->first(); n--; m = m->next()) xx += m->measure(0, button) + 16;
@@ -356,7 +366,8 @@ public:
 	}
 
 	// scroll so item i is visible on screen
-	void autoscroll(int n) {
+	void autoscroll(int n)
+	{
 		int scr_y, scr_h;
 		int Y = y()+Fl::box_dx(box())+2+n*itemheight;
 
@@ -372,7 +383,8 @@ public:
 		// y(y()+Y); // don't wait for response from X
 	}
 
-	void position(int X, int Y) {
+	void position(int X, int Y)
+	{
 		if (title) {
 			title->position(X, title->y()+Y-y());
 		}
@@ -381,7 +393,8 @@ public:
 	}
 
 	// return 1, if the given root coordinates are inside the window
-	int is_inside(int mx, int my) {
+	int is_inside(int mx, int my)
+	{
 		if ( mx < x_root() || mx >= x_root() + w() || my < y_root() || my >= y_root() + h()) {
 			return 0;
 		}
@@ -472,12 +485,12 @@ void Fl_Menu_Item::draw(int x, int y, int w, int h, const Fl_Menu_* m, int selec
 				} else fl_color(labelcolor_);
 
 				switch (tW) {
-					// Larger circles draw fine...
+				// Larger circles draw fine...
 				default :
 					fl_pie(x + td + 2, y + d + td, tW, tW, 0.0, 360.0);
 					break;
 
-					// Small circles don't draw well on many systems...
+				// Small circles don't draw well on many systems...
 				case 6 :
 					fl_rectf(x + td + 4, y + d + td, tW - 4, tW);
 					fl_rectf(x + td + 3, y + d + td + 1, tW - 2, tW - 2);
@@ -562,7 +575,8 @@ struct menustate {
 	int state;
 	menuwindow* fakemenu; // kludge for buttons in menubar
 	// return 1 if the coordinates are inside any of the menuwindows
-	int is_inside(int mx, int my) {
+	int is_inside(int mx, int my)
+	{
 		int i;
 		for (i=nummenus-1; i>=0; i--) {
 			if (p[i]->is_inside(mx, my))
@@ -813,11 +827,11 @@ BACKTAB:
   internally by the Fl_Menu_Bar widget.
 */
 const Fl_Menu_Item* Fl_Menu_Item::pulldown(
-        int X, int Y, int W, int H,
-        const Fl_Menu_Item* initial_item,
-        const Fl_Menu_* pbutton,
-        const Fl_Menu_Item* t,
-        int menubar) const
+    int X, int Y, int W, int H,
+    const Fl_Menu_Item* initial_item,
+    const Fl_Menu_* pbutton,
+    const Fl_Menu_Item* t,
+    int menubar) const
 {
 	Fl_Group::current(0); // fix possible user error...
 
@@ -1008,10 +1022,10 @@ STARTUP:
   boxtypes for the menu are pulled.  If NULL then defaults are used.
 */
 const Fl_Menu_Item* Fl_Menu_Item::popup(
-        int X, int Y,
-        const char* title,
-        const Fl_Menu_Item* picked,
-        const Fl_Menu_* button
+    int X, int Y,
+    const char* title,
+    const Fl_Menu_Item* picked,
+    const Fl_Menu_* button
 ) const
 {
 	static Fl_Menu_Item dummy; // static so it is all zeros
@@ -1068,7 +1082,7 @@ const Fl_Menu_Item* Fl_Menu_Item::test_shortcut() const
 				// only return matches from lower menu if nothing found in top menu:
 				if (!ret && m->submenu()) {
 					const Fl_Menu_Item* s =
-					        (m->flags&FL_SUBMENU) ? m+1:(const Fl_Menu_Item*)m->user_data_;
+					    (m->flags&FL_SUBMENU) ? m+1:(const Fl_Menu_Item*)m->user_data_;
 					ret = s->test_shortcut();
 				}
 			}

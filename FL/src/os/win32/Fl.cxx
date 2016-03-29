@@ -50,7 +50,7 @@
 // that makes fltk use easier as only fltk libs are now requested
 // This idea could be extended to fltk libs themselves,
 // implementer should then care about DLL linkage flags ...
-#  if (_MSC_VER>=1310)
+#  if defined(_MSC_VER) && (_MSC_VER>=1310)
 #    pragma comment (lib, "comctl32.lib")
 #  endif
 #endif
@@ -651,7 +651,8 @@ class Fl_Win32_At_Exit
 {
 public:
 	Fl_Win32_At_Exit() { }
-	~Fl_Win32_At_Exit() {
+	~Fl_Win32_At_Exit()
+	{
 		fl_free_fonts();        // do some WIN32 cleanup
 		fl_cleanup_pens();
 		OleUninitialize();
@@ -764,7 +765,8 @@ class Lf2CrlfConvert
 	char *out;
 	int outlen;
 public:
-	Lf2CrlfConvert(const char *in, int inlen) {
+	Lf2CrlfConvert(const char *in, int inlen)
+	{
 		outlen = 0;
 		const char *i;
 		char *o;
@@ -802,13 +804,16 @@ public:
 		}
 		*o++ = 0;
 	}
-	~Lf2CrlfConvert() {
+	~Lf2CrlfConvert()
+	{
 		delete[] out;
 	}
-	int GetLength() const {
+	int GetLength() const
+	{
 		return(outlen);
 	}
-	const char* GetValue() const {
+	const char* GetValue() const
+	{
 		return(out);
 	}
 };
@@ -972,10 +977,10 @@ void Fl::paste(Fl_Widget &receiver, int clipboard, const char *type)
 				int vmm = GetDeviceCaps(hdc, VERTSIZE);
 				int vdots = GetDeviceCaps(hdc, VERTRES);
 				ReleaseDC(NULL, hdc);
-				float factorw =  (float)((100. * hmm) / hdots);
-				float factorh =  (float)((100. * vmm) / vdots + 0.5);
-				width /= (int)factorw;
-				height /= (int)factorh; // convert to screen pixel unit
+				float factorw = (100.f * hmm) / hdots;
+				float factorh = (100.f * vmm) / vdots + 0.5f;
+				width = (int)(width/factorw);
+				height = (int)(height/factorh); // convert to screen pixel unit
 				RECT rect = {0, 0, width, height};
 				Fl_Offscreen off = fl_create_offscreen(width, height);
 				fl_begin_offscreen(off);
@@ -1325,7 +1330,7 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 	Fl_Window *window = fl_find(hWnd);
 
 	if (window) switch (uMsg) {
-			// add by cyantree, for scintilla
+		// add by cyantree, for scintilla
 		case WM_MOUSEACTIVATE:
 			if ( window->tooltip_window() ) return MA_NOACTIVATE;
 			break;
@@ -1787,7 +1792,7 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 			}
 			delete [] pInputs;
 
-			
+
 			Fl::handle(FL_EVENT_TOUCH, touchwin);
 			touch_type_ = FL_TOUCH_NONE;
 
@@ -1826,7 +1831,7 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 			// Force redraw of the rectangle
 			//InvalidateRect(hWnd, NULL, TRUE);
 		}
-		//if (getTouchInputInfo != NULL) return doTouchEvent((int)wParam, (HTOUCHINPUT)lParam);
+			//if (getTouchInputInfo != NULL) return doTouchEvent((int)wParam, (HTOUCHINPUT)lParam);
 		break;
 
 		case 0x119: /* WM_GESTURE */
@@ -2104,24 +2109,28 @@ void Fl_Window::fullscreen_off_x(int X, int Y, int W, int H)
 class NameList
 {
 public:
-	NameList() {
+	NameList()
+	{
 		name = (char**)malloc(sizeof(char**));
 		NName = 1;
 		nName = 0;
 	}
-	~NameList() {
+	~NameList()
+	{
 		int i;
 		for (i=0; i<nName; i++) free(name[i]);
 		if (name) free(name);
 	}
-	void add_name(const char *n) {
+	void add_name(const char *n)
+	{
 		if (NName==nName) {
 			NName += 5;
 			name = (char**)realloc(name, NName * sizeof(char*));
 		}
 		name[nName++] = strdup(n);
 	}
-	char has_name(const char *n) {
+	char has_name(const char *n)
+	{
 		int i;
 		for (i=0; i<nName; i++) {
 			if (strcmp(name[i], n)==0) return 1;
@@ -2237,20 +2246,20 @@ Fl_X* Fl_X::make(Fl_Window* w)
 		}
 
 		switch (wintype) {
-			// No border (used for menus)
+		// No border (used for menus)
 		case 0:
 			style |= WS_POPUP;
 			styleEx |= WS_EX_TOOLWINDOW;
 			break;
 
-			// Thin border and title bar
+		// Thin border and title bar
 		case 1:
 			style |= WS_DLGFRAME | WS_CAPTION;
 			if (!w->modal())
 				style |= WS_SYSMENU | WS_MINIMIZEBOX;
 			break;
 
-			// Thick, resizable border and title bar, with maximize button
+		// Thick, resizable border and title bar, with maximize button
 		case 2:
 			style |= WS_THICKFRAME | WS_SYSMENU | WS_MAXIMIZEBOX | WS_CAPTION;
 			if (!w->modal())
@@ -2309,13 +2318,13 @@ Fl_X* Fl_X::make(Fl_Window* w)
 		lab[wlen] = 0;
 	}
 	x->xid = CreateWindowExW(
-	                 styleEx,
-	                 class_namew, lab, style,
-	                 xp, yp, wp, hp,
-	                 parent,
-	                 NULL, // menu
-	                 fl_display,
-	                 NULL // creation parameters
+	             styleEx,
+	             class_namew, lab, style,
+	             xp, yp, wp, hp,
+	             parent,
+	             NULL, // menu
+	             fl_display,
+	             NULL // creation parameters
 	         );
 	if (lab) free(lab);
 
@@ -2464,7 +2473,7 @@ void Fl::repeat_timeout(double time, Fl_Timeout_Handler cb, void* data)
 	win32_timers[timer_id].data     = data;
 
 	win32_timers[timer_id].handle =
-	        SetTimer(s_TimerWnd, timer_id + 1, elapsed, NULL);
+	    SetTimer(s_TimerWnd, timer_id + 1, elapsed, NULL);
 }
 
 int Fl::has_timeout(Fl_Timeout_Handler cb, void* data)
@@ -2657,8 +2666,8 @@ static HICON default_big_icon = NULL;
 static HICON default_small_icon = NULL;
 
 static const Fl_RGB_Image *find_best_icon(int ideal_width,
-                const Fl_RGB_Image *icons[],
-                int count)
+        const Fl_RGB_Image *icons[],
+        int count)
 {
 	const Fl_RGB_Image *best;
 
@@ -2858,25 +2867,25 @@ int Fl_X::set_cursor(Fl_Cursor c)
 			break;
 		case FL_CURSOR_N:
 		case FL_CURSOR_S:
-			// FIXME: Should probably have fallbacks for these instead
+		// FIXME: Should probably have fallbacks for these instead
 		case FL_CURSOR_NS:
 			n = IDC_SIZENS;
 			break;
 		case FL_CURSOR_NE:
 		case FL_CURSOR_SW:
-			// FIXME: Dito.
+		// FIXME: Dito.
 		case FL_CURSOR_NESW:
 			n = IDC_SIZENESW;
 			break;
 		case FL_CURSOR_E:
 		case FL_CURSOR_W:
-			// FIXME: Dito.
+		// FIXME: Dito.
 		case FL_CURSOR_WE:
 			n = IDC_SIZEWE;
 			break;
 		case FL_CURSOR_SE:
 		case FL_CURSOR_NW:
-			// FIXME: Dito.
+		// FIXME: Dito.
 		case FL_CURSOR_NWSE:
 			n = IDC_SIZENWSE;
 			break;
@@ -3127,7 +3136,7 @@ static RECT border_width_title_bar_height(Fl_Window *win, int &bx, int &by, int 
 		static HMODULE dwmapi_dll = LoadLibrary("dwmapi.dll");
 		typedef HRESULT (WINAPI* DwmGetWindowAttribute_type)(HWND hwnd, DWORD dwAttribute, PVOID pvAttribute, DWORD cbAttribute);
 		static DwmGetWindowAttribute_type DwmGetWindowAttribute = dwmapi_dll ?
-		(DwmGetWindowAttribute_type)GetProcAddress(dwmapi_dll, "DwmGetWindowAttribute") : NULL;
+		        (DwmGetWindowAttribute_type)GetProcAddress(dwmapi_dll, "DwmGetWindowAttribute") : NULL;
 		int need_r = 1;
 		if (DwmGetWindowAttribute) {
 			const DWORD DWMWA_EXTENDED_FRAME_BOUNDS = 9;

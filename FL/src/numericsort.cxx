@@ -34,13 +34,13 @@
 #    include <dirent.h>
 #  else
 #    define dirent direct
-#    if HAVE_SYS_NDIR_H
+#    ifdef HAVE_SYS_NDIR_H
 #      include <sys/ndir.h>
 #    endif /* HAVE_SYS_NDIR_H */
-#    if HAVE_SYS_DIR_H
+#    ifdef HAVE_SYS_DIR_H
 #      include <sys/dir.h>
 #    endif /* HAVE_SYS_DIR_H */
-#    if HAVE_NDIR_H
+#    ifdef HAVE_NDIR_H
 #      include <ndir.h>
 #    endif /* HAVE_NDIR_H */
 #  endif /* HAVE_DIRENT_H */

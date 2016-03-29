@@ -43,7 +43,7 @@ extern void *fl_capture;
 
 void Fl::grab(Fl_Window* win)
 {
-#if USE_X11
+#ifdef USE_X11
 	Fl_Window *fullscreen_win = NULL;
 	for (Fl_Window *W = Fl::first_window(); W; W = Fl::next_window(W)) {
 		if (W->fullscreen_active()) {

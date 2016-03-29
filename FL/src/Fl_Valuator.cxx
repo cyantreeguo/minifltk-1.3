@@ -56,25 +56,36 @@ void Fl_Valuator::step(double s)
 	}
 }
 
-/**  Sets the step value to 1/10<SUP>digits</SUP>.*/
-void Fl_Valuator::precision(int p)
+/** Sets the step value to 1.0 / 10<SUP>digits</SUP>.
+
+    Precision \p digits is limited to 0...9 to avoid internal overflow errors.
+    Values outside this range are clamped.
+
+    \note For negative values of \p digits the step value is set to
+    \p A = 1.0 and \p B = 1, i.e. 1.0/1 = 1.
+*/
+void Fl_Valuator::precision(int digits)
 {
+	if (digits > 9) digits = 9;
+	else if (digits < 0) digits = 0;
 	A = 1.0;
-	for (B = 1; p--;) B *= 10;
+	for (B = 1; digits--;) B *= 10;
 }
-/** Asks for partial redraw */
+
+/**  Asks for partial redraw */
 void Fl_Valuator::value_damage()
 {
-	damage(FL_DAMAGE_EXPOSE);       // by default do partial-redraw
+	damage(FL_DAMAGE_EXPOSE);   // by default do partial-redraw
 }
 
 /**
-    Sets the current value. The new value is <I>not</I>
+    Sets the current value. The new value is \e not
     clamped or otherwise changed before storing it. Use
     clamp() or round() to modify the value before
     calling value(). The widget is redrawn if the new value
     is different than the current one. The initial value is zero.
-    <P>changed() will return true if the user has moved the slider,
+
+    changed() will return true if the user has moved the slider,
     but it will be turned off by value(x) and just before doing a callback
     (the callback can turn it back on if desired).
 */
@@ -154,23 +165,23 @@ double Fl_Valuator::increment(double v, int n)
 
 /**
   Uses internal rules to format the fields numerical value into
-  the character array pointed to by the passed parameter.</P>
+  the character array pointed to by the passed parameter.
 
-  <P>The actual format used depends on the current step value. If
-  the step value has been set to zero then a %g format is used.
-  If the step value is non-zero, then a %.*f format is used,
+  The actual format used depends on the current step value. If
+  the step value has been set to zero then a \%g format is used.
+  If the step value is non-zero, then a \%.*f format is used,
   where the precision is calculated to show sufficient digits
   for the current step value. An integer step value, such as 1
   or 1.0, gives a precision of 0, so the formatted value will
-  appear as an integer.</P>
+  appear as an integer.
 
-  <P>This method is used by the Fl_Value_... group of widgets to
+  This method is used by the Fl_Valuator_... group of widgets to
   format the current value into a text string.
   The return value is the length of the formatted text.
-  The formatted value is written into in <i>buffer</i>.
-  <i>buffer</i> should have space for at least 128 bytes.</P>
+  The formatted value is written into \p buffer.
+  \p buffer should have space for at least 128 bytes.
 
-  <P>You may override this function to create your own text formatting.
+  You may override this function to create your own text formatting.
 */
 int Fl_Valuator::format(char* buffer)
 {
@@ -200,5 +211,5 @@ int Fl_Valuator::format(char* buffer)
 }
 
 //
-// End of "$Id: Fl_Valuator.cxx 9325 2012-04-05 05:12:30Z fabien $".
+// End of "$Id: Fl_Valuator.cxx 11316 2016-03-08 13:42:59Z AlbrechtS $".
 //

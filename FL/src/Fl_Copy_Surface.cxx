@@ -88,14 +88,14 @@ Fl_Copy_Surface::Fl_Copy_Surface(int w, int h) :  Fl_Surface_Device(NULL)
 	int vmm = GetDeviceCaps(hdc, VERTSIZE);
 	int vdots = GetDeviceCaps(hdc, VERTRES);
 	ReleaseDC(NULL, hdc);
-	float factorw =  (float)((100. * hmm) / hdots);
-	float factorh =  (float)((100. * vmm) / vdots);
+	float factorw = (100.f * hmm) / hdots;
+	float factorh = (100.f * vmm) / vdots;
 
 	RECT rect;
 	rect.left = 0;
 	rect.top = 0;
-	rect.right = (int)(w * factorw);
-	rect.bottom = (int)(h * factorh);
+	rect.right = (LONG)(w * factorw);
+	rect.bottom = (LONG)(h * factorh);
 	gc = CreateEnhMetaFile (NULL, NULL, &rect, NULL);
 	if (gc != NULL) {
 		SetTextAlign(gc, TA_BASELINE|TA_LEFT);
@@ -305,16 +305,19 @@ class Fl_translated_Xlib_Graphics_Driver_ : public Fl_Xlib_Graphics_Driver
 	int stack_x[20], stack_y[20]; // translation stack allowing cumulative translations
 public:
 	static const char *class_id;
-	const char *class_name() {
+	const char *class_name()
+	{
 		return class_id;
 	};
-	Fl_translated_Xlib_Graphics_Driver_() {
+	Fl_translated_Xlib_Graphics_Driver_()
+	{
 		offset_x = 0;
 		offset_y = 0;
 		depth = 0;
 	}
 	virtual ~Fl_translated_Xlib_Graphics_Driver_() {};
-	void translate_all(int dx, int dy) { // reversibly adds dx,dy to the offset between user and graphical coordinates
+	void translate_all(int dx, int dy)   // reversibly adds dx,dy to the offset between user and graphical coordinates
+	{
 		stack_x[depth] = offset_x;
 		stack_y[depth] = offset_y;
 		offset_x = stack_x[depth] + dx;
@@ -324,134 +327,166 @@ public:
 		if (depth < sizeof(stack_x)/sizeof(int)) depth++;
 		else Fl::warning("%s: translate stack overflow!", class_id);
 	}
-	void untranslate_all() { // undoes previous translate_all()
+	void untranslate_all()   // undoes previous translate_all()
+	{
 		if (depth > 0) depth--;
 		offset_x = stack_x[depth];
 		offset_y = stack_y[depth];
 		pop_matrix();
 	}
-	void rect(int x, int y, int w, int h) {
+	void rect(int x, int y, int w, int h)
+	{
 		Fl_Xlib_Graphics_Driver::rect(x+offset_x, y+offset_y, w, h);
 	}
-	void rectf(int x, int y, int w, int h) {
+	void rectf(int x, int y, int w, int h)
+	{
 		Fl_Xlib_Graphics_Driver::rectf(x+offset_x, y+offset_y, w, h);
 	}
-	void xyline(int x, int y, int x1) {
+	void xyline(int x, int y, int x1)
+	{
 		Fl_Xlib_Graphics_Driver::xyline(x+offset_x, y+offset_y, x1+offset_x);
 	}
-	void xyline(int x, int y, int x1, int y2) {
+	void xyline(int x, int y, int x1, int y2)
+	{
 		Fl_Xlib_Graphics_Driver::xyline(x+offset_x, y+offset_y, x1+offset_x, y2+offset_y);
 	}
-	void xyline(int x, int y, int x1, int y2, int x3) {
+	void xyline(int x, int y, int x1, int y2, int x3)
+	{
 		Fl_Xlib_Graphics_Driver::xyline(x+offset_x, y+offset_y, x1+offset_x, y2+offset_y, x3+offset_x);
 	}
-	void yxline(int x, int y, int y1) {
+	void yxline(int x, int y, int y1)
+	{
 		Fl_Xlib_Graphics_Driver::yxline(x+offset_x, y+offset_y, y1+offset_y);
 	}
-	void yxline(int x, int y, int y1, int x2) {
+	void yxline(int x, int y, int y1, int x2)
+	{
 		Fl_Xlib_Graphics_Driver::yxline(x+offset_x, y+offset_y, y1+offset_y, x2+offset_x);
 	}
-	void yxline(int x, int y, int y1, int x2, int y3) {
+	void yxline(int x, int y, int y1, int x2, int y3)
+	{
 		Fl_Xlib_Graphics_Driver::yxline(x+offset_x, y+offset_y, y1+offset_y, x2+offset_x, y3+offset_y);
 	}
-	void line(int x, int y, int x1, int y1) {
+	void line(int x, int y, int x1, int y1)
+	{
 		Fl_Xlib_Graphics_Driver::line(x+offset_x, y+offset_y, x1+offset_x, y1+offset_y);
 	}
-	void line(int x, int y, int x1, int y1, int x2, int y2) {
+	void line(int x, int y, int x1, int y1, int x2, int y2)
+	{
 		Fl_Xlib_Graphics_Driver::line(x+offset_x, y+offset_y, x1+offset_x, y1+offset_y, x2+offset_x, y2+offset_y);
 	}
-	void draw(const char* str, int n, int x, int y) {
+	void draw(const char* str, int n, int x, int y)
+	{
 		Fl_Xlib_Graphics_Driver::draw(str, n, x+offset_x, y+offset_y);
 	}
-	void draw(int angle, const char *str, int n, int x, int y) {
+	void draw(int angle, const char *str, int n, int x, int y)
+	{
 		Fl_Xlib_Graphics_Driver::draw(angle, str, n, x+offset_x, y+offset_y);
 	}
-	void rtl_draw(const char* str, int n, int x, int y) {
+	void rtl_draw(const char* str, int n, int x, int y)
+	{
 		Fl_Xlib_Graphics_Driver::rtl_draw(str, n, x+offset_x, y+offset_y);
 	}
-	void draw(Fl_Pixmap *pxm, int XP, int YP, int WP, int HP, int cx, int cy) {
+	void draw(Fl_Pixmap *pxm, int XP, int YP, int WP, int HP, int cx, int cy)
+	{
 		XP += offset_x;
 		YP += offset_y;
 		translate_all(-offset_x, -offset_y);
 		Fl_Xlib_Graphics_Driver::draw(pxm, XP, YP, WP,HP,cx,cy);
 		untranslate_all();
 	}
-	void draw(Fl_Bitmap *bm, int XP, int YP, int WP, int HP, int cx, int cy) {
+	void draw(Fl_Bitmap *bm, int XP, int YP, int WP, int HP, int cx, int cy)
+	{
 		XP += offset_x;
 		YP += offset_y;
 		translate_all(-offset_x, -offset_y);
 		Fl_Xlib_Graphics_Driver::draw(bm, XP, YP, WP,HP,cx,cy);
 		untranslate_all();
 	}
-	void draw(Fl_RGB_Image *img, int XP, int YP, int WP, int HP, int cx, int cy) {
+	void draw(Fl_RGB_Image *img, int XP, int YP, int WP, int HP, int cx, int cy)
+	{
 		XP += offset_x;
 		YP += offset_y;
 		translate_all(-offset_x, -offset_y);
 		Fl_Xlib_Graphics_Driver::draw(img, XP, YP, WP,HP,cx,cy);
 		untranslate_all();
 	}
-	void draw_image(const uchar* buf, int X,int Y,int W,int H, int D=3, int L=0) {
+	void draw_image(const uchar* buf, int X,int Y,int W,int H, int D=3, int L=0)
+	{
 		X += offset_x;
 		Y += offset_y;
 		translate_all(-offset_x, -offset_y);
 		Fl_Xlib_Graphics_Driver::draw_image(buf, X, Y, W,H,D,L);
 		untranslate_all();
 	}
-	void draw_image(Fl_Draw_Image_Cb cb, void* data, int X,int Y,int W,int H, int D=3) {
+	void draw_image(Fl_Draw_Image_Cb cb, void* data, int X,int Y,int W,int H, int D=3)
+	{
 		X += offset_x;
 		Y += offset_y;
 		translate_all(-offset_x, -offset_y);
 		Fl_Xlib_Graphics_Driver::draw_image(cb, data, X, Y, W,H,D);
 		untranslate_all();
 	}
-	void draw_image_mono(const uchar* buf, int X,int Y,int W,int H, int D=1, int L=0) {
+	void draw_image_mono(const uchar* buf, int X,int Y,int W,int H, int D=1, int L=0)
+	{
 		X += offset_x;
 		Y += offset_y;
 		translate_all(-offset_x, -offset_y);
 		Fl_Xlib_Graphics_Driver::draw_image_mono(buf, X, Y, W,H,D,L);
 		untranslate_all();
 	}
-	void draw_image_mono(Fl_Draw_Image_Cb cb, void* data, int X,int Y,int W,int H, int D=1) {
+	void draw_image_mono(Fl_Draw_Image_Cb cb, void* data, int X,int Y,int W,int H, int D=1)
+	{
 		X += offset_x;
 		Y += offset_y;
 		translate_all(-offset_x, -offset_y);
 		Fl_Xlib_Graphics_Driver::draw_image_mono(cb, data, X, Y, W,H,D);
 		untranslate_all();
 	}
-	void copy_offscreen(int x, int y, int w, int h, Fl_Offscreen pixmap, int srcx, int srcy) {
+	void copy_offscreen(int x, int y, int w, int h, Fl_Offscreen pixmap, int srcx, int srcy)
+	{
 		Fl_Xlib_Graphics_Driver::copy_offscreen(x+offset_x, y+offset_y, w, h,pixmap,srcx,srcy);
 	}
-	void push_clip(int x, int y, int w, int h) {
+	void push_clip(int x, int y, int w, int h)
+	{
 		Fl_Xlib_Graphics_Driver::push_clip(x+offset_x, y+offset_y, w, h);
 	}
-	int not_clipped(int x, int y, int w, int h) {
+	int not_clipped(int x, int y, int w, int h)
+	{
 		return Fl_Xlib_Graphics_Driver::not_clipped(x + offset_x, y + offset_y, w, h);
 	};
-	int clip_box(int x, int y, int w, int h, int& X, int& Y, int& W, int& H) {
+	int clip_box(int x, int y, int w, int h, int& X, int& Y, int& W, int& H)
+	{
 		int retval = Fl_Xlib_Graphics_Driver::clip_box(x + offset_x, y + offset_y, w,h,X,Y,W,H);
 		X -= offset_x;
 		Y -= offset_y;
 		return retval;
 	}
-	void pie(int x, int y, int w, int h, double a1, double a2) {
+	void pie(int x, int y, int w, int h, double a1, double a2)
+	{
 		Fl_Xlib_Graphics_Driver::pie(x+offset_x,y+offset_y,w,h,a1,a2);
 	}
-	void arc(int x, int y, int w, int h, double a1, double a2) {
+	void arc(int x, int y, int w, int h, double a1, double a2)
+	{
 		Fl_Xlib_Graphics_Driver::arc(x+offset_x,y+offset_y,w,h,a1,a2);
 	}
-	void polygon(int x0, int y0, int x1, int y1, int x2, int y2) {
+	void polygon(int x0, int y0, int x1, int y1, int x2, int y2)
+	{
 		Fl_Xlib_Graphics_Driver::polygon(x0+offset_x,y0+offset_y,x1+offset_x,y1+offset_y,x2+offset_x,y2+offset_y);
 	}
-	void polygon(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3) {
+	void polygon(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3)
+	{
 		Fl_Xlib_Graphics_Driver::polygon(x0+offset_x,y0+offset_y,x1+offset_x,y1+offset_y,x2+offset_x,y2+offset_y,x3+offset_x,y3+offset_y);
 	}
-	void loop(int x0, int y0, int x1, int y1, int x2, int y2) {
+	void loop(int x0, int y0, int x1, int y1, int x2, int y2)
+	{
 		Fl_Xlib_Graphics_Driver::loop(x0+offset_x,y0+offset_y,x1+offset_x,y1+offset_y,x2+offset_x,y2+offset_y);
 	}
-	void loop(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3) {
+	void loop(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3)
+	{
 		Fl_Xlib_Graphics_Driver::loop(x0+offset_x,y0+offset_y,x1+offset_x,y1+offset_y,x2+offset_x,y2+offset_y,x3+offset_x,y3+offset_y);
 	}
-	void point(int x, int y) {
+	void point(int x, int y)
+	{
 		Fl_Xlib_Graphics_Driver::point(x+offset_x, y+offset_y);
 	}
 };

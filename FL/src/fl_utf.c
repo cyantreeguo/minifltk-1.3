@@ -67,7 +67,9 @@
    to completely ignore character sets in your code because virtually
    everything is either ISO-8859-1 or UTF-8.
 */
-#define ERRORS_TO_ISO8859_1 1
+#ifndef ERRORS_TO_ISO8859_1
+# define ERRORS_TO_ISO8859_1 1
+#endif
 
 /*!Set to 1 to turn bad UTF-8 bytes in the 0x80-0x9f range into the
    Unicode index for Microsoft's CP1252 character set. You should
@@ -75,7 +77,9 @@
    available text (such as all web pages) are correctly converted
    to Unicode.
 */
-#define ERRORS_TO_CP1252 1
+#ifndef ERRORS_TO_CP1252
+# define ERRORS_TO_CP1252 1
+#endif
 
 /*!A number of Unicode code points are in fact illegal and should not
    be produced by a UTF-8 converter. Turn this on will replace the
@@ -83,7 +87,9 @@
    arbitrary 16-bit data to UTF-8 and then back is not an identity,
    which will probably break a lot of software.
 */
-#define STRICT_RFC3629 0
+#ifndef STRICT_RFC3629
+# define STRICT_RFC3629 0
+#endif
 
 #if ERRORS_TO_CP1252
 /* Codes 0x80..0x9f from the Microsoft CP1252 character set, translated
@@ -103,7 +109,7 @@ static unsigned short cp1252[32] = {
     (adding \e len to \e p will point at the next character).
 
     If \p p points at an illegal UTF-8 encoding, including one that
-    would go past \e end, or where a code is uses more bytes than
+    would go past \e end, or where a code uses more bytes than
     necessary, then *(unsigned char*)p is translated as though it is
     in the Microsoft CP1252 character set and \e len is set to 1.
     Treating errors this way allows this to decode almost any
@@ -130,7 +136,7 @@ static unsigned short cp1252[32] = {
 */
 unsigned fl_utf8decode(const char* p, const char* end, int* len)
 {
-	unsigned char c = *(unsigned char*)p;
+	unsigned char c = *(const unsigned char*)p;
 	if (c < 0x80) {
 		if (len) *len = 1;
 		return c;
@@ -146,20 +152,20 @@ unsigned fl_utf8decode(const char* p, const char* end, int* len)
 	if (c < 0xe0) {
 		if (len) *len = 2;
 		return
-		        ((p[0] & 0x1f) << 6) +
-		        ((p[1] & 0x3f));
+		    ((p[0] & 0x1f) << 6) +
+		    ((p[1] & 0x3f));
 	} else if (c == 0xe0) {
-		if (((unsigned char*)p)[1] < 0xa0) goto FAIL;
+		if (((const unsigned char*)p)[1] < 0xa0) goto FAIL;
 		goto UTF8_3;
 #if STRICT_RFC3629
 	} else if (c == 0xed) {
 		/* RFC 3629 says surrogate chars are illegal. */
-		if (((unsigned char*)p)[1] >= 0xa0) goto FAIL;
+		if (((const unsigned char*)p)[1] >= 0xa0) goto FAIL;
 		goto UTF8_3;
 	} else if (c == 0xef) {
 		/* 0xfffe and 0xffff are also illegal characters */
-		if (((unsigned char*)p)[1]==0xbf &&
-		    ((unsigned char*)p)[2]>=0xbe) goto FAIL;
+		if (((const unsigned char*)p)[1]==0xbf &&
+		    ((const unsigned char*)p)[2]>=0xbe) goto FAIL;
 		goto UTF8_3;
 #endif
 	} else if (c < 0xf0) {
@@ -167,11 +173,11 @@ UTF8_3:
 		if ( (end && p+2 >= end) || (p[2]&0xc0) != 0x80) goto FAIL;
 		if (len) *len = 3;
 		return
-		        ((p[0] & 0x0f) << 12) +
-		        ((p[1] & 0x3f) << 6) +
-		        ((p[2] & 0x3f));
+		    ((p[0] & 0x0f) << 12) +
+		    ((p[1] & 0x3f) << 6) +
+		    ((p[2] & 0x3f));
 	} else if (c == 0xf0) {
-		if (((unsigned char*)p)[1] < 0x90) goto FAIL;
+		if (((const unsigned char*)p)[1] < 0x90) goto FAIL;
 		goto UTF8_4;
 	} else if (c < 0xf4) {
 UTF8_4:
@@ -180,16 +186,16 @@ UTF8_4:
 #if STRICT_RFC3629
 		/* RFC 3629 says all codes ending in fffe or ffff are illegal: */
 		if ((p[1]&0xf)==0xf &&
-		    ((unsigned char*)p)[2] == 0xbf &&
-		    ((unsigned char*)p)[3] >= 0xbe) goto FAIL;
+		    ((const unsigned char*)p)[2] == 0xbf &&
+		    ((const unsigned char*)p)[3] >= 0xbe) goto FAIL;
 #endif
 		return
-		        ((p[0] & 0x07) << 18) +
-		        ((p[1] & 0x3f) << 12) +
-		        ((p[2] & 0x3f) << 6) +
-		        ((p[3] & 0x3f));
+		    ((p[0] & 0x07) << 18) +
+		    ((p[1] & 0x3f) << 12) +
+		    ((p[2] & 0x3f) << 6) +
+		    ((p[3] & 0x3f));
 	} else if (c == 0xf4) {
-		if (((unsigned char*)p)[1] > 0x8f) goto FAIL; /* after 0x10ffff */
+		if (((const unsigned char*)p)[1] > 0x8f) goto FAIL; /* after 0x10ffff */
 		goto UTF8_4;
 	} else {
 FAIL:
@@ -323,9 +329,9 @@ int fl_utf8encode(unsigned ucs, char* buf)
 		return 4;
 	} else {
 		/* encode 0xfffd: */
-		buf[0] = 0xefU;
-		buf[1] = 0xbfU;
-		buf[2] = 0xbdU;
+		buf[0] = (char)0xef;
+		buf[1] = (char)0xbf;
+		buf[2] = (char)0xbd;
 		return 3;
 	}
 }
@@ -378,7 +384,7 @@ unsigned fl_ucs_to_Utf16(const unsigned ucs, unsigned short *dst, const unsigned
 	}
 	/* Convert from UCS to UTF16 */
 	if((ucs > 0x0010FFFF) || /* UCS is too large */
-	    ((ucs > 0xD7FF) && (ucs < 0xE000))) { /* UCS in invalid range */
+	   ((ucs > 0xD7FF) && (ucs < 0xE000))) { /* UCS in invalid range */
 		out[0] = 0xFFFD; /* REPLACEMENT CHARACTER */
 		count = 1;
 	} else if(ucs < 0x00010000) {
@@ -580,7 +586,7 @@ unsigned fl_utf8toa(const char* src, unsigned srclen,
 				dst[count] = 0;
 				return count;
 			}
-			c = *(unsigned char*)p;
+			c = *(const unsigned char*)p;
 			if (c < 0xC2) { /* ascii or bad code */
 				dst[count] = c;
 				p++;
@@ -755,7 +761,7 @@ unsigned fl_utf8froma(char* dst, unsigned dstlen,
 				dst[count] = 0;
 				return count;
 			}
-			ucs = *(unsigned char*)p++;
+			ucs = *(const unsigned char*)p++;
 			if (ucs < 0x80U) {
 				dst[count++] = ucs;
 				if (count >= dstlen) {
@@ -774,7 +780,7 @@ unsigned fl_utf8froma(char* dst, unsigned dstlen,
 		}
 	/* we filled dst, measure the rest: */
 	while (p < e) {
-		unsigned char ucs = *(unsigned char*)p++;
+		unsigned char ucs = *(const unsigned char*)p++;
 		if (ucs < 0x80U) {
 			count++;
 		} else {
@@ -784,9 +790,7 @@ unsigned fl_utf8froma(char* dst, unsigned dstlen,
 	return count;
 }
 
-#if __FLTK_WIN32__
-# include <windows.h>
-#elif __FLTK_WINCE__
+#ifdef WIN32
 # include <windows.h>
 #endif
 
@@ -806,9 +810,7 @@ int fl_utf8locale(void)
 {
 	static int ret = 2;
 	if (ret == 2) {
-#if __FLTK_WIN32__
-		ret = GetACP() == CP_UTF8;
-#elif __FLTK_WINCE__
+#ifdef WIN32
 		ret = GetACP() == CP_UTF8;
 #else
 		char* s;
@@ -856,20 +858,20 @@ unsigned fl_utf8to_mb(const char* src, unsigned srclen,
 			 * documentation claims it does:
 			 */
 			ret =
-			        WideCharToMultiByte(GetACP(), 0, buf, length, dst, dstlen, 0, 0);
+			    WideCharToMultiByte(GetACP(), 0, buf, length, dst, dstlen, 0, 0);
 			dst[ret] = 0;
 		}
 		/* if it overflows or measuring length, get the actual length: */
 		if (dstlen==0 || ret >= dstlen-1)
 			ret =
-			        WideCharToMultiByte(GetACP(), 0, buf, length, 0, 0, 0, 0);
+			    WideCharToMultiByte(GetACP(), 0, buf, length, 0, 0, 0, 0);
 		if (buf != lbuf) free((void*)buf);
 		return ret;
 #else
 		wchar_t lbuf[1024];
 		wchar_t* buf = lbuf;
 		unsigned length = fl_utf8towc(src, srclen, buf, 1024);
-		int ret; // note: wcstombs() returns unsigned(length) or unsigned(-1)
+		int ret; /* note: wcstombs() returns unsigned(length) or unsigned(-1) */
 		if (length >= 1024) {
 			buf = (wchar_t*)(malloc((length+1)*sizeof(wchar_t)));
 			fl_utf8towc(src, srclen, buf, length+1);
@@ -1049,5 +1051,5 @@ int fl_wcwidth(const char* src)
 /** @} */
 
 /*
- * End of "$Id: fl_utf.c 8864 2011-07-19 04:49:30Z greg.ercolano $".
+ * End of "$Id: fl_utf.c 11404 2016-03-23 13:36:50Z AlbrechtS $".
  */

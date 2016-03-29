@@ -1961,7 +1961,7 @@ KEYPRESS:
 					break;
 				}
 #  endif
-#  if BACKSPACE_HACK
+#  ifdef BACKSPACE_HACK
 			// Attempt to fix keyboards that send "delete" for the key in the
 			// upper-right corner of the main keyboard.  But it appears that
 			// very few of these remain?

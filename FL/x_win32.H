@@ -115,6 +115,8 @@ public:
     static int touch_y(int finger);
     static int touch_x_root(int finger);
     static int touch_y_root(int finger);
+
+	static void setAlpha(const Fl_Window *win, const float alpha) {} // just for ios
 };
 extern FL_EXPORT UINT fl_wake_msg;
 extern FL_EXPORT char fl_override_redirect; // hack into Fl_Window::make_xid()

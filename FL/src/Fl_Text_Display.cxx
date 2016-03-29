@@ -35,6 +35,19 @@
 #undef min
 #undef max
 
+// #define DEBUG
+// #define DEBUG2
+
+#define LINENUM_LEFT_OF_VSCROLL   	// uncomment this line ...
+// ... if you want the line numbers to be drawn left of the vertical
+// scrollbar (only if the vertical scrollbar is aligned left).
+// This is the default.
+// If not defined and the vertical scrollbar is aligned left, then the
+// scrollbar is positioned at the left border and the line numbers are
+// drawn between the scrollbar (left) and the text area (right).
+// If the vertical scrollbar is aligned right, then the line number
+// position is not affected by this definition.
+
 // Text area margins.  Left & right margins should be at least 3 so that
 // there is some room for the overhanging parts of the cursor!
 #define TOP_MARGIN 1
@@ -195,7 +208,7 @@ Fl_Text_Display::~Fl_Text_Display()
 /**
  Set width of screen area for line numbers.
  Use to also enable/disable line numbers.
- A value of 0 disables line numbering, values >0 enables them.
+ A value of 0 disables line numbering, values >0 enable the line number display.
  \param width The new width of the area for line numbers to appear, in pixels.
               0 disables line numbers (default)
 */
@@ -486,54 +499,95 @@ int Fl_Text_Display::longest_vline() const
  */
 void Fl_Text_Display::resize(int X, int Y, int W, int H)
 {
-#ifdef DEBUG
+
+#ifdef DEBUG2
+	printf("\n");
 	printf("Fl_Text_Display::resize(X=%d, Y=%d, W=%d, H=%d)\n", X, Y, W, H);
-#endif // DEBUG
-	const int oldWidth = w();
-#ifdef DEBUG
-	printf("    oldWidth=%d, mContinuousWrap=%d, mWrapMarginPix=%d\n", oldWidth, mContinuousWrap, mWrapMarginPix);
-#endif // DEBUG
+	printf("           current size(x=%d, y=%d, w=%d, h=%d)\n", x(), y(), w(), h());
+	printf("            box_d* size(x=%d, y=%d, w=%d, h=%d)\n",
+	       Fl::box_dx(box()),Fl::box_dy(box()),Fl::box_dw(box()),Fl::box_dh(box()));
+	printf("         text_area size(x=%d, y=%d, w=%d, h=%d)\n",
+	       text_area.x, text_area.y, text_area.w, text_area.h);
+	printf("    mContinuousWrap=%d, mWrapMarginPix=%d\n",
+	       mContinuousWrap, mWrapMarginPix);
+	fflush(stdout);
+#endif // DEBUG2
+
 	Fl_Widget::resize(X,Y,W,H);
 	if (!buffer()) return;
-	X += Fl::box_dx(box());
-	Y += Fl::box_dy(box());
-	W -= Fl::box_dw(box());
-	H -= Fl::box_dh(box());
-
-	text_area.x = X+LEFT_MARGIN;
-	text_area.y = Y+TOP_MARGIN;
-	text_area.w = W-LEFT_MARGIN-RIGHT_MARGIN;
-	text_area.h = H-TOP_MARGIN-BOTTOM_MARGIN;
-	const int oldTAWidth = text_area.w;
-	int i;
-
-	/* Find the new maximum font height for this text display */
-	for (i = 0, mMaxsize = fl_height(textfont(), textsize()); i < mNStyles; i++)
-		mMaxsize = max(mMaxsize, fl_height(mStyleTable[i].font, mStyleTable[i].size));
 
 	// did we have scrollbars initially?
 	unsigned int hscrollbarvisible = mHScrollBar->visible();
 	unsigned int vscrollbarvisible = mVScrollBar->visible();
 
+	int oldTAWidth = text_area.w;
+
+	X += Fl::box_dx(box());
+	Y += Fl::box_dy(box());
+	W -= Fl::box_dw(box());
+	H -= Fl::box_dh(box());
+
+	text_area.x = X + LEFT_MARGIN + mLineNumWidth;
+	text_area.y = Y + TOP_MARGIN;
+	text_area.w = W - LEFT_MARGIN - RIGHT_MARGIN - mLineNumWidth;
+	text_area.h = H - TOP_MARGIN - BOTTOM_MARGIN;
+
+	// Find the new maximum font height for this text display
+	int i;
+	for (i = 0, mMaxsize = fl_height(textfont(), textsize()); i < mNStyles; i++)
+		mMaxsize = max(mMaxsize, fl_height(mStyleTable[i].font, mStyleTable[i].size));
+
 	// try without scrollbars first
 	mVScrollBar->clear_visible();
 	mHScrollBar->clear_visible();
+
+#if (1) // optimization (experimental - seems to work well)
+
+	// Optimization: if the number of lines in the buffer does not fit in
+	// the display area, then we need a vertical scrollbar regardless of
+	// word wrapping. If we switch it on here, this saves one line counting
+	// run in wrap mode in the loop below ("... again ..."). This is important
+	// for large buffers that suffer from slow calculations of character width
+	// to determine line wrapping.
+
+	if (mContinuousWrap && !mWrapMarginPix) {
+
+		int nvlines = (text_area.h + mMaxsize - 1) / mMaxsize;
+		int nlines = buffer()->count_lines(0,buffer()->length());
+		if (nvlines < 1) nvlines = 1;
+		if (nlines >= nvlines-1) {
+			mVScrollBar->set_visible(); // we need a vertical scrollbar
+			text_area.w -= scrollbar_width();
+		}
+	}
+
+#endif // optimization
 
 	for (int again = 1; again;) {
 		again = 0;
 		/* In continuous wrap mode, a change in width affects the total number of
 		 lines in the buffer, and can leave the top line number incorrect, and
 		 the top character no longer pointing at a valid line start */
-		if (mContinuousWrap && !mWrapMarginPix && (W!=oldWidth || text_area.w!=oldTAWidth)) {
+
+#ifdef DEBUG2
+		printf("*** again ... text_area.w = %d, oldTAWidth = %d, diff = %d\n",
+		       text_area.w, oldTAWidth, text_area.w - oldTAWidth);
+#endif // DEBUG2
+
+		if (mContinuousWrap && !mWrapMarginPix && text_area.w != oldTAWidth) {
+
 			int oldFirstChar = mFirstChar;
 			mNBufferLines = count_lines(0, buffer()->length(), true);
 			mFirstChar = line_start(mFirstChar);
 			mTopLineNum = count_lines(0, mFirstChar, true)+1;
 			absolute_top_line_number(oldFirstChar);
-#ifdef DEBUG
+#ifdef DEBUG2
 			printf("    mNBufferLines=%d\n", mNBufferLines);
-#endif // DEBUG
+#endif // DEBUG2
+
 		}
+
+		oldTAWidth = text_area.w;
 
 		/* reallocate and update the line starts array, which may have changed
 		 size and / or contents.  */
@@ -550,24 +604,15 @@ void Fl_Text_Display::resize(int X, int Y, int W, int H)
 
 		// figure the scrollbars
 		if (scrollbar_width()) {
+
 			/* Decide if the vertical scrollbar needs to be visible */
-			uchar vbvis = mVScrollBar->visible();
-			if (scrollbar_align() & (FL_ALIGN_LEFT|FL_ALIGN_RIGHT) &&
-			    mNBufferLines >= mNVisibleLines - 1) {
+			if (!mVScrollBar->visible() &&
+			    scrollbar_align() & (FL_ALIGN_LEFT|FL_ALIGN_RIGHT) &&
+			    mNBufferLines >= mNVisibleLines-1) {
 				mVScrollBar->set_visible();
-				if (scrollbar_align() & FL_ALIGN_LEFT) {
-					text_area.x = X+scrollbar_width()+LEFT_MARGIN;
-					text_area.w = W-scrollbar_width()-LEFT_MARGIN-RIGHT_MARGIN;
-					mVScrollBar->resize(X, text_area.y-TOP_MARGIN, scrollbar_width(),
-					                    text_area.h+TOP_MARGIN+BOTTOM_MARGIN);
-				} else {
-					text_area.x = X+LEFT_MARGIN;
-					text_area.w = W-scrollbar_width()-LEFT_MARGIN-RIGHT_MARGIN;
-					mVScrollBar->resize(X+W-scrollbar_width(), text_area.y-TOP_MARGIN,
-					                    scrollbar_width(), text_area.h+TOP_MARGIN+BOTTOM_MARGIN);
-				}
+				text_area.w -= scrollbar_width();
+				again = 1;
 			}
-			if (vbvis != mVScrollBar->visible()) again = 1;
 
 			/*
 			 Decide if the horizontal scrollbar needs to be visible. If the text
@@ -591,33 +636,64 @@ void Fl_Text_Display::resize(int X, int Y, int W, int H)
 			/* WAS: Suggestion: Try turning the horizontal scrollbar on when
 			 you first see a line that is too wide in the window, but then
 			 don't turn it off (ie mix both of your solutions). */
-			if (scrollbar_align() & (FL_ALIGN_TOP|FL_ALIGN_BOTTOM) &&
+
+			if (!mHScrollBar->visible() &&
+			    scrollbar_align() & (FL_ALIGN_TOP|FL_ALIGN_BOTTOM) &&
 			    (mVScrollBar->visible() || longest_vline() > text_area.w)) {
 				char wrap_at_bounds = mContinuousWrap && (mWrapMarginPix<text_area.w);
-				if (!mHScrollBar->visible() && !wrap_at_bounds) {
+				if (!wrap_at_bounds) {
 					mHScrollBar->set_visible();
+					text_area.h -= scrollbar_width();
 					again = 1; // loop again to see if we now need vert. & recalc sizes
-				}
-				if (scrollbar_align() & FL_ALIGN_TOP) {
-					text_area.y = Y + scrollbar_width()+TOP_MARGIN;
-					text_area.h = H - (wrap_at_bounds?0:scrollbar_width())-TOP_MARGIN-BOTTOM_MARGIN;
-					mHScrollBar->resize(text_area.x-LEFT_MARGIN, Y,
-					                    text_area.w+LEFT_MARGIN+RIGHT_MARGIN, scrollbar_width());
-				} else {
-					text_area.y = Y+TOP_MARGIN;
-					text_area.h = H - (wrap_at_bounds?0:scrollbar_width())-TOP_MARGIN-BOTTOM_MARGIN;
-					mHScrollBar->resize(text_area.x-LEFT_MARGIN, Y+H-scrollbar_width(),
-					                    text_area.w+LEFT_MARGIN+RIGHT_MARGIN, scrollbar_width());
 				}
 			}
 		}
+	} // (... again ...)
+
+	// Calculate text area position, dependent on scrollbars and line numbers.
+	// Note: width and height have been calculated above.
+	text_area.x = X + mLineNumWidth + LEFT_MARGIN;
+	if (mVScrollBar->visible() && scrollbar_align() & FL_ALIGN_LEFT)
+		text_area.x += scrollbar_width();
+
+	text_area.y = Y + TOP_MARGIN;
+	if (mHScrollBar->visible() &&
+	    scrollbar_align() & FL_ALIGN_TOP)
+		text_area.y += scrollbar_width();
+
+	// position and resize scrollbars
+	if (mVScrollBar->visible()) {
+		if (scrollbar_align() & FL_ALIGN_LEFT) {
+#ifdef LINENUM_LEFT_OF_VSCROLL
+			mVScrollBar->resize(text_area.x - LEFT_MARGIN - scrollbar_width(),
+#else
+			mVScrollBar->resize(X,
+#endif
+			                    text_area.y - TOP_MARGIN,
+			                    scrollbar_width(),
+			                    text_area.h + TOP_MARGIN + BOTTOM_MARGIN);
+		} else {
+			mVScrollBar->resize(X+W-scrollbar_width(),
+			                    text_area.y - TOP_MARGIN,
+			                    scrollbar_width(),
+			                    text_area.h + TOP_MARGIN + BOTTOM_MARGIN);
+		}
 	}
 
-	// add linenum width to the text area - LZA / STR#2621
-	if (mLineNumWidth > 0) {
-		text_area.x += mLineNumWidth;
-		text_area.w -= mLineNumWidth;
+	if (mHScrollBar->visible()) {
+		if (scrollbar_align() & FL_ALIGN_TOP) {
+			mHScrollBar->resize(text_area.x - LEFT_MARGIN,
+			                    Y,
+			                    text_area.w + LEFT_MARGIN + RIGHT_MARGIN,
+			                    scrollbar_width());
+		} else {
+			mHScrollBar->resize(text_area.x - LEFT_MARGIN,
+			                    Y + H - scrollbar_width(),
+			                    text_area.w + LEFT_MARGIN + RIGHT_MARGIN,
+			                    scrollbar_width());
+		}
 	}
+
 
 	// user request to change viewport
 	if (mTopLineNumHint != mTopLineNum || mHorizOffsetHint != mHorizOffset)
@@ -631,8 +707,8 @@ void Fl_Text_Display::resize(int X, int Y, int W, int H)
 	} else {
 		while (   mNVisibleLines>=2
 		          && (mLineStarts[mNVisibleLines-2]==-1)
-		          && scroll_(mTopLineNum-1, mHorizOffset))
-			{ }
+		          && scroll_(mTopLineNum-1, mHorizOffset)) {
+		}
 	}
 
 	// user request to display insert position
@@ -1356,10 +1432,10 @@ int Fl_Text_Display::move_down()
 /**
  \brief Count the number of lines between two positions.
 
- Same as BufCountLines, but takes into account wrapping if wrapping is
- turned on.  If the caller knows that \p startPos is at a line start, it
- can pass \p startPosIsLineStart as True to make the call more efficient
- by avoiding the additional step of scanning back to the last newline.
+ Same as Fl_Text_Buffer::count_lines(), but takes into account wrapping if
+ wrapping is turned on. If the caller knows that \p startPos is at a line
+ start, it can pass \p startPosIsLineStart as True to make the call more
+ efficient by avoiding the additional step of scanning back to the last newline.
 
  \param startPos index to first character
  \param endPos index after last character
@@ -1379,7 +1455,7 @@ int Fl_Text_Display::count_lines(int startPos, int endPos,
 	       startPos, endPos, startPosIsLineStart);
 #endif // DEBUG
 
-	/* If we're not wrapping use simple (and more efficient) BufCountLines */
+	/* If we're not wrapping use simple (and more efficient) Fl_Text_Buffer::count_lines() */
 	if (!mContinuousWrap)
 		return buffer()->count_lines(startPos, endPos);
 
@@ -1652,7 +1728,7 @@ void Fl_Text_Display::buffer_predelete_cb(int pos, int nDeleted, void *cbArg)
  \param cbArg "this" pointer for static callback function
  */
 void Fl_Text_Display::buffer_modified_cb( int pos, int nInserted, int nDeleted,
-                int nRestyled, const char *deletedText, void *cbArg )
+        int nRestyled, const char *deletedText, void *cbArg )
 {
 	int linesInserted, linesDeleted, startDispPos, endDispPos;
 	Fl_Text_Display *textD = ( Fl_Text_Display * ) cbArg;
@@ -1943,10 +2019,10 @@ int Fl_Text_Display::position_to_line( int pos, int *lineNum ) const
  \todo we must provide code to get pixel positions of the middle of a character as well
  */
 int Fl_Text_Display::handle_vline(
-        int mode,
-        int lineStartPos, int lineLen, int leftChar, int rightChar,
-        int Y, int bottomClip,
-        int leftClip, int rightClip) const
+    int mode,
+    int lineStartPos, int lineLen, int leftChar, int rightChar,
+    int Y, int bottomClip,
+    int leftClip, int rightClip) const
 {
 	IS_UTF8_ALIGNED2(buffer(), lineStartPos)
 
@@ -2234,7 +2310,7 @@ void Fl_Text_Display::draw_string(int style,
 		fl_color( foreground );
 		fl_font( font, fsize );
 #if !(defined(__APPLE__) || defined(WIN32)) && USE_XFT
-		// makes sure antialiased ÄÖÜ do not leak on line above
+		// makes sure antialiased 脛脰脺 do not leak on line above
 		fl_push_clip(X, Y, toX - X, mMaxsize);
 #endif
 		fl_draw( string, nChars, X, Y + mMaxsize - fl_descent());
@@ -2696,8 +2772,8 @@ void Fl_Text_Display::offset_line_starts( int newTopLineNum )
  \param[out] scrolled set to 1 if the text display needs to be scrolled
  */
 void Fl_Text_Display::update_line_starts(int pos, int charsInserted,
-                int charsDeleted, int linesInserted,
-                int linesDeleted, int *scrolled )
+        int charsDeleted, int linesInserted,
+        int linesDeleted, int *scrolled )
 {
 	IS_UTF8_ALIGNED2(buffer(), pos)
 
@@ -2928,7 +3004,7 @@ int Fl_Text_Display::scroll_(int topLineNum, int horizOffset)
  \brief Update vertical scrollbar.
 
  Update the minimum, maximum, slider size, page increment, and value
- for vertical scrollbar.
+ for the vertical scrollbar.
  */
 void Fl_Text_Display::update_v_scrollbar()
 {
@@ -2948,7 +3024,7 @@ void Fl_Text_Display::update_v_scrollbar()
 
 
 /**
- \brief Update vertical scrollbar.
+ \brief Update horizontal scrollbar.
 
  Update the minimum, maximum, slider size, page increment, and value
  for the horizontal scrollbar.
@@ -2962,7 +3038,7 @@ void Fl_Text_Display::update_h_scrollbar()
 
 
 /**
- \brief Callbacks for drag or valueChanged on scrollbars.
+ \brief Callbacks for drag or valueChanged on vertical scrollbar.
  */
 void Fl_Text_Display::v_scrollbar_cb(Fl_Scrollbar* b, Fl_Text_Display* textD)
 {
@@ -2973,7 +3049,7 @@ void Fl_Text_Display::v_scrollbar_cb(Fl_Scrollbar* b, Fl_Text_Display* textD)
 
 
 /**
- \brief Callbacks for drag or valueChanged on scrollbars.
+ \brief Callbacks for drag or valueChanged on horizontal scrollbar.
  */
 void Fl_Text_Display::h_scrollbar_cb(Fl_Scrollbar* b, Fl_Text_Display* textD)
 {
@@ -3007,22 +3083,29 @@ void Fl_Text_Display::draw_line_numbers(bool /*clearAll*/)
 	if (mLineNumWidth <= 0 || !visible_r())
 		return;
 
-	// Make sure we reset clipping range for line number's GC;
-	// it may be shared (e.g. if line numbers and text have same color)
-	// and therefore clipping ranges may be invalid.
-	int xoff = Fl::box_dx(box());
+	// Make sure we set the correct clipping range for line numbers.
+	// Take scrollbars and positions into account.
 	int hscroll_h = mHScrollBar->visible() ? mHScrollBar->h() : 0;
+	int xoff = Fl::box_dx(box());
+	int yoff = Fl::box_dy(box()) + ((scrollbar_align()&FL_ALIGN_TOP)?hscroll_h:0);
+
+#ifndef LINENUM_LEFT_OF_VSCROLL
+	int vscroll_w = mVScrollBar->visible() ? mVScrollBar->w() : 0;
+	if (scrollbar_align()&FL_ALIGN_LEFT)
+		xoff += vscroll_w;
+#endif
+
 	Fl_Color fgcolor = isactive ? linenumber_fgcolor() : fl_inactive(linenumber_fgcolor());
 	Fl_Color bgcolor = isactive ? linenumber_bgcolor() : fl_inactive(linenumber_bgcolor());
 	fl_push_clip(x() + xoff,
-	             y() + Fl::box_dy(box()),
-	             mLineNumWidth - xoff,
-	             h() - Fl::box_dh(box()) - hscroll_h);
+	             y() + yoff,
+	             mLineNumWidth,
+	             h() - Fl::box_dw(box()) - hscroll_h);
 	{
 		// Set background color for line number area -- LZA / STR# 2621
 		// Erase background
 		fl_color(bgcolor);
-		fl_rectf(x(), y(), mLineNumWidth, h());
+		fl_rectf(x()+xoff, y(), mLineNumWidth, h());
 
 		// Draw separator line
 		//fl_color(180,180,180);
@@ -3031,7 +3114,7 @@ void Fl_Text_Display::draw_line_numbers(bool /*clearAll*/)
 		// Draw line number text
 		fl_font(linenumber_font(), linenumber_size());
 
-		Y = y();
+		Y = y() + yoff;
 		line = get_absolute_top_line_number();
 
 		// set font color for line numbers
@@ -3042,7 +3125,7 @@ void Fl_Text_Display::draw_line_numbers(bool /*clearAll*/)
 				sprintf(lineNumString, linenumber_format(), line);
 				int xx = x() + xoff + 3,
 				    yy = Y + 3,
-				    ww = mLineNumWidth - xoff - (3*2),
+				    ww = mLineNumWidth - (3*2),
 				    hh = lineHeight;
 				fl_draw(lineNumString, xx, yy, ww, hh, linenumber_align(), 0, 0);
 				//DEBUG fl_rect(xx, yy, ww, hh);
@@ -3434,9 +3517,9 @@ void Fl_Text_Display::measure_deleted_lines(int pos, int nDeleted)
  \param[out] countLastLineMissingNewLine
  */
 void Fl_Text_Display::wrapped_line_counter(Fl_Text_Buffer *buf, int startPos,
-                int maxPos, int maxLines, bool startPosIsLineStart, int styleBufOffset,
-                int *retPos, int *retLines, int *retLineStart, int *retLineEnd,
-                bool countLastLineMissingNewLine) const
+        int maxPos, int maxLines, bool startPosIsLineStart, int styleBufOffset,
+        int *retPos, int *retLines, int *retLineStart, int *retLineEnd,
+        bool countLastLineMissingNewLine) const
 {
 	IS_UTF8_ALIGNED2(buf, startPos)
 	IS_UTF8_ALIGNED2(buf, maxPos)
@@ -3559,6 +3642,8 @@ void Fl_Text_Display::wrapped_line_counter(Fl_Text_Buffer *buf, int startPos,
 	*retLineStart = lineStart;
 	*retLineEnd = buf->length();
 }
+
+
 
 /**
  \brief Wrapping calculations.
@@ -3848,9 +3933,9 @@ void Fl_Text_Display::draw(void)
 	if (damage() & (FL_DAMAGE_ALL | FL_DAMAGE_SCROLL | FL_DAMAGE_EXPOSE)
 	    && (
 #ifdef __APPLE__
-	            Fl::compose_state ||
+	        Fl::compose_state ||
 #endif
-	            !has_selection || mCursorPos < start || mCursorPos > end) &&
+	        !has_selection || mCursorPos < start || mCursorPos > end) &&
 	    mCursorOn && Fl::focus() == (Fl_Widget*)this ) {
 		fl_push_clip(text_area.x-LEFT_MARGIN,
 		             text_area.y,
@@ -4027,8 +4112,7 @@ int Fl_Text_Display::handle(int event)
 		if (dragType==DRAG_START_DND) {
 			if (!Fl::event_is_click() && Fl::dnd_text_ops()) {
 				const char* copy = buffer()->selection_text();
-//#ifdef __APPLE__
-#if __FLTK_MACOSX__
+#ifdef __APPLE__
 				Fl_X::dnd(1);
 #else
 				Fl::dnd();
@@ -4199,8 +4283,6 @@ double Fl_Text_Display::col_to_x(double col) const
 }
 
 
-
-
 //
-// End of "$Id: Fl_Text_Display.cxx 10152 2014-05-21 06:56:59Z greg.ercolano $".
+// End of "$Id: Fl_Text_Display.cxx 11210 2016-02-22 17:38:26Z AlbrechtS $".
 //

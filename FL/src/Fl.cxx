@@ -81,6 +81,22 @@ extern double fl_ios_flush_and_wait(double time_to_wait);
 //
 // Globals...
 //
+
+// Pointers you can use to change FLTK to a foreign language.
+// Note: Similar pointers are defined in FL/fl_ask.H and src/fl_ask.cxx
+#if !defined(__APPLE__) || defined(FL_DOXYGEN)
+const char* fl_local_alt   = "Alt";	///< string pointer used in shortcuts, you can change it to another language
+const char* fl_local_ctrl  = "Ctrl";	///< string pointer used in shortcuts, you can change it to another language
+const char* fl_local_meta  = "Meta";	///< string pointer used in shortcuts, you can change it to another language
+const char* fl_local_shift = "Shift";	///< string pointer used in shortcuts, you can change it to another language
+#else
+const char* fl_local_alt   = "\xe2\x8c\xa5\\"; // U+2325 (option key)
+const char* fl_local_ctrl  = "\xe2\x8c\x83\\"; // U+2303 (up arrowhead)
+const char* fl_local_meta  = "\xe2\x8c\x98\\"; // U+2318 (place of interest sign)
+const char* fl_local_shift = "\xe2\x87\xa7\\"; // U+21E7 (upwards white arrow)
+#endif
+
+// Apple App Menu
 #if __FLTK_MACOSX__
 const char *Fl_Mac_App_Menu::about = "About %@";
 const char *Fl_Mac_App_Menu::print = "Print Front Window";
@@ -92,23 +108,23 @@ const char *Fl_Mac_App_Menu::quit = "Quit %@";
 #endif // __APPLE__
 #ifndef FL_DOXYGEN
 Fl_Widget	*Fl::belowmouse_,
-                *Fl::pushed_,
-                *Fl::focus_,
-                *Fl::selection_owner_;
+            *Fl::pushed_,
+            *Fl::focus_,
+            *Fl::selection_owner_;
 int		Fl::damage_,
-             Fl::e_number,
-             Fl::e_x,
-             Fl::e_y,
-             Fl::e_x_root,
-             Fl::e_y_root,
-             Fl::e_dx,
-             Fl::e_dy,
-             Fl::e_state,
-             Fl::e_clicks,
-             Fl::e_is_click,
-             Fl::e_keysym,
-             Fl::e_original_keysym,
-             Fl::scrollbar_size_ = 16;
+        Fl::e_number,
+        Fl::e_x,
+        Fl::e_y,
+        Fl::e_x_root,
+        Fl::e_y_root,
+        Fl::e_dx,
+        Fl::e_dy,
+        Fl::e_state,
+        Fl::e_clicks,
+        Fl::e_is_click,
+        Fl::e_keysym,
+        Fl::e_original_keysym,
+        Fl::scrollbar_size_ = 16;
 
 char		*Fl::e_text = (char *)"";
 int		Fl::e_length;
@@ -727,7 +743,8 @@ class Fl_Win32_At_Exit
 {
 public:
 	Fl_Win32_At_Exit() { }
-	~Fl_Win32_At_Exit() {
+	~Fl_Win32_At_Exit()
+	{
 		fl_free_fonts();        // do some WIN32 cleanup
 		fl_cleanup_pens();
 		fl_OleUninitialize();
@@ -1014,7 +1031,9 @@ void Fl::remove_handler(Fl_Event_Handler ha)
 	handler_link *l, *p;
 
 	// Search for the handler in the list...
-	for (l = handlers, p = 0; l && l->handle != ha; p = l, l = l->next);
+	for (l = handlers, p = 0; l && l->handle != ha; p = l, l = l->next) {
+		/*empty*/
+	}
 
 	if (l) {
 		// Found it, so remove it from the list...
@@ -1310,7 +1329,7 @@ void fl_throw_focus(Fl_Widget *o)
 #endif
 	if (o->contains(Fl::belowmouse())) Fl::belowmouse_ = 0;
 	if (o->contains(Fl::focus())) Fl::focus_ = 0;
-    if (o == fl_xfocus) fl_xfocus = 0;
+	if (o == fl_xfocus) fl_xfocus = 0;
 	if (o == Fl_Tooltip::current()) Fl_Tooltip::current(0);
 	if (o == fl_xmousewin) fl_xmousewin = 0;
 	Fl_Tooltip::exit(o);
@@ -1551,19 +1570,19 @@ int Fl::handle_(int e, Fl_Window* window)
 				else ret = (wi && send_event(e, wi, window));
 			} else
 #elif __FLTK_IPHONEOS__
-            if ( 1) { //fl_mac_os_version < 100500) {
-                // before 10.5, mouse moved events aren't sent to borderless windows such as tooltips
-                Fl_Window *tooltip = Fl_Tooltip::current_window();
-                int inside = 0;
-                if (tooltip && tooltip->shown() ) { // check if a tooltip window is currently opened
-                    // check if mouse is inside the tooltip
-                    inside = (Fl::event_x_root() >= tooltip->x() && Fl::event_x_root() < tooltip->x() + tooltip->w() &&
-                                  Fl::event_y_root() >= tooltip->y() && Fl::event_y_root() < tooltip->y() + tooltip->h() );
-                }
-                // if inside, send event to tooltip window instead of background window
-                if (inside) ret = send_event(e, tooltip, window);
-                else ret = (wi && send_event(e, wi, window));
-            } else
+			if ( 1) { //fl_mac_os_version < 100500) {
+				// before 10.5, mouse moved events aren't sent to borderless windows such as tooltips
+				Fl_Window *tooltip = Fl_Tooltip::current_window();
+				int inside = 0;
+				if (tooltip && tooltip->shown() ) { // check if a tooltip window is currently opened
+					// check if mouse is inside the tooltip
+					inside = (Fl::event_x_root() >= tooltip->x() && Fl::event_x_root() < tooltip->x() + tooltip->w() &&
+					          Fl::event_y_root() >= tooltip->y() && Fl::event_y_root() < tooltip->y() + tooltip->h() );
+				}
+				// if inside, send event to tooltip window instead of background window
+				if (inside) ret = send_event(e, tooltip, window);
+				else ret = (wi && send_event(e, wi, window));
+			} else
 #endif
 				ret = (wi && send_event(e, wi, window));
 			if (pbm != belowmouse()) {
@@ -2577,156 +2596,159 @@ void Fl::option(Fl_Option opt, bool val)
 }
 
 int Fl::use_high_res_GL_ = 0;
-    
+
 // add by cyantree
 int Fl::softkeyboard_isshow()
 {
 #if __FLTK_IPHONEOS__
-    return Fl_X::softkeyboard_isshow();
+	return Fl_X::softkeyboard_isshow();
 #else
-    return 0;
+	return 0;
 #endif
 }
-    
+
 void Fl::softkeyboard_work_area(int &X, int &Y, int &W, int &H)
 {
-    X = 0; Y = 0; W = 0; H = 0;
+	X = 0;
+	Y = 0;
+	W = 0;
+	H = 0;
 #if __FLTK_IPHONEOS__
-    Fl_X::softkeyboard_work_area(X, Y, W, H);
+	Fl_X::softkeyboard_work_area(X, Y, W, H);
 #else
 #endif
 }
-    
+
 int Fl::mouse_simulate_by_touch()
 {
 #if __FLTK_IPHONEOS__
-    return Fl_X::mouse_simulate_by_touch();
+	return Fl_X::mouse_simulate_by_touch();
 #elif __FLTK_WIN32__
 	return Fl_X::mouse_simulate_by_touch();
 #else
-    return 0;
+	return 0;
 #endif
 }
-    
+
 int Fl::touch_type()
 {
 #if __FLTK_IPHONEOS__
-    return Fl_X::touch_type();
+	return Fl_X::touch_type();
 #elif __FLTK_WIN32__
 	return Fl_X::touch_type();
 #else
-    return 0;
+	return 0;
 #endif
 }
-    
+
 int Fl::touch_tapcount()
 {
 #if __FLTK_IPHONEOS__
-    return Fl_X::touch_tapcount();
+	return Fl_X::touch_tapcount();
 #elif __FLTK_WIN32__
 	return Fl_X::touch_tapcount();
 #else
-    return 0;
+	return 0;
 #endif
 }
 
 int Fl::touch_finger()
 {
 #if __FLTK_IPHONEOS__
-    return Fl_X::touch_finger();
+	return Fl_X::touch_finger();
 #elif __FLTK_WIN32__
 	return Fl_X::touch_finger();
 #else
-    return 0;
+	return 0;
 #endif
 }
-    
+
 int Fl::touch_x(int finger)
 {
 #if __FLTK_IPHONEOS__
-    return Fl_X::touch_x(finger);
+	return Fl_X::touch_x(finger);
 #elif __FLTK_WIN32__
 	return Fl_X::touch_x(finger);
 #else
-    return 0;
+	return 0;
 #endif
 }
-    
+
 int Fl::touch_y(int finger)
 {
 #if __FLTK_IPHONEOS__
-    return Fl_X::touch_y(finger);
+	return Fl_X::touch_y(finger);
 #elif __FLTK_WIN32__
 	return Fl_X::touch_y(finger);
 #else
-    return 0;
+	return 0;
 #endif
 }
-    
+
 int Fl::touch_x_root(int finger)
 {
 #if __FLTK_IPHONEOS__
-    return Fl_X::touch_x_root(finger);
+	return Fl_X::touch_x_root(finger);
 #elif __FLTK_WIN32__
 	return Fl_X::touch_x_root(finger);
 #else
-    return 0;
+	return 0;
 #endif
 }
-    
+
 int Fl::touch_y_root(int finger)
 {
 #if __FLTK_IPHONEOS__
-    return Fl_X::touch_y_root(finger);
+	return Fl_X::touch_y_root(finger);
 #elif __FLTK_WIN32__
 	return Fl_X::touch_y_root(finger);
 #else
-    return 0;
+	return 0;
 #endif
 }
-    
+
 int Fl::touch_end_finger()
 {
 #if __FLTK_IPHONEOS__
-    return Fl_X::touch_end_finger();
+	return Fl_X::touch_end_finger();
 #else
-    return 0;
+	return 0;
 #endif
 }
-    
+
 int Fl::touch_end_x(int finger)
 {
 #if __FLTK_IPHONEOS__
-        return Fl_X::touch_end_x(finger);
+	return Fl_X::touch_end_x(finger);
 #else
-        return 0;
+	return 0;
 #endif
 }
-    
+
 int Fl::touch_end_y(int finger)
 {
 #if __FLTK_IPHONEOS__
-        return Fl_X::touch_end_y(finger);
+	return Fl_X::touch_end_y(finger);
 #else
-        return 0;
+	return 0;
 #endif
 }
-    
+
 int Fl::touch_end_x_root(int finger)
 {
 #if __FLTK_IPHONEOS__
-        return Fl_X::touch_end_x_root(finger);
+	return Fl_X::touch_end_x_root(finger);
 #else
-        return 0;
+	return 0;
 #endif
 }
-    
+
 int Fl::touch_end_y_root(int finger)
 {
 #if __FLTK_IPHONEOS__
-        return Fl_X::touch_end_y_root(finger);
+	return Fl_X::touch_end_y_root(finger);
 #else
-        return 0;
+	return 0;
 #endif
 }
 

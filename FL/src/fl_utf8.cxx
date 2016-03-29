@@ -766,6 +766,9 @@ int fl_stat(const char* f, struct stat *b)
   \param     l the length of the buffer
   \return    the CWD encoded as UTF-8.
 */
+#if __FLTK_IPHONEOS__
+#include "x.h"
+#endif
 char *fl_getcwd(char* b, int l)
 {
 
@@ -773,7 +776,7 @@ char *fl_getcwd(char* b, int l)
 		b = (char*) malloc(l+1);
 	}
 
-#if defined(WIN32) && !defined(__CYGWIN__) // Windows
+#if __FLTK_WIN32__ || __FLTK_WINCE__
 
 	static xchar *wbuf = NULL;
 	wbuf = (xchar*)realloc(wbuf, sizeof(xchar) * (l+1));
@@ -787,7 +790,9 @@ char *fl_getcwd(char* b, int l)
 	} else {
 		return NULL;
 	}
-
+    
+//#elif __FLTK_IPHONEOS__
+//    return ios_getcwd(b, l);
 #else // other platforms
 
 	return getcwd(b, l);

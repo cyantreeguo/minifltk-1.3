@@ -146,7 +146,7 @@ void Fl_Xlib_Graphics_Driver::copy_offscreen(int x, int y, int w, int h, Fl_Offs
 }
 
 void Fl_Xlib_Graphics_Driver::copy_offscreen_with_alpha(int x, int y, int w, int h,
-                Fl_Offscreen pixmap, int srcx, int srcy)
+        Fl_Offscreen pixmap, int srcx, int srcy)
 {
 #if HAVE_XRENDER
 	XRenderPictureAttributes srcattr;
@@ -392,7 +392,7 @@ Fl_Offscreen Fl_Quartz_Graphics_Driver::create_offscreen_with_alpha(int w, int h
 	void *data = calloc(w*h,4);
 	CGColorSpaceRef lut = CGColorSpaceCreateDeviceRGB();
 	CGContextRef ctx = CGBitmapContextCreate(
-	                           data, w, h, 8, w*4, lut, kCGImageAlphaPremultipliedLast);
+	                       data, w, h, 8, w*4, lut, kCGImageAlphaPremultipliedLast);
 	CGColorSpaceRelease(lut);
 	return (Fl_Offscreen)ctx;
 }
@@ -413,21 +413,21 @@ Fl_Offscreen fl_create_offscreen(int ww, int hh)
 	// add by cyantree, for retina
 	/*
 	int scale = [[NSScreen mainScreen] backingScaleFactor];
-    printf("scale:%d\n", scale);
+	printf("scale:%d\n", scale);
 	*/
-    int scale = 2;
+	int scale = 1;
 	int w = ww*scale;
-    int h = hh*scale;
-	
+	int h = hh*scale;
+
 	void *data = calloc(w*h,4);
 	CGColorSpaceRef lut = CGColorSpaceCreateDeviceRGB();
 	CGContextRef ctx = CGBitmapContextCreate(data, w, h, 8, w*4, lut, kCGImageAlphaNoneSkipLast);
 	CGColorSpaceRelease(lut);
-	
+
 	// add by cyantree, for retina
 	if ( scale > 1 ) CGContextTranslateCTM(ctx, 0, -h);
-    CGContextScaleCTM(ctx, scale, scale);
-	
+	CGContextScaleCTM(ctx, scale, scale);
+
 	return (Fl_Offscreen)ctx;
 }
 
@@ -442,8 +442,8 @@ void Fl_Quartz_Graphics_Driver::copy_offscreen(int x,int y,int w,int h,Fl_Offscr
 {
 	// add by cyantree, for retina
 	//int scale = [[NSScreen mainScreen] backingScaleFactor];
-    int scale = 2;
-	
+	int scale = 1;
+
 	CGContextRef src = (CGContextRef)osrc;
 	void *data = CGBitmapContextGetData(src);
 	int sw = CGBitmapContextGetWidth(src);
@@ -536,7 +536,7 @@ Fl_Offscreen Fl_Quartz_Graphics_Driver::create_offscreen_with_alpha(int w, int h
 	void *data = calloc(w*h,4);
 	CGColorSpaceRef lut = CGColorSpaceCreateDeviceRGB();
 	CGContextRef ctx = CGBitmapContextCreate(
-	                           data, w, h, 8, w*4, lut, kCGImageAlphaPremultipliedLast);
+	                       data, w, h, 8, w*4, lut, kCGImageAlphaPremultipliedLast);
 	CGColorSpaceRelease(lut);
 	return (Fl_Offscreen)ctx;
 }
@@ -556,22 +556,22 @@ Fl_Offscreen fl_create_offscreen(int ww, int hh)
 	// add by cyantree, for retina
 	/*
 	int scale = [[UIScreen mainScreen] scale];
-    if (scale < 1 ) scale = 1;
-    if ( scale == 3 ) scale = 2;
+	if (scale < 1 ) scale = 1;
+	if ( scale == 3 ) scale = 2;
 	*/
-    int scale = 2;
+	int scale = 2;
 	int w = ww*scale;
-    int h = hh*scale;
-	
+	int h = hh*scale;
+
 	void *data = calloc(w*h,4);
 	CGColorSpaceRef lut = CGColorSpaceCreateDeviceRGB();
 	CGContextRef ctx = CGBitmapContextCreate(data, w, h, 8, w*4, lut, kCGImageAlphaNoneSkipLast);
 	CGColorSpaceRelease(lut);
-	
+
 	// add by cyantree, for retina
 	if ( scale > 1 ) CGContextTranslateCTM(ctx, 0, -h);
-    CGContextScaleCTM(ctx, scale, scale);
-	
+	CGContextScaleCTM(ctx, scale, scale);
+
 	return (Fl_Offscreen)ctx;
 }
 
@@ -587,15 +587,15 @@ void Fl_Quartz_Graphics_Driver::copy_offscreen(int x,int y,int w,int h,Fl_Offscr
 	// add by cyantree, for retina
 	/*
 	int scale = [[UIScreen mainScreen] scale];
-    if (scale < 1 ) scale = 1;
-    if ( scale == 3 ) scale = 2;
+	if (scale < 1 ) scale = 1;
+	if ( scale == 3 ) scale = 2;
 	*/
-    int scale = 2;
-	
+	int scale = 2;
+
 	CGContextRef src = (CGContextRef)osrc;
 	void *data = CGBitmapContextGetData(src);
-	int sw = CGBitmapContextGetWidth(src);
-	int sh = CGBitmapContextGetHeight(src);
+	int sw = (int)CGBitmapContextGetWidth(src);
+	int sh = (int)CGBitmapContextGetHeight(src);
 	CGImageAlphaInfo alpha = CGBitmapContextGetAlphaInfo(src);
 	CGColorSpaceRef lut = CGColorSpaceCreateDeviceRGB();
 	// when output goes to a Quartz printercontext, release of the bitmap must be
@@ -678,7 +678,7 @@ static int stack_ix = 0;
 static CBitmapContext* stack_gc[stack_max];
 // static Window stack_window[stack_max];
 
-void fl_begin_offscreen(Fl_Offscreen ctx) 
+void fl_begin_offscreen(Fl_Offscreen ctx)
 {
 	// TODO: S60
 	if (stack_ix<stack_max) {
@@ -780,10 +780,10 @@ void Fl_Double_Window::flush(int eraseoverlay)
 			myi->other_xid = fl_create_offscreen(w(), h());
 		clear_damage(FL_DAMAGE_ALL);
 #elif __FLTK_S60v32__
-	// DONE: S60
-    myi->other_xid = fl_create_offscreen(w(), h());
-    clear_damage(FL_DAMAGE_ALL);
-#elif __FLTK_ANDROID__    
+			// DONE: S60
+			myi->other_xid = fl_create_offscreen(w(), h());
+		clear_damage(FL_DAMAGE_ALL);
+#elif __FLTK_ANDROID__
 #else
 # error unsupported platform
 #endif
@@ -861,31 +861,27 @@ void Fl_Double_Window::flush(int eraseoverlay)
 				fl_end_offscreen();
 			} else {
 				draw();
-			}			
+			}
 #elif __FLTK_S60v32__
-    // DONE: S60
-    if (myi->other_xid)
-    	{
-    	fl_begin_offscreen(myi->other_xid);
-    	fl_clip_region(0);
-    	draw();
-    	fl_end_offscreen();
-    	} else
-    		{
-    		draw();
-    		}			
+			// DONE: S60
+			if (myi->other_xid) {
+				fl_begin_offscreen(myi->other_xid);
+				fl_clip_region(0);
+				draw();
+				fl_end_offscreen();
+			} else {
+				draw();
+			}
 #elif __FLTK_ANDROID__
-    // DONE: S60
-    if (myi->other_xid)
-    	{
-    	fl_begin_offscreen(myi->other_xid);
-    	fl_clip_region(0);
-    	draw();
-    	fl_end_offscreen();
-    	} else
-    		{
-    		draw();
-    		}			    	
+			// DONE: S60
+			if (myi->other_xid) {
+				fl_begin_offscreen(myi->other_xid);
+				fl_clip_region(0);
+				draw();
+				fl_end_offscreen();
+			} else {
+				draw();
+			}
 #else // X:
 			fl_window = myi->other_xid;
 			draw();
@@ -928,7 +924,9 @@ void Fl_Double_Window::hide()
 	Fl_X* myi = Fl_X::i(this);
 	if (myi && myi->other_xid) {
 #if USE_XDBE
-		if (!use_xdbe)
+		if (use_xdbe) {
+			XdbeDeallocateBackBufferName(fl_display, myi->other_xid);
+		} else
 #endif
 			fl_delete_offscreen(myi->other_xid);
 	}

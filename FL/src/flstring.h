@@ -65,34 +65,34 @@ extern "C" {
 #  endif /* __cplusplus */
 
 FL_EXPORT extern int fl_snprintf(char *, size_t, const char *, ...);
-#  if !HAVE_SNPRINTF
+#  ifndef HAVE_SNPRINTF
 #    define snprintf fl_snprintf
 #  endif /* !HAVE_SNPRINTF */
 
 FL_EXPORT extern int fl_vsnprintf(char *, size_t, const char *, va_list ap);
-#  if !HAVE_VSNPRINTF
+#  ifndef HAVE_VSNPRINTF
 #    define vsnprintf fl_vsnprintf
 #  endif /* !HAVE_VSNPRINTF */
 
-	/*
-	 * strlcpy() and strlcat() are some really useful BSD string functions
-	 * that work the way strncpy() and strncat() *should* have worked.
-	 */
+/*
+ * strlcpy() and strlcat() are some really useful BSD string functions
+ * that work the way strncpy() and strncat() *should* have worked.
+ */
 
 FL_EXPORT extern size_t fl_strlcat(char *, const char *, size_t);
-#  if !HAVE_STRLCAT
+#  ifndef HAVE_STRLCAT
 #    define strlcat fl_strlcat
 #  endif /* !HAVE_STRLCAT */
 
 FL_EXPORT extern size_t fl_strlcpy(char *, const char *, size_t);
-#  if !HAVE_STRLCPY
+#  ifndef HAVE_STRLCPY
 #    define strlcpy fl_strlcpy
 #  endif /* !HAVE_STRLCPY */
 
-	/*
-	 * locale independent ascii compare, does not introduce locale
-	 * pbs as w/  case cmp
-	 */
+/*
+ * locale independent ascii compare, does not introduce locale
+ * pbs as w/  case cmp
+ */
 FL_EXPORT extern int fl_ascii_strcasecmp(const char *s, const char *t);
 
 #  ifdef __cplusplus
@@ -102,5 +102,5 @@ FL_EXPORT extern int fl_ascii_strcasecmp(const char *s, const char *t);
 #endif /* !flstring_h */
 
 /*
- * End of "$Id: flstring.h 10074 2014-01-21 11:07:43Z AlbrechtS $".
+ * End of "$Id: flstring.h 11094 2016-01-31 02:49:56Z AlbrechtS $".
  */

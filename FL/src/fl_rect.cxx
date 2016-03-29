@@ -938,6 +938,7 @@ void XDestroyRegion (Fl_Region r)
 void Fl_Graphics_Driver::restore_clip()
 {
 	fl_clip_state_number++;
+	if (!fl_gc) return;
 	Fl_Region r = rstack[rstackptr];
 #if __FLTK_WIN32__
 	SelectClipRgn(fl_gc, r); //if r is NULL, clip is automatically cleared

@@ -798,7 +798,7 @@ int Fl_Input::handle(int event)
 		// fall through:
 	case FL_DND_DRAG:
 		//int p = mouse_position(X, Y, W, H);
-#if DND_OUT_XXXX
+#ifdef DND_OUT_XXXX
 		if (Fl::focus()==this && (p>=dnd_save_position && p<=dnd_save_mark ||
 		                          p>=dnd_save_mark && p<=dnd_save_position)) {
 			position(dnd_save_position, dnd_save_mark);
@@ -814,7 +814,7 @@ int Fl_Input::handle(int event)
 
 	case FL_DND_LEAVE:
 		position(dnd_save_position, dnd_save_mark);
-#if DND_OUT_XXXX
+#ifdef DND_OUT_XXXX
 		if (!focused())
 #endif
 			if (dnd_save_focus && dnd_save_focus != this) {

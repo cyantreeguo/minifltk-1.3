@@ -538,7 +538,7 @@ Fl_File_Chooser::favoritesButtonCB()
 {
 	int		v;			// Current selection
 	char		pathname[FL_PATH_MAX],		// Pathname
-	             menuname[FL_PATH_MAX];		// Menu name
+	            menuname[FL_PATH_MAX];		// Menu name
 
 
 	v = favoritesButton->value();
@@ -582,7 +582,7 @@ Fl_File_Chooser::favoritesCB(Fl_Widget *w)
 {
 	int		i;			// Looping var
 	char		name[32],		// Preference name
-	             pathname[1024];		// Directory in list
+	            pathname[1024];		// Directory in list
 
 
 	if (!w) {
@@ -800,14 +800,14 @@ Fl_File_Chooser::fileListCB()
 void Fl_File_Chooser::fileNameCB()
 {
 	char		*filename,	// New filename
-	             *slash,		// Pointer to trailing slash
-	             pathname[FL_PATH_MAX],	// Full pathname to file
-	             matchname[FL_PATH_MAX];	// Matching filename
+	            *slash,		// Pointer to trailing slash
+	            pathname[FL_PATH_MAX],	// Full pathname to file
+	            matchname[FL_PATH_MAX];	// Matching filename
 	int		i,		// Looping var
-	             min_match,	// Minimum number of matching chars
-	             max_match,	// Maximum number of matching chars
-	             num_files,	// Number of files in directory
-	             first_line;	// First matching line
+	        min_match,	// Minimum number of matching chars
+	        max_match,	// Maximum number of matching chars
+	        num_files,	// Number of files in directory
+	        first_line;	// First matching line
 	const char	*file;		// File from directory
 
 //  puts("fileNameCB()");
@@ -965,16 +965,16 @@ void Fl_File_Chooser::fileNameCB()
 		} else if (max_match > min_match && first_line) {
 			// Add the matching portion...
 			fileName->replace(
-			        (int) (filename - pathname),
-			        (int) (filename - pathname + min_match),
-			        matchname);
+			    (int) (filename - pathname),
+			    (int) (filename - pathname + min_match),
+			    matchname);
 
 			// Highlight it with the cursor at the end of the selection so
 			// s/he can press the right arrow to accept the selection
 			// (Tab and End also do this for both cases.)
 			fileName->position(
-			        (int) (filename - pathname + max_match),
-			        (int) (filename - pathname + min_match));
+			    (int) (filename - pathname + max_match),
+			    (int) (filename - pathname + min_match));
 		} else if (max_match == 0) {
 			fileList->deselect(0);
 			fileList->redraw();
@@ -1010,8 +1010,8 @@ void
 Fl_File_Chooser::filter(const char *p)		// I - Pattern(s)
 {
 	char		*copyp,				// Copy of pattern
-	             *start,				// Start of pattern
-	             *end;				// End of pattern
+	            *start,				// Start of pattern
+	            *end;				// End of pattern
 	int		allfiles;			// Do we have a "*" pattern?
 	char		temp[FL_PATH_MAX];			// Temporary pattern string
 
@@ -1225,7 +1225,7 @@ void
 Fl_File_Chooser::showChoiceCB()
 {
 	const char	*item,			// Selected item
-	           *patstart;		// Start of pattern
+	       *patstart;		// Start of pattern
 	char		*patend;		// End of pattern
 	char		temp[FL_PATH_MAX];		// Temporary string for pattern
 
@@ -1265,7 +1265,7 @@ Fl_File_Chooser::update_favorites()
 {
 	int		i;			// Looping var
 	char		pathname[FL_PATH_MAX],		// Pathname
-	             menuname[2048];		// Menu name
+	            menuname[2048];		// Menu name
 	const char	*home;			// Home directory
 
 
@@ -1404,7 +1404,9 @@ Fl_File_Chooser::update_preview()
 		if (*ptr || ptr == preview_text_) {
 			for (ptr = preview_text_;
 			     *ptr && (isprint(*ptr & 255) || isspace(*ptr & 255));
-			     ptr ++);
+			     ptr ++) {
+				/*empty*/
+			}
 		}
 
 		if (*ptr || ptr == preview_text_) {
@@ -1523,7 +1525,7 @@ Fl_File_Chooser::value(const char *filename)
 // I - Filename + directory
 {
 	int	i,				// Looping var
-	        fcount;				// Number of items in list
+	    fcount;				// Number of items in list
 	char	*slash;				// Directory separator
 	char	pathname[FL_PATH_MAX];		// Local copy of filename
 
